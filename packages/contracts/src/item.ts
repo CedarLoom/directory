@@ -12,6 +12,7 @@ import {
   keyword,
   kind,
   licenseClass,
+  registryName,
   semver,
   share,
   sourceId,
@@ -145,7 +146,7 @@ export const agentRecord = z.strictObject({
 export const hookRecord = z.strictObject({
   ...common,
   kind: z.literal('hook'),
-  events: z.array(keyword),
+  events: z.array(keyword).max(64),
   handlerTypes: z.array(z.enum(['command', 'http', 'prompt', 'agent'])),
   commandForms: z.array(z.enum(['shell', 'exec'])),
   matcherBreadth: z.enum(['match-all', 'specific', 'none']),
@@ -154,12 +155,13 @@ export const hookRecord = z.strictObject({
 export const mcpServerRecord = z.strictObject({
   ...common,
   kind: z.literal('mcp-server'),
+  name: registryName.describe('The registry name of the MCP server, `<namespace>/<name>`.'),
   links: links.extend({ registry: httpsUrl }),
   version: versionLabel.optional().describe('The registry version; absent when it is no version label.'),
   registryStatus: z.enum(['active', 'deprecated']),
   transports: z.array(z.enum(['stdio', 'streamable-http', 'sse'])),
   packageRegistryTypes: z.array(z.enum(['npm', 'pypi', 'oci', 'nuget', 'mcpb', 'cargo'])),
-  versionPinned: z.boolean(),
+  versionPinned: z.boolean().describe('Every package names an exact version; also true for a server without packages.'),
   requiredSecrets: count,
   remoteHosts: count,
 });
@@ -168,5 +170,5 @@ export const outputStyleRecord = z.strictObject({
   ...common,
   kind: z.literal('output-style'),
   tokens: count,
-  frontmatterFields: z.array(keyword),
+  frontmatterFields: z.array(keyword).max(64),
 });

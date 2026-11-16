@@ -342,10 +342,15 @@ export async function collect(
   const runDate = runAt.slice(0, 10);
   const counter = { refused: 0 };
   const refuse = refusalLogger(log, counter);
+  // A failed source fails the run, so the registry crawl stops reading pages nobody will use.
+  const failed = new AbortController();
   const results = await Promise.all([
     ...options.adapters.map((adapter) => adapter.collect(client, log)),
-    mcpRegistryAdapter(options.previous, runAt).collect(options.registryClient, log),
-  ]);
+    mcpRegistryAdapter(options.previous, runAt, failed.signal).collect(options.registryClient, log),
+  ]).catch((error: unknown) => {
+    failed.abort();
+    throw error;
+  });
   counter.refused += results.reduce((sum, result) => sum + result.refused, 0);
   const listed = applyExclusions(mergeCandidates(results.flatMap((result) => result.candidates)), excluded).filter(
     isLocated,

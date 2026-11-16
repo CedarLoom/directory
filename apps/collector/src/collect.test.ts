@@ -1,3 +1,4 @@
+import { indexFile } from '@directory/contracts';
 import { expect, it } from 'vitest';
 import { z } from 'zod';
 import { collect } from './collect.ts';
@@ -311,7 +312,7 @@ it('finishes inside the GitHub request cap when the registry has more servers th
     world.set(`example-org/server-${index}`, { stars: index, files: {} });
     return {
       server: {
-        name: `com.example/server-${index}`,
+        name: `io.github.example-org/server-${index}`,
         version: '1.0.0',
         repository: { url: `https://github.com/example-org/server-${index}`, source: 'github' },
       },
@@ -340,6 +341,56 @@ it('refuses a topic repository whose name is too long for an id and finishes the
     refused: 2,
     items: firstItems,
     lines: ['topic search: refused: value too_big'],
+  });
+});
+
+it('refuses a registry server whose repository name is too long for an id and finishes the run', async () => {
+  const lines: string[] = [];
+  const long = registryEntry(26);
+  const { report } = await run(fakeWorld(), '2026-11-16', new Map(), {
+    registry: [
+      ...registryEntries,
+      {
+        ...long,
+        server: {
+          ...long.server,
+          name: 'io.github.example-org/long',
+          repository: { url: `https://github.com/example-org/${'_'.repeat(70)}`, source: 'github' },
+        },
+      },
+    ],
+    log: (line) => lines.push(line),
+  });
+  expect({
+    refused: report.refused,
+    items: report.items,
+    lines: lines.filter((line) => line.startsWith('mcp-registry: refused')),
+  }).toEqual({
+    refused: 2,
+    items: firstItems,
+    lines: ['mcp-registry: refused a server: value too_big'],
+  });
+});
+
+it('writes the record and the index row of a server whose registry name is longer than 64 characters', async () => {
+  const name = `io.github.example-org/${'long-name-'.repeat(7)}end`;
+  const world = fakeWorld();
+  world.set('example-org/long', { stars: 1, files: {} });
+  const long = registryEntry(26);
+  const { files } = await run(world, '2026-11-16', new Map(), {
+    registry: [
+      ...registryEntries,
+      { ...long, server: { ...long.server, name, repository: { url: 'https://github.com/example-org/long' } } },
+    ],
+  });
+  const id = name.replace('/', '.');
+  const index = indexFile.parse(JSON.parse(files.get('index.json') ?? '{}'));
+  expect({
+    name: ownFields(files, `records/mcp-server/${id}.json`)['name'],
+    row: index.items.find((item) => item.id === id)?.name,
+  }).toEqual({
+    name: 'io.github.example-org/long-name-long-name-long-name-long-name-long-name-long-name-long-name-end',
+    row: 'io.github.example-org/long-name-long-name-long-name-long-name-long-name-long-name-long-name-end',
   });
 });
 

@@ -1,11 +1,14 @@
-import { versionLabel } from '@directory/contracts';
+import { registryName, versionLabel } from '@directory/contracts';
 import { z } from 'zod';
 
 const transportTypes = ['stdio', 'streamable-http', 'sse'] as const;
 const registryTypes = ['npm', 'pypi', 'oci', 'nuget', 'mcpb', 'cargo'] as const;
 
 // The registry's server.json; only the keys a fact needs are read, the rest is stripped.
-const input = z.object({ isRequired: z.boolean().optional(), isSecret: z.boolean().optional() });
+const supplied = z.object({ isRequired: z.boolean().optional(), isSecret: z.boolean().optional() });
+// The variables fill the `{curly_braces}` of an input's value or a remote's URL; each is a value the user may supply.
+const variables = z.record(z.string(), supplied).optional();
+const input = supplied.extend({ variables });
 const registryPackage = z.object({
   registryType: z.enum(registryTypes),
   identifier: z.string(),
@@ -19,15 +22,12 @@ const remote = z.object({
   type: z.enum(transportTypes),
   url: z.string(),
   headers: z.array(input).optional(),
+  variables,
 });
 
 /** The server a registry entry describes; the name and version patterns are the registry's own. */
 export const registryServer = z.object({
-  name: z
-    .string()
-    .min(3)
-    .max(200)
-    .regex(/^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/),
+  name: registryName,
   version: z.string().max(255),
   // The registry leaves out an empty URL, so a repository can come without one.
   repository: z.object({ url: z.string().optional() }).optional(),
@@ -54,7 +54,8 @@ function pinned({ version, identifier }: z.infer<typeof registryPackage>): boole
 }
 
 function secrets(inputs: readonly z.infer<typeof input>[] = []): number {
-  return inputs.filter(({ isRequired, isSecret }) => isRequired === true && isSecret === true).length;
+  const values = inputs.flatMap((one) => [one, ...Object.values(one.variables ?? {})]);
+  return values.filter(({ isRequired, isSecret }) => isRequired === true && isSecret === true).length;
 }
 
 function present<T extends string>(order: readonly T[], found: readonly T[]): T[] {
@@ -77,14 +78,18 @@ export function analyzeMcpServer(server: RegistryServer, registryStatus: McpServ
       packages.map(({ registryType }) => registryType),
     ),
     versionPinned: packages.every(pinned),
-    requiredSecrets: Math.max(
-      0,
+    // A fold, not a spread into Math.max: a spread of a very long list overflows the call stack.
+    requiredSecrets: [
       ...packages.map(({ runtimeArguments = [], packageArguments = [], environmentVariables = [] }) =>
         secrets([...runtimeArguments, ...packageArguments, ...environmentVariables]),
       ),
-      ...remotes.map(({ headers }) => secrets(headers)),
-    ),
-    // Hosts as the URL names them, a `{variable}` part included.
-    remoteHosts: new Set(remotes.map(({ url }) => /^[a-z]+:\/\/([^/?#]*)/i.exec(url)?.[1]?.toLowerCase() ?? url)).size,
+      ...remotes.map(({ headers = [], variables: urlVariables = {} }) =>
+        secrets([...headers, ...Object.values(urlVariables)]),
+      ),
+    ].reduce((most, way) => Math.max(most, way), 0),
+    // Hosts as the URL names them without user info and port, a `{variable}` part included.
+    remoteHosts: new Set(
+      remotes.map(({ url }) => /^[a-z]+:\/\/(?:[^/?#@]*@)?(\[[^\]]*\]|[^/?#:]*)/i.exec(url)?.[1]?.toLowerCase() ?? url),
+    ).size,
   } satisfies McpServerFacts;
 }

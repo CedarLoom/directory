@@ -1,3 +1,4 @@
+import { keyword } from '@directory/contracts';
 import { z } from 'zod';
 import { jsonText } from './json-text.ts';
 
@@ -22,8 +23,8 @@ const toolEvents: ReadonlySet<string> = new Set([
   'PermissionRequest',
 ]);
 
-// A matcher is a regular expression; these two match every tool name.
-const matchAllPatterns: ReadonlySet<string> = new Set(['*', '.*']);
+// A matcher is a regular expression, which no list classifies in full; these common spellings match every tool name.
+const matchAllPatterns: ReadonlySet<string> = new Set(['*', '.*', '.+', '^.*$', '^.+$', '(.*)']);
 
 type Group = z.infer<typeof group>;
 
@@ -45,7 +46,7 @@ export function analyzeHooks(text: string): HookFacts | undefined {
   const forms = new Set(commands.map(({ args }) => (Array.isArray(args) ? 'exec' : 'shell')));
   const types = new Set(handlers.map(({ type }) => type));
   return {
-    events: Object.keys(hooks),
+    events: Object.keys(hooks).filter((event) => keyword.safeParse(event).success),
     handlerTypes: handlerTypes.filter((type) => types.has(type)),
     commandForms: (['shell', 'exec'] as const).filter((form) => forms.has(form)),
     matcherBreadth: matcherBreadth(groups),

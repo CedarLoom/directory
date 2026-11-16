@@ -1,6 +1,16 @@
 export { canonicalJson, contentHash } from './content-hash.ts';
 export { exclusionsFile } from './exclusions.ts';
-export { gitSha, httpsUrl, itemId, itemName, keyword, type SourceId, spdxId, versionLabel } from './fields.ts';
+export {
+  gitSha,
+  httpsUrl,
+  itemId,
+  itemName,
+  keyword,
+  registryName,
+  type SourceId,
+  spdxId,
+  versionLabel,
+} from './fields.ts';
 export {
   agentRecord,
   hookRecord,

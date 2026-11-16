@@ -1122,6 +1122,7 @@
       "const": "hook"
     },
     "events": {
+      "maxItems": 64,
       "type": "array",
       "items": {
         "type": "string",
