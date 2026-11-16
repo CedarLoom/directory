@@ -94,12 +94,14 @@ function classOf(id: string): LicenseClass {
 }
 
 /**
- * The item's license: a frontmatter SPDX id first, else GitHub's detected one.
- * A frontmatter value that is no SPDX id, such as a sentence, is not read.
+ * The item's license: a frontmatter value first, else GitHub's detected one.
+ * A frontmatter value that is no SPDX id, such as a sentence, states terms of its own: class `none` without its text.
  */
 export function licenseOf(detected: string | undefined, declared?: string): License {
-  if (spdxId.safeParse(declared).success && declared !== undefined)
-    return { spdx: declared, source: 'frontmatter', class: classOf(declared) };
+  if (declared !== undefined)
+    return spdxId.safeParse(declared).success
+      ? { spdx: declared, source: 'frontmatter', class: classOf(declared) }
+      : { source: 'frontmatter', class: 'none' };
   if (detected === undefined) return { class: 'none' };
   // NOASSERTION: GitHub found a license file it could not name.
   if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };

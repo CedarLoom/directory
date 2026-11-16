@@ -9,8 +9,9 @@ export interface Frontmatter {
 
 const opening = /^\uFEFF?---\r?\n/;
 const closing = /^---[ \t]*$/m;
-const keyLine = /^([A-Za-z][\w-]*):(?:[ \t]+(.*))?$/;
-const listItem = /^[ \t]*-[ \t]+(.*)$/;
+// With `s`, `.` also takes a lone `\r`, so a line holding one matches without backtracking over the run of blanks.
+const keyLine = /^([A-Za-z][\w-]*):(?:[ \t]+(.*))?$/s;
+const listItem = /^[ \t]*-[ \t]+(.*)$/s;
 
 function unquote(value: string): string {
   const trimmed = value.trim();
@@ -18,8 +19,9 @@ function unquote(value: string): string {
 }
 
 function inlineValue(raw: string): string | string[] {
-  // A ` #` starts a comment unless the value is quoted.
-  const value = /^["']/.test(raw) ? raw : raw.replace(/\s+#.*$/, '');
+  // A ` #` starts a comment unless the value is quoted; one scan for it, as `/\s+#.*$/` is quadratic on a run of blanks.
+  const comment = raw.search(/\s#/);
+  const value = /^["']/.test(raw) || comment === -1 ? raw : raw.slice(0, comment).trimEnd();
   if (/^\[.*\]$/.test(value))
     return value
       .slice(1, -1)
@@ -33,9 +35,11 @@ function inlineValue(raw: string): string | string[] {
 /** Adds a block list item to the key above it when that key opened a list. */
 function addListItem(fields: Map<string, string | string[]>, key: string, line: string): void {
   const [, item] = listItem.exec(line) ?? [];
+  if (item === undefined) return;
   const list = fields.get(key);
-  if (item !== undefined && (list === '' || Array.isArray(list)))
-    fields.set(key, [...(Array.isArray(list) ? list : []), unquote(item)]);
+  // Appended in place: a copy per item is quadratic on a long list.
+  if (Array.isArray(list)) list.push(unquote(item));
+  else if (list === '') fields.set(key, [unquote(item)]);
 }
 
 /** Reads the top-level keys only; nested maps and multi-line text are not parsed, as no stored fact needs them. */

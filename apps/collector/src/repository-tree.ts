@@ -38,6 +38,18 @@ export const blob = z
   .object({ text: z.string().nullable().optional(), isTruncated: z.boolean().optional() })
   .nullable();
 
+// The largest file parsed, in UTF-8 bytes; GitHub returns about 512 KB of a Blob's text before it cuts it.
+const maxFileBytes = 256 * 1024;
+
+/** A file read: its text, absent for a missing or binary file, or too large when GitHub cut it or it passes the cap. */
+export type FileRead = { text?: string } | 'too-large';
+
+export function fileRead(file: z.infer<typeof blob> | undefined): FileRead {
+  const text = file?.text ?? undefined;
+  if (file?.isTruncated === true || (text !== undefined && Buffer.byteLength(text) > maxFileBytes)) return 'too-large';
+  return text === undefined ? {} : { text };
+}
+
 /** What one location holds of the plugin, skill, agent and marketplace layout. */
 export interface Inspection {
   directories: Partial<Record<DirectoryKey, Entry[]>>;
@@ -54,23 +66,27 @@ function keysOf<T extends object>(value: T): Extract<keyof T, string>[] {
   return Object.keys(value).filter((key): key is Extract<keyof T, string> => key in value);
 }
 
-/** The text of each layout file; a cut file gives undefined. */
-function layoutFiles(answer: Readonly<Record<string, unknown>>): Inspection['files'] | undefined {
+/** The text of each layout file, or too large when one of them is. */
+function layoutFiles(answer: Readonly<Record<string, unknown>>): Inspection['files'] | 'too-large' {
   const found: Inspection['files'] = {};
   for (const key of keysOf(files)) {
-    const file = blob.parse(answer[key]);
-    if (file?.isTruncated === true) return undefined;
-    if (file?.text != null) found[key] = file.text;
+    const read = fileRead(blob.parse(answer[key]));
+    if (read === 'too-large') return read;
+    if (read.text !== undefined) found[key] = read.text;
   }
   return found;
 }
 
-/** The layout a location holds; a missing location or a cut layout file gives undefined, so no record is built from part of it. */
-function toInspection(raw: unknown): Inspection | undefined {
+/**
+ * The layout a location holds; a missing location gives undefined and a layout file that is too large gives
+ * 'too-large', so no record is built from part of it.
+ */
+function toInspection(raw: unknown): Inspection | 'too-large' | undefined {
   if (raw === null) return undefined;
   const answer = z.record(z.string(), z.unknown()).parse(raw);
   const found = layoutFiles(answer);
-  if (directory.parse(answer['root']) === null || found === undefined) return undefined;
+  if (directory.parse(answer['root']) === null) return undefined;
+  if (found === 'too-large') return found;
   const inspection: Inspection = { directories: {}, files: found };
   for (const key of keysOf(directoryPaths)) {
     const entries = directory.parse(answer[key])?.entries;
@@ -83,7 +99,7 @@ function toInspection(raw: unknown): Inspection | undefined {
 export async function inspectLocations(
   client: HttpClient,
   locations: readonly GitHubLocation[],
-): Promise<(Inspection | undefined)[]> {
+): Promise<(Inspection | 'too-large' | undefined)[]> {
   const paths: Record<string, string> = { ...directoryPaths, ...files };
   const answers = await queryEach(client, locations, {
     name: 'Inspect',

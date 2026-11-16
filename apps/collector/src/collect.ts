@@ -70,21 +70,35 @@ function countByKind(items: readonly { kind: ItemKind }[]): Record<ItemKind, num
   return { marketplace: count('marketplace'), plugin: count('plugin'), skill: count('skill'), agent: count('agent') };
 }
 
+type Refuse = (id: string, error: Error) => void;
+
 /** Logs a refusal by id, issue paths and codes only: an issue message could quote third-party text. */
-function refusalLogger(log: (line: string) => void, counter: { refused: number }) {
-  return (id: string, error: Error) => {
+function refusalLogger(log: (line: string) => void, counter: { refused: number }): Refuse {
+  return (id, error) => {
     counter.refused += 1;
     const detail = error instanceof ZodError ? issueSummary(error, 'value') : error.message;
     log(`${id}: refused: ${detail}`);
   };
 }
 
+const tooLarge = 'a file is cut by GitHub or over the size cap';
+
+/** The topic repositories that have an id; a name too long for one is refused, so it cannot stop the run. */
+function identified(repositories: readonly Repository[], refuse: Refuse): Repository[] {
+  return repositories.filter((repository) => {
+    try {
+      repositoryId(repository);
+      return true;
+    } catch (error) {
+      if (!(error instanceof ZodError)) throw error;
+      refuse('topic search', error);
+      return false;
+    }
+  });
+}
+
 /** Inspects the most starred listed plugins and the topic repositories and adds the items they hold. */
-async function inspectPlaces(
-  client: HttpClient,
-  places: readonly InspectedPlace[],
-  refuse: (id: string, error: ZodError) => void,
-) {
+async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace[], refuse: Refuse) {
   const inspections = await inspectLocations(
     client,
     places.map((place) => place.location),
@@ -94,10 +108,24 @@ async function inspectPlaces(
   for (const [index, place] of places.entries()) {
     const inspection = inspections[index];
     if (inspection === undefined) continue;
+    if (inspection === 'too-large') {
+      refuse(place.container ?? repositoryId(place.location), new Error(tooLarge));
+      continue;
+    }
     if (place.container !== undefined) inspected.set(place.container, inspection);
     found.push(...inspectionCandidates(place, inspection, refuse));
   }
   return { inspected, found };
+}
+
+/** Refuses each item whose file is too large; it gets no record. */
+function refuseTooLarge(items: readonly Located[], files: readonly ItemFile[], refuse: Refuse): void {
+  for (const [index, item] of items.entries())
+    if (files[index]?.file === 'too-large') refuse(item.id, new Error(tooLarge));
+}
+
+function textOf(item: ItemFile | undefined): string | undefined {
+  return item === undefined || item.file === 'too-large' ? undefined : item.file.text;
 }
 
 async function readFiles(client: HttpClient, skills: readonly Located[], agents: readonly Located[]) {
@@ -115,7 +143,7 @@ async function readFiles(client: HttpClient, skills: readonly Located[], agents:
   ]);
 }
 
-function buildAll(inputs: readonly RecordInput[], runDate: string, refuse: (id: string, error: Error) => void) {
+function buildAll(inputs: readonly RecordInput[], runDate: string, refuse: Refuse) {
   return inputs.flatMap((input): ItemRecord[] => {
     try {
       return [buildRecord(input, runDate)];
@@ -161,15 +189,16 @@ function pluginInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
 function skillInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
   return selection.skills.flatMap((candidate, index): RecordInput[] => {
     const [facts, file] = [factsOf(candidate), selection.skillFiles[index]];
-    return facts !== undefined && file?.text !== undefined
-      ? [{ kind: 'skill', candidate, facts, text: file.text, folders: file.folders }]
+    const text = textOf(file);
+    return facts !== undefined && file !== undefined && text !== undefined
+      ? [{ kind: 'skill', candidate, facts, text, folders: file.folders }]
       : [];
   });
 }
 
 function agentInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
   return selection.agents.flatMap((candidate, index): RecordInput[] => {
-    const [facts, text] = [factsOf(candidate), selection.agentFiles[index]?.text];
+    const [facts, text] = [factsOf(candidate), textOf(selection.agentFiles[index])];
     return facts !== undefined && text !== undefined ? [{ kind: 'agent', candidate, facts, text }] : [];
   });
 }
@@ -218,7 +247,7 @@ export async function collect(
     isLocated,
   );
   // An excluded repository found by topic is not inspected, so the items it holds stay out too.
-  const topicRepositories = (await searchTopics(client, options.topics, perTopic)).filter(
+  const topicRepositories = identified(await searchTopics(client, options.topics, perTopic), refuse).filter(
     (repository) => !excluded.has(repositoryId(repository)),
   );
   const repositories = uniqueRepositories([...listed.map(({ location }) => location), ...topicRepositories]);
@@ -230,6 +259,8 @@ export async function collect(
   const candidates = kept.filter(isLocated);
   const [skills, agents] = [top(candidates, 'skill', facts, perKind), top(candidates, 'agent', facts, perKind)];
   const [skillFiles, agentFiles] = await readFiles(client, skills, agents);
+  refuseTooLarge(skills, skillFiles, refuse);
+  refuseTooLarge(agents, agentFiles, refuse);
   const selection = { candidates, facts, plugins, inspected, skills, skillFiles, agents, agentFiles };
   const records = buildAll(recordInputs(selection), runDate, refuse);
   const report: RunReport = {

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { queryEach } from './github-graphql.ts';
 import type { GitHubLocation } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
-import { blob, expression } from './repository-tree.ts';
+import { blob, expression, type FileRead, fileRead } from './repository-tree.ts';
 const subdirectory = z.object({
   entries: z
     .array(
@@ -24,8 +24,7 @@ export interface SkillFolders {
 }
 
 export interface ItemFile {
-  /** Absent for a missing, binary or cut file. */
-  text?: string;
+  file: FileRead;
   folders: SkillFolders;
 }
 
@@ -66,8 +65,6 @@ export async function readItemFiles(
   });
   return answers.map((raw) => {
     const read = answer.parse(raw);
-    const text = read?.file?.isTruncated === true ? undefined : read?.file?.text;
-    const found = folders(read?.directory);
-    return text == null ? { folders: found } : { text, folders: found };
+    return { file: fileRead(read?.file), folders: folders(read?.directory) };
   });
 }

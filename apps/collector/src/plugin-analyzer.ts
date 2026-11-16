@@ -17,7 +17,9 @@ const servers = z.record(z.string(), z.object({ type: z.string().optional() }));
 const mcpConfig = z.union([z.object({ mcpServers: servers }), servers.transform((mcpServers) => ({ mcpServers }))]);
 const lspConfig = z.record(z.string(), z.unknown());
 
-const transports: Readonly<Record<string, 'stdio' | 'http' | 'sse'>> = { stdio: 'stdio', http: 'http', sse: 'sse' };
+// A Set, so a type such as `constructor` reads no inherited property.
+const transports: ReadonlySet<string> = new Set(['stdio', 'http', 'sse'] as const);
+const isTransport = (type: string): type is 'stdio' | 'http' | 'sse' => transports.has(type);
 
 /** A manifest value that is an object holds the configuration inline; a path or a list of paths is not followed. */
 function inline(value: unknown): unknown {
@@ -38,10 +40,8 @@ function mcpServersByTransport(configs: readonly unknown[]): Partial<Record<'std
   const counts: Partial<Record<'stdio' | 'http' | 'sse', number>> = {};
   for (const config of configs) {
     if (config === undefined) continue;
-    for (const { type = 'stdio' } of Object.values(mcpConfig.parse(config).mcpServers)) {
-      const transport = transports[type];
-      if (transport !== undefined) counts[transport] = (counts[transport] ?? 0) + 1;
-    }
+    for (const { type = 'stdio' } of Object.values(mcpConfig.parse(config).mcpServers))
+      if (isTransport(type)) counts[type] = (counts[type] ?? 0) + 1;
   }
   return counts;
 }

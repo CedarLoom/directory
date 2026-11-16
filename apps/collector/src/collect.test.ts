@@ -161,11 +161,22 @@ function fakeFetch(world: World, topicRepositories: readonly string[]) {
   };
 }
 
-async function run(world: World, runDate: string, previous: ReadonlyMap<string, string> = new Map()) {
+interface RunOptions {
+  topicRepositories?: readonly string[];
+  log?: (line: string) => void;
+}
+
+async function run(
+  world: World,
+  runDate: string,
+  previous: ReadonlyMap<string, string> = new Map(),
+  { topicRepositories = [], log = () => undefined }: RunOptions = {},
+) {
   const client = createHttpClient({
     fetch: fakeFetch(world, [
       ...Array.from({ length: 25 }, (_, index) => `example-org/market-${index}`),
       'example-org/plugin-1',
+      ...topicRepositories,
     ]),
     clock: { now: () => 0, sleep: async () => undefined },
     headers: {},
@@ -184,7 +195,7 @@ async function run(world: World, runDate: string, previous: ReadonlyMap<string, 
     excluded: new Set(['gh.example-org.plugin-1']),
     previous,
     runDate,
-    log: () => undefined,
+    log,
   });
 }
 
@@ -198,6 +209,42 @@ it('builds a first batch of each kind in under 300 requests', async () => {
     excluded: 1,
     discovered: { marketplace: 27, plugin: 1001, skill: 59, agent: 59 },
     items: { marketplace: 27, plugin: 59, skill: 59, agent: 59 },
+  });
+});
+
+it('refuses a topic repository whose name is too long for an id and finishes the run', async () => {
+  const lines: string[] = [];
+  const { report } = await run(fakeWorld(), '2026-11-16', new Map(), {
+    topicRepositories: [`example-org/${'_'.repeat(70)}`],
+    log: (line) => lines.push(line),
+  });
+  expect({
+    refused: report.refused,
+    items: report.items,
+    lines: lines.filter((line) => line.startsWith('topic search')),
+  }).toEqual({
+    refused: 2,
+    items: { marketplace: 27, plugin: 59, skill: 59, agent: 59 },
+    lines: ['topic search: refused: value too_big'],
+  });
+});
+
+it('refuses a skill whose SKILL.md is over 256 KB', async () => {
+  const world = fakeWorld();
+  const files = world.get('example-org/plugin-0')?.files ?? {};
+  files['skills/skill-0/SKILL.md'] = `---\nname: skill-0\n---\n${'x'.repeat(256 * 1024)}`;
+  const lines: string[] = [];
+  const { report, files: written } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
+  expect({
+    refused: report.refused,
+    skills: report.items.skill,
+    record: written.has('records/skill/gh.example-org.plugin-0.skills.skill-0.json'),
+    lines: lines.filter((line) => line.startsWith('gh.example-org.plugin-0')),
+  }).toEqual({
+    refused: 2,
+    skills: 58,
+    record: false,
+    lines: ['gh.example-org.plugin-0.skills.skill-0: refused: a file is cut by GitHub or over the size cap'],
   });
 });
 
