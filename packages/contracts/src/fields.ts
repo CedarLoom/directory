@@ -1,3 +1,4 @@
+import deprecatedSpdxIds from 'spdx-license-ids/deprecated.json' with { type: 'json' };
 import spdxIds from 'spdx-license-ids/index.json' with { type: 'json' };
 import { z } from 'zod';
 
@@ -48,7 +49,8 @@ export const semver = z.string().regex(/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1
 /** A version, tag or ref as an upstream sets it. */
 export const versionLabel = z.string().regex(/^[0-9A-Za-z][0-9A-Za-z._+/-]{0,63}$/);
 
-export const spdxId = z.enum(spdxIds);
+// GitHub's license detection returns deprecated ids such as GPL-3.0; its NOASSERTION is stored as no `spdx` with class `none`.
+export const spdxId = z.enum([...spdxIds, ...deprecatedSpdxIds]);
 
 const sourceIds = [
   'official-marketplace',

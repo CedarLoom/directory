@@ -10,7 +10,7 @@ export const indexFile = z.strictObject({
       kind,
       name: itemName,
       owner: itemName.optional(),
-      score: z.number().min(0).max(100),
+      score: z.number().min(0).max(100).optional(),
       stars: count.optional(),
       licenseClass,
       fit: fitLabel,

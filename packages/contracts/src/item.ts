@@ -23,8 +23,9 @@ import { pin, sourceKind } from './plugin-source.ts';
 
 // Strict objects throughout: a key outside the contract, such as a copied description, is refused.
 
+// An item off the allow-listed hosts (a registry entry, a plugin on another git host) has no source link and no maintenance facts.
 const links = z.strictObject({
-  source: httpsUrl,
+  source: httpsUrl.optional(),
   homepage: httpsUrl.optional(),
   install: httpsUrl.optional(),
   registry: httpsUrl.optional(),
@@ -42,7 +43,9 @@ const maintenance = z.strictObject({
 const common = {
   schemaVersion: z.literal(1),
   id: itemId,
-  name: itemName,
+  name: itemName.describe(
+    'The identifier of the item, never a display name: the manifest or frontmatter `name` of a marketplace, plugin, skill or agent, the registry name of an MCP server, and the file stem of an output style (its frontmatter `name` is a display name) or of a hook.',
+  ),
   aliases: z.array(itemId),
   links,
   container: itemId.optional(),
@@ -52,7 +55,7 @@ const common = {
     source: z.enum(['github-detected', 'manifest', 'frontmatter']).optional(),
     class: licenseClass,
   }),
-  maintenance,
+  maintenance: maintenance.optional(),
   popularity: z.array(
     z.strictObject({
       signal: z.enum(['stars', 'listed']),
@@ -65,11 +68,16 @@ const common = {
   flags: z.array(flag),
   tags: z.array(tag),
   cedarloomFit: z.strictObject({ label: fitLabel, tags: z.array(tag) }),
-  score: z.strictObject({
-    rubric: z.strictObject({ kind, version: semver }),
-    total: z.number().min(0).max(100),
-    parts: z.array(z.strictObject({ signal: keyword, points: z.number().min(0), max: z.number().min(0) })),
-  }),
+  score: z
+    .strictObject({
+      rubric: z.strictObject({ kind, version: semver }),
+      total: z.number().min(0).max(100),
+      parts: z.array(z.strictObject({ signal: keyword, points: z.number().min(0), max: z.number().min(0) })),
+    })
+    .optional()
+    .describe(
+      'Stored apart from the raw signals and absent until a rubric scores the record; milestone 6 settles whether published records require it.',
+    ),
   provenance: z.array(sourceId),
   changedAt: date,
 };
@@ -136,12 +144,10 @@ export const hookRecord = z.strictObject({
   matcherBreadth: z.enum(['match-all', 'specific', 'none']),
 });
 
-// A registry entry need not link a repository, so source and maintenance facts are optional here.
 export const mcpServerRecord = z.strictObject({
   ...common,
   kind: z.literal('mcp-server'),
-  links: links.extend({ source: httpsUrl.optional(), registry: httpsUrl }),
-  maintenance: maintenance.optional(),
+  links: links.extend({ registry: httpsUrl }),
   registryStatus: z.enum(['active', 'deprecated']),
   transports: z.array(z.enum(['stdio', 'streamable-http', 'sse'])),
   packageRegistryTypes: z.array(z.enum(['npm', 'pypi', 'oci', 'nuget', 'mcpb'])),

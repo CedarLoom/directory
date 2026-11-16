@@ -34,7 +34,7 @@ Node.js 26, pnpm 12 and uv. Install with `pnpm install --frozen-lockfile --ignor
 | `apps/collector`     | Node                   | source adapters, HTTP client, analyzers, the command line        | `contracts`, `scoring`   |
 | `apps/site`          | DOM                    | the site                                                         | `contracts`, `scoring`   |
 
-Each package's `tsconfig.json` sets the `lib` and `types` of its layer; the logic packages leave their `*.test.ts` files to the root `tsconfig.json`, which typechecks them with the Node types the test runner needs. The `no-restricted-imports` overrides in [.oxlintrc.json](.oxlintrc.json) refuse Node imports in logic and the site and imports that point up or across.
+Each package's `tsconfig.json` sets the `lib` and `types` of its layer; every logic package includes [packages/contracts/src/zod-globals.d.ts](packages/contracts/src/zod-globals.d.ts), which declares the part of `URL` that zod's types name. The logic packages leave their `*.test.ts` files to the root `tsconfig.json`, which typechecks them with the Node types the test runner needs. The `no-restricted-imports` overrides in [.oxlintrc.json](.oxlintrc.json) refuse Node imports in logic and the site and imports that point up or across.
 
 ## Tests
 
