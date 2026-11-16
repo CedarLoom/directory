@@ -9,12 +9,18 @@ catalogs:
     '@biomejs/biome':
       specifier: 2.6.7
       version: 2.6.7
+    '@commander-js/extra-typings':
+      specifier: 15.1.0
+      version: 15.1.0
     '@noble/hashes':
       specifier: 2.4.0
       version: 2.4.0
     '@types/node':
       specifier: 26.6.6
       version: 26.6.6
+    commander:
+      specifier: 15.1.0
+      version: 15.1.0
     jscpd:
       specifier: 5.4.3
       version: 5.4.3
@@ -79,6 +85,19 @@ importers:
         version: 4.6.7
 
   apps/collector:
+    dependencies:
+      '@commander-js/extra-typings':
+        specifier: 'catalog:'
+        version: 15.1.0(commander@15.1.0)
+      '@directory/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      commander:
+        specifier: 'catalog:'
+        version: 15.1.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -185,6 +204,11 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
+
+  '@commander-js/extra-typings@15.1.0':
+    resolution: {integrity: sha512-FsI7l5tFON52RyyDKyCkvwFl+peHZuP5TZ7AhxbDFGo/5T6KQd4+KE48aJ8jrDSSAQDvZ8hYKX47fmwZ5bGFNw==}
+    peerDependencies:
+      commander: ~15.1.0
 
   '@csstools/css-calc@3.4.3':
     resolution: {integrity: sha512-iex20d8CHVkyvg6B7UKV7uHnI2Bqo9g+EFfT9E0y+GvTvhZ/DwONJ+9aKb1dlqm0ZiGsL5RXjp0fCoJYnkeDjA==}
@@ -923,6 +947,10 @@ packages:
   colord@2.12.0:
     resolution: {integrity: sha512-SpiONmQPZDqe50ivOTgkVikYsnp6l1HTFYqPRLNBCJJdA2Qympw2yYUzX99XlSbbKZswjiG6r+xsUpPPOHqY+Q==}
 
+  commander@15.1.0:
+    resolution: {integrity: sha512-cgnQ88TRrWcC7pVq46RzJVRMktu3W2RcbnoidnfBsl1bmDCBwJS/udcIZpKoCrbAYYaCqsz1yZCVIgbIaU3ddQ==}
+    engines: {node: '>=22.12.0'}
+
   cosmiconfig@10.0.1:
     resolution: {integrity: sha512-/zvGoYn0y27QTBmK+0B+oPdEPC4fKGUmJsMTQbDjqph00TrkqfVFW/M+C6ya54sYCgHC6QCwK/mI6djt8cEGHQ==}
     engines: {node: ^22.18 || >= 24}
@@ -1398,6 +1426,10 @@ snapshots:
   '@biomejs/cli-win32-x64@2.6.7':
     optional: true
 
+  '@commander-js/extra-typings@15.1.0(commander@15.1.0)':
+    dependencies:
+      commander: 15.1.0
+
   '@csstools/css-calc@3.4.3(@csstools/css-parser-algorithms@4.0.2(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)':
     dependencies:
       '@csstools/css-parser-algorithms': 4.0.2(@csstools/css-tokenizer@4.0.2)
@@ -1828,6 +1860,8 @@ snapshots:
   chai@6.3.0: {}
 
   colord@2.12.0: {}
+
+  commander@15.1.0: {}
 
   cosmiconfig@10.0.1:
     dependencies:

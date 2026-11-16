@@ -996,7 +996,7 @@
       "additionalProperties": false
     },
     "score": {
-      "description": "Stored apart from the raw signals and absent until a rubric scores the record; milestone 6 settles whether published records require it.",
+      "description": "Stored apart from the raw signals; optional, and absent while no rubric has scored the record.",
       "type": "object",
       "properties": {
         "rubric": {

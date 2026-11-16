@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200,
+        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "ids"
+  ],
+  "additionalProperties": false
+}

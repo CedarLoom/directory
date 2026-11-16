@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import exclusionsFixture from '../fixtures/exclusions.json' with { type: 'json' };
 import indexFixture from '../fixtures/index.json' with { type: 'json' };
 import metaFixture from '../fixtures/meta.json' with { type: 'json' };
 import agent from '../fixtures/records/agent.json' with { type: 'json' };
@@ -12,6 +13,7 @@ import skill from '../fixtures/records/skill.json' with { type: 'json' };
 import rubricFixture from '../fixtures/rubric.json' with { type: 'json' };
 import {
   agentRecord,
+  exclusionsFile,
   hookRecord,
   indexFile,
   marketplaceRecord,
@@ -38,6 +40,7 @@ const files = [
   ['index', indexFile, indexFixture],
   ['meta', metaFile, metaFixture],
   ['rubric', rubricFile, rubricFixture],
+  ['exclusions', exclusionsFile, exclusionsFixture],
 ] as const;
 
 describe.each(files)('%s', (name, schema, fixture) => {
@@ -92,6 +95,7 @@ const objects: [string, z.ZodType, unknown, Path[]][] = [
   ['index', indexFile, indexFixture, [[], ['items', 0]]],
   ['meta', metaFile, metaFixture, [[], ['sources', 0], ['stats']]],
   ['rubric', rubricFile, rubricFixture, [[], ['signals', 0], ['flagPenalties', 0]]],
+  ['exclusions', exclusionsFile, exclusionsFixture, [[]]],
 ];
 
 function isObject(value: unknown): value is Record<string | number, unknown> {

@@ -75,9 +75,7 @@ const common = {
       parts: z.array(z.strictObject({ signal: keyword, points: z.number().min(0), max: z.number().min(0) })),
     })
     .optional()
-    .describe(
-      'Stored apart from the raw signals and absent until a rubric scores the record; milestone 6 settles whether published records require it.',
-    ),
+    .describe('Stored apart from the raw signals; optional, and absent while no rubric has scored the record.'),
   provenance: z.array(sourceId),
   changedAt: date,
 };
