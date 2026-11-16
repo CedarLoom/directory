@@ -4,13 +4,15 @@ import { Command, CommanderError } from '@commander-js/extra-typings';
 import { ZodError } from 'zod';
 import { systemClock } from './clock.ts';
 import { collect, summaryLine } from './collect.ts';
+import { readDataFolder, writeDataFolder } from './data-folder.ts';
 import { parseExclusions } from './exclusions.ts';
 import { gitHubHeaders } from './github-contents.ts';
 import { createHttpClient, RequestError } from './http-client.ts';
 import { sourceAdapters } from './sources.ts';
+import { topics } from './topic-search.ts';
 
 const defaultExclusions = fileURLToPath(new URL('../../../curation/exclusions.json', import.meta.url));
-// A hard cap well under the 1,000 requests per hour of the workflow token.
+// A hard cap well under the 1,000 requests per hour of the workflow token; a run takes about 100.
 const requestCap = 600;
 // GitHub's secondary limit allows 900 REST points per minute; one request per second stays far below it.
 const requestIntervalMs = 1000;
@@ -27,13 +29,17 @@ const log = (line: string) => console.error(line);
 
 const program = new Command()
   .name('collect')
-  .description('Reads the marketplace sources and lists their marketplace, plugin and skill candidates.')
+  .description(
+    'Reads the sources and GitHub, builds the marketplace, plugin, skill and agent records and prints the run report.',
+  )
   .option('--dry-run', 'print the run report as JSON and write nothing')
+  .option('--out <folder>', 'the data folder: reads the last run there and writes the changed files')
   .option('--exclusions <file>', 'the exclusions file', defaultExclusions)
   .exitOverride()
-  .action(async ({ dryRun, exclusions }) => {
-    if (dryRun !== true) program.error('collect: writing records is not implemented; run it with --dry-run');
+  .action(async ({ dryRun, out, exclusions }) => {
+    if ((dryRun === true) === (out !== undefined)) program.error('collect: pass either --dry-run or --out <folder>');
     const excluded = parseExclusions(await readFile(exclusions, 'utf8'));
+    const previous = out === undefined ? new Map<string, string>() : await readDataFolder(out);
     const client = createHttpClient({
       fetch,
       clock: systemClock,
@@ -44,7 +50,16 @@ const program = new Command()
       maxDelayMs: 5 * 60_000,
       log,
     });
-    const report = await collect(sourceAdapters, client, excluded, log);
+    const runDate = new Date(systemClock.now()).toISOString().slice(0, 10);
+    const { report, files } = await collect(client, {
+      adapters: sourceAdapters,
+      topics,
+      excluded,
+      previous,
+      runDate,
+      log,
+    });
+    if (out !== undefined) log(`collect: wrote ${await writeDataFolder(out, files, previous)} changed files to ${out}`);
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
     log(summaryLine(report));
   });

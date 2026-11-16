@@ -62,6 +62,11 @@ function repositorySegments({ owner, repo }: Repository): string[] {
   return ['gh', idSegment(owner), idSegment(repo)];
 }
 
+/** The id `gh.<owner>.<repo>` of a repository, which also names its popularity file. */
+export function repositoryId(repository: Repository): string {
+  return joinId(repositorySegments(repository));
+}
+
 /** The item id `gh.<owner>.<repo>[.<path-slug>]`, lower case, one id segment per path segment. */
 export function locationId(location: GitHubLocation): string {
   const pathSegments = location.path.split('/').filter((part) => part !== '');

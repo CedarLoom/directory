@@ -18,6 +18,7 @@ import {
   locationLink,
 } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
+import { entrySources } from './marketplace-analyzer.ts';
 import type { SourceAdapter, SourceResult } from './source-adapter.ts';
 
 const marketplacePath = '.claude-plugin/marketplace.json';
@@ -36,6 +37,7 @@ function skillCandidate(location: GitHubLocation, container: string, listing: Li
     id: locationId(location),
     name: itemName.parse(location.path.split('/').at(-1)),
     links: { source: locationLink(location) },
+    location,
     container,
     listedIn: [listing.marketplaceId],
     provenance: [listing.source],
@@ -59,6 +61,7 @@ function entryCandidates(raw: unknown, listing: Listing): Candidate[] {
       ...(location === undefined ? {} : { source: locationLink(location) }),
       ...(homepage.success ? { homepage: homepage.data } : {}),
     },
+    ...(location === undefined ? {} : { location }),
     listedIn: [listing.marketplaceId],
     provenance: [listing.source],
     source,
@@ -97,8 +100,10 @@ async function readMarketplace(
       id: listing.marketplaceId,
       name: file.name,
       links: { source: locationLink(marketplace) },
+      location: marketplace,
       listedIn: [],
       provenance: [source],
+      entries: entrySources(file.plugins),
     },
   ];
   let refused = 0;

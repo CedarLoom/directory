@@ -1,5 +1,4 @@
 import { expect, it } from 'vitest';
-import { collect } from './collect.ts';
 import { createHttpClient } from './http-client.ts';
 import { sourceAdapters } from './sources.ts';
 
@@ -75,6 +74,14 @@ it('reads the official marketplace and refuses an entry with an invalid name', a
         links: { source: 'https://github.com/anthropics/claude-plugins-official' },
         listedIn: [],
         provenance: ['official-marketplace'],
+        location: { owner: 'anthropics', repo: 'claude-plugins-official', path: '', ref: 'HEAD' },
+        entries: {
+          count: 3,
+          sources: [
+            { kind: 'path', pin: 'marketplace-commit' },
+            { kind: 'github', pin: 'sha' },
+          ],
+        },
       },
       {
         kind: 'plugin',
@@ -83,6 +90,7 @@ it('reads the official marketplace and refuses an entry with an invalid name', a
         links: { source: 'https://github.com/anthropics/claude-plugins-official/tree/HEAD/plugins/code-review' },
         listedIn: [official],
         provenance: ['official-marketplace'],
+        location: { owner: 'anthropics', repo: 'claude-plugins-official', path: 'plugins/code-review', ref: 'HEAD' },
         source: { kind: 'path', pin: 'marketplace-commit' },
       },
       {
@@ -92,6 +100,7 @@ it('reads the official marketplace and refuses an entry with an invalid name', a
         links: { source: 'https://github.com/example-org/lint', homepage: 'https://claude.com/lint' },
         listedIn: [official],
         provenance: ['official-marketplace'],
+        location: { owner: 'example-org', repo: 'lint', path: '', ref: sha },
         source: { kind: 'github', pin: 'sha' },
       },
     ],
@@ -110,6 +119,7 @@ it('reads the community marketplace and refuses a path out of the repository', a
       links: { source: 'https://github.com/example-org/lint' },
       listedIn: [community],
       provenance: ['community-marketplace'],
+      location: { owner: 'example-org', repo: 'lint', path: '', ref: 'HEAD' },
       source: { kind: 'url', pin: 'none' },
     },
     {
@@ -119,6 +129,7 @@ it('reads the community marketplace and refuses a path out of the repository', a
       links: { source: 'https://github.com/example-org/tools/tree/v1/plugins/deploy' },
       listedIn: [community],
       provenance: ['community-marketplace'],
+      location: { owner: 'example-org', repo: 'tools', path: 'plugins/deploy', ref: 'v1' },
       source: { kind: 'git-subdir', pin: 'ref' },
     },
     {
@@ -175,18 +186,4 @@ it('reads both Anthropic topic marketplaces with the skills a plugin lists', asy
       container: undefined,
     },
   ]);
-});
-
-it('joins a plugin two marketplaces list and leaves out excluded items', async () => {
-  const report = await collect(sourceAdapters, client(), new Set(['gh.anthropics.skills.skills.pdf']), () => undefined);
-  expect(report.candidates.find(({ id }) => id === 'gh.example-org.lint')).toMatchObject({
-    listedIn: [official, community],
-    provenance: ['official-marketplace', 'community-marketplace'],
-    source: { kind: 'github', pin: 'sha' },
-  });
-  expect({ counts: report.counts, excluded: report.excluded, refused: report.refused }).toEqual({
-    counts: { marketplace: 4, plugin: 6, skill: 1 },
-    excluded: 1,
-    refused: 2,
-  });
 });

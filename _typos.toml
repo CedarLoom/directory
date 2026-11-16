@@ -1,6 +1,8 @@
 # US spelling everywhere.
 [default]
 locale = "en-us"
+# ND is the no-derivatives part of Creative Commons SPDX ids.
+extend-ignore-re = ["CC-BY(-NC)?-ND-[0-9.]+"]
 
 [files]
 extend-exclude = ["pnpm-lock.yaml", "LICENSES/", "LICENSE", "packages/contracts/schemas/"]

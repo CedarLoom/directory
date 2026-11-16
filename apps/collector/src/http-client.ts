@@ -27,9 +27,16 @@ export interface HttpClientOptions {
   log: (line: string) => void;
 }
 
+interface TextRequest {
+  accept: string;
+  maxBytes: number;
+}
+
 export interface HttpClient {
   /** GETs `url` and returns the body as UTF-8 text; a body over `maxBytes` is refused. */
-  getText(url: string, request: { accept: string; maxBytes: number }): Promise<string>;
+  getText(url: string, request: TextRequest): Promise<string>;
+  /** POSTs a JSON `body` to `url` and returns the answer as getText does. */
+  postText(url: string, body: string, request: TextRequest): Promise<string>;
   /** Requests sent so far, retries included. */
   readonly requests: number;
 }
@@ -53,6 +60,12 @@ async function readText(response: Response, url: string, maxBytes: number): Prom
   return text + decoder.decode();
 }
 
+interface Call {
+  method: 'GET' | 'POST';
+  url: string;
+  body?: string;
+}
+
 export function createHttpClient(options: HttpClientOptions): HttpClient {
   const { clock, cap, log } = options;
   const limiter = createRateLimiter(clock, options.intervalMs);
@@ -60,43 +73,51 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
   // The first failure stops the run, so requests still queued are not sent.
   let stopped: RequestError | undefined;
 
-  async function send(url: string, headers: Record<string, string>): Promise<Response> {
+  async function send(call: Call, accept: string): Promise<Response> {
     if (stopped !== undefined) throw stopped;
     await limiter.waitTurn();
     if (stopped !== undefined) throw stopped;
-    if (requests >= cap) throw new RequestCapError(`request cap of ${cap} reached; refused GET ${url}`);
+    if (requests >= cap) throw new RequestCapError(`request cap of ${cap} reached; refused ${call.method} ${call.url}`);
     requests += 1;
+    const headers = {
+      ...options.headers,
+      accept,
+      ...(call.body === undefined ? {} : { 'content-type': 'application/json' }),
+    };
     // A redirect is answered, not followed, so every request sent passes the cap and the limiter.
-    const response = await options.fetch(url, { headers, redirect: 'manual' });
-    log(`GET ${url} ${response.status}`);
+    const body = call.body === undefined ? {} : { body: call.body };
+    const response = await options.fetch(call.url, { method: call.method, headers, ...body, redirect: 'manual' });
+    log(`${call.method} ${call.url} ${response.status}`);
     return response;
   }
 
-  async function attempt(url: string, request: { accept: string; maxBytes: number }, retry: number): Promise<string> {
-    const response = await send(url, { ...options.headers, accept: request.accept });
-    if (response.ok) return readText(response, url, request.maxBytes);
+  async function attempt(call: Call, textRequest: TextRequest, retry: number): Promise<string> {
+    const response = await send(call, textRequest.accept);
+    if (response.ok) return readText(response, call.url, textRequest.maxBytes);
     await response.body?.cancel();
     const delay = retry < options.maxRetries ? retryDelay(response, retry, clock.now()) : undefined;
     if (delay === undefined || delay > options.maxDelayMs)
-      throw new RequestError(`GET ${url} answered ${response.status}`);
+      throw new RequestError(`${call.method} ${call.url} answered ${response.status}`);
     limiter.hold(delay);
     await clock.sleep(delay);
-    return attempt(url, request, retry + 1);
+    return attempt(call, textRequest, retry + 1);
   }
 
-  async function getText(url: string, request: { accept: string; maxBytes: number }): Promise<string> {
+  async function request(call: Call, textRequest: TextRequest): Promise<string> {
     try {
-      return await attempt(url, request, 0);
+      return await attempt(call, textRequest, 0);
     } catch (error) {
       // A network error, a cut connection or invalid UTF-8 also stops the run as a failed request.
-      const failure = error instanceof RequestError ? error : new RequestError(`GET ${url} failed`, { cause: error });
+      const failure =
+        error instanceof RequestError ? error : new RequestError(`${call.method} ${call.url} failed`, { cause: error });
       stopped ??= failure;
       throw failure;
     }
   }
 
   return {
-    getText,
+    getText: (url, textRequest) => request({ method: 'GET', url }, textRequest),
+    postText: (url, body, textRequest) => request({ method: 'POST', url, body }, textRequest),
     get requests() {
       return requests;
     },
