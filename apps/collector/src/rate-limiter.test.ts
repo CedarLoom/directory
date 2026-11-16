@@ -8,7 +8,7 @@ beforeEach(() => vi.useFakeTimers({ now: 0 }));
 afterEach(() => vi.useRealTimers());
 
 it('spaces the starts of concurrent calls by the interval', async () => {
-  const waitTurn = createRateLimiter(clock, 1000);
+  const { waitTurn } = createRateLimiter(clock, 1000);
   const starts = Promise.all(
     [1, 2, 3].map(async () => {
       await waitTurn();
@@ -20,7 +20,7 @@ it('spaces the starts of concurrent calls by the interval', async () => {
 });
 
 it('lets a call through at once when the interval has passed', async () => {
-  const waitTurn = createRateLimiter(clock, 1000);
+  const { waitTurn } = createRateLimiter(clock, 1000);
   await waitTurn();
   vi.setSystemTime(1500);
   await waitTurn();

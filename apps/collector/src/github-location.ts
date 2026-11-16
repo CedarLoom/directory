@@ -9,10 +9,13 @@ export interface GitHubLocation extends Repository {
 
 const repositoryPattern = /^(?:https:\/\/github\.com\/)?([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/;
 
-/** Reads `owner/repo` from a GitHub URL or shorthand; a repository on another host gives undefined. */
+const dotSegments: ReadonlySet<string> = new Set(['.', '..']);
+
+/** Reads `owner/repo` from a GitHub URL or shorthand; a repository on another host, or a `.` or `..` name, gives undefined. */
 function parseRepository(value: string): Repository | undefined {
   const [, owner, repo] = repositoryPattern.exec(value) ?? [];
-  return owner === undefined || repo === undefined ? undefined : { owner, repo };
+  if (owner === undefined || repo === undefined || dotSegments.has(owner) || dotSegments.has(repo)) return undefined;
+  return { owner, repo };
 }
 
 /** Joins relative paths into one without `./` and trailing slashes; '' is the root. */
@@ -46,12 +49,26 @@ export function locationLink({ owner, repo, path, ref }: GitHubLocation): string
   return httpsUrl.parse(path === '' ? repository : `${repository}/tree/${ref}/${path}`);
 }
 
+/** Escapes `_`, `.` and `/` as `_5f`, `_2e` and `_2f`, so `.` only separates id segments and no segment is a bare `_`. */
+function idSegment(part: string): string {
+  return part.replaceAll(/[._/]/g, (character) => `_${character.charCodeAt(0).toString(16)}`);
+}
+
+function joinId(segments: readonly string[]): string {
+  return itemId.parse(segments.join('.').toLowerCase());
+}
+
+function repositorySegments({ owner, repo }: Repository): string[] {
+  return ['gh', idSegment(owner), idSegment(repo)];
+}
+
 /** The item id `gh.<owner>.<repo>[.<path-slug>]`, lower case, one id segment per path segment. */
-export function locationId({ owner, repo, path }: GitHubLocation): string {
-  return itemId.parse(
-    ['gh', owner, repo, ...path.split('/')]
-      .filter((part) => part !== '')
-      .join('.')
-      .toLowerCase(),
-  );
+export function locationId(location: GitHubLocation): string {
+  const pathSegments = location.path.split('/').filter((part) => part !== '');
+  return joinId([...repositorySegments(location), ...pathSegments.map(idSegment)]);
+}
+
+/** The id `gh.<owner>.<repo>._.<name>` of an entry identified by its marketplace and name; the `_` segment keeps it apart from every location id. */
+export function entryNameId(marketplace: Repository, name: string): string {
+  return joinId([...repositorySegments(marketplace), '_', idSegment(name)]);
 }

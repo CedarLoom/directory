@@ -9,7 +9,14 @@ import {
 import { ZodError } from 'zod';
 import type { Candidate } from './candidate.ts';
 import { readRepositoryFile, type Repository } from './github-contents.ts';
-import { type GitHubLocation, joinPath, locateSource, locationId, locationLink } from './github-location.ts';
+import {
+  entryNameId,
+  type GitHubLocation,
+  joinPath,
+  locateSource,
+  locationId,
+  locationLink,
+} from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
 import type { SourceAdapter, SourceResult } from './source-adapter.ts';
 
@@ -35,13 +42,13 @@ function skillCandidate(location: GitHubLocation, container: string, listing: Li
   };
 }
 
-/** The plugin of one entry and the skills it lists; a plugin without a location of its own takes its name as the path. */
+/** The plugin of one entry and the skills it lists; a plugin without a location of its own is identified by its name. */
 function entryCandidates(raw: unknown, listing: Listing): Candidate[] {
   const entry = marketplaceEntry.parse(raw);
   const source = classifySource(entry.source);
   const location = locateSource(entry.source, source.kind, listing.marketplace);
   const located = location !== undefined && locationId(location) !== listing.marketplaceId;
-  const id = located ? locationId(location) : locationId({ ...listing.marketplace, path: entry.name });
+  const id = located ? locationId(location) : entryNameId(listing.marketplace, entry.name);
   // A homepage off the allow-listed hosts is not stored.
   const homepage = httpsUrl.safeParse(entry.homepage);
   const plugin: Candidate = {
@@ -65,17 +72,25 @@ function entryCandidates(raw: unknown, listing: Listing): Candidate[] {
   return [plugin, ...skills];
 }
 
+function parseJson(text: string, marketplaceId: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    // The parser's own message quotes the file, which is third-party text.
+    throw new SyntaxError(`${marketplaceId}: ${marketplacePath} is not JSON`);
+  }
+}
+
 async function readMarketplace(
   client: HttpClient,
   repository: Repository,
   source: SourceId,
   log: (line: string) => void,
 ): Promise<SourceResult> {
-  const file = marketplaceFile.parse(
-    JSON.parse(await readRepositoryFile(client, repository, marketplacePath, marketplaceMaxBytes)),
-  );
+  const text = await readRepositoryFile(client, repository, marketplacePath, marketplaceMaxBytes);
   const marketplace = { ...repository, path: '', ref: 'HEAD' };
   const listing = { source, marketplace, marketplaceId: locationId(marketplace) };
+  const file = marketplaceFile.parse(parseJson(text, listing.marketplaceId));
   const candidates: Candidate[] = [
     {
       kind: 'marketplace',

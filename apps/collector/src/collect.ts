@@ -14,8 +14,14 @@ export interface RunReport {
   candidates: Candidate[];
 }
 
+// Code unit order, so the report does not depend on the machine's locale.
+function byCodeUnits(first: string, second: string): number {
+  if (first === second) return 0;
+  return first < second ? -1 : 1;
+}
+
 function byKindAndId(first: Candidate, second: Candidate): number {
-  return first.kind.localeCompare(second.kind) || first.id.localeCompare(second.id);
+  return byCodeUnits(first.kind, second.kind) || byCodeUnits(first.id, second.id);
 }
 
 /** Reads every source, joins the candidates they share and leaves out the excluded ones. */

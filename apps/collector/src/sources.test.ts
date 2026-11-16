@@ -123,7 +123,7 @@ it('reads the community marketplace and refuses a path out of the repository', a
     },
     {
       kind: 'plugin',
-      id: 'gh.anthropics.claude-plugins-community.helper',
+      id: 'gh.anthropics.claude-plugins-community._.helper',
       name: 'helper',
       links: {},
       listedIn: [community],
@@ -146,7 +146,7 @@ it('reads both Anthropic topic marketplaces with the skills a plugin lists', asy
     },
     {
       kind: 'plugin',
-      id: 'gh.anthropics.skills.document-skills',
+      id: 'gh.anthropics.skills._.document-skills',
       links: { source: 'https://github.com/anthropics/skills' },
       container: undefined,
     },
@@ -154,13 +154,13 @@ it('reads both Anthropic topic marketplaces with the skills a plugin lists', asy
       kind: 'skill',
       id: 'gh.anthropics.skills.skills.pdf',
       links: { source: 'https://github.com/anthropics/skills/tree/HEAD/skills/pdf' },
-      container: 'gh.anthropics.skills.document-skills',
+      container: 'gh.anthropics.skills._.document-skills',
     },
     {
       kind: 'skill',
       id: 'gh.anthropics.skills.skills.docx',
       links: { source: 'https://github.com/anthropics/skills/tree/HEAD/skills/docx' },
-      container: 'gh.anthropics.skills.document-skills',
+      container: 'gh.anthropics.skills._.document-skills',
     },
     {
       kind: 'marketplace',

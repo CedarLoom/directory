@@ -5,7 +5,7 @@ const rateLimitBaseMs = 60_000;
 
 function retryAfterMs(headers: Headers): number | undefined {
   const seconds = Number(headers.get('retry-after') ?? Number.NaN);
-  return Number.isFinite(seconds) ? seconds * 1000 : undefined;
+  return Number.isFinite(seconds) ? Math.max(0, seconds * 1000) : undefined;
 }
 
 function resetWaitMs(headers: Headers, now: number): number | undefined {
@@ -29,5 +29,6 @@ export function retryDelay(
     if (wait !== undefined) return wait;
     return status === 429 ? rateLimitBaseMs * 2 ** attempt : undefined;
   }
-  return status >= 500 ? serverErrorBaseMs * 2 ** attempt : undefined;
+  // A 503 may say how long the server stays unavailable: https://www.rfc-editor.org/rfc/rfc9110#section-10.2.3
+  return status >= 500 ? (retryAfterMs(headers) ?? serverErrorBaseMs * 2 ** attempt) : undefined;
 }

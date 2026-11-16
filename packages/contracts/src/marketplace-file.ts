@@ -27,6 +27,7 @@ export const gitSourceLocation = z.object({
   repo: z.string().optional(),
   url: z.string().optional(),
   path: relativePath.optional(),
-  ref: versionLabel.optional(),
+  // A `.` or `..` segment would move a link built from the ref to another repository.
+  ref: versionLabel.refine((ref) => !ref.split('/').some((part) => part === '.' || part === '..')).optional(),
   sha: gitSha.optional(),
 });
