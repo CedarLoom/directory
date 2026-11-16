@@ -1,6 +1,6 @@
 export { canonicalJson, contentHash } from './content-hash.ts';
 export { exclusionsFile } from './exclusions.ts';
-export { httpsUrl, itemId, itemName, type SourceId } from './fields.ts';
+export { gitSha, httpsUrl, itemId, itemName, keyword, type SourceId, spdxId, versionLabel } from './fields.ts';
 export {
   agentRecord,
   hookRecord,
@@ -13,5 +13,6 @@ export {
 export { indexFile } from './listing.ts';
 export { gitSourceLocation, marketplaceEntry, marketplaceFile, relativePath } from './marketplace-file.ts';
 export { metaFile } from './meta.ts';
-export { classifySource, type Pin, type SourceKind } from './plugin-source.ts';
+export { type PopularityFile, popularityFile } from './popularity.ts';
+export { classifySource, type Pin, type SourceKind, sourceKind } from './plugin-source.ts';
 export { rubricFile } from './rubric.ts';

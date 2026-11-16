@@ -27,7 +27,13 @@
   "popularity": [
     {
       "signal": "stars",
-      "value": 412,
+      "ref": "gh.example-org.plugins",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.example-org.plugins",
       "scope": "repository",
       "source": "github"
     }

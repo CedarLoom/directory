@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.plugins",
+  "snapshots": [
+    { "date": "2026-09-28", "stars": 360 },
+    { "date": "2026-10-05", "stars": 375 },
+    { "date": "2026-10-26", "stars": 398 },
+    { "date": "2026-11-02", "stars": 412 }
+  ]
+}

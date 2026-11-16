@@ -882,47 +882,81 @@
     "popularity": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "signal": {
-            "type": "string",
-            "enum": [
-              "stars",
-              "listed"
-            ]
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "signal": {
+                "type": "string",
+                "const": "listed"
+              },
+              "value": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "item",
+                  "repository",
+                  "marketplace"
+                ]
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "official-marketplace",
+                  "community-marketplace",
+                  "anthropic-marketplaces",
+                  "github",
+                  "mcp-registry",
+                  "seeds"
+                ]
+              }
+            },
+            "required": [
+              "signal",
+              "value",
+              "scope",
+              "source"
+            ],
+            "additionalProperties": false
           },
-          "value": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "scope": {
-            "type": "string",
-            "enum": [
-              "item",
-              "repository",
-              "marketplace"
-            ]
-          },
-          "source": {
-            "type": "string",
-            "enum": [
-              "official-marketplace",
-              "community-marketplace",
-              "anthropic-marketplaces",
-              "github",
-              "mcp-registry",
-              "seeds"
-            ]
+          {
+            "type": "object",
+            "properties": {
+              "signal": {
+                "type": "string",
+                "enum": [
+                  "stars",
+                  "starsGained30d"
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "maxLength": 200,
+                "pattern": "^[a-z0-9][a-z0-9._-]*$",
+                "description": "The id `gh.<owner>.<repo>` of the popularity file that holds the star snapshots."
+              },
+              "scope": {
+                "type": "string",
+                "const": "repository"
+              },
+              "source": {
+                "type": "string",
+                "const": "github"
+              }
+            },
+            "required": [
+              "signal",
+              "ref",
+              "scope",
+              "source"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "signal",
-          "value",
-          "scope",
-          "source"
-        ],
-        "additionalProperties": false
+        ]
       }
     },
     "signals": {

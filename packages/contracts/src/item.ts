@@ -57,12 +57,21 @@ const common = {
   }),
   maintenance: maintenance.optional(),
   popularity: z.array(
-    z.strictObject({
-      signal: z.enum(['stars', 'listed']),
-      value: count,
-      scope: z.enum(['item', 'repository', 'marketplace']),
-      source: sourceId,
-    }),
+    z.discriminatedUnion('signal', [
+      z.strictObject({
+        signal: z.literal('listed'),
+        value: count,
+        scope: z.enum(['item', 'repository', 'marketplace']),
+        source: sourceId,
+      }),
+      // A pointer, not the value: the count lives in the popularity file, so a star change leaves the record as it is.
+      z.strictObject({
+        signal: z.enum(['stars', 'starsGained30d']),
+        ref: itemId.describe('The id `gh.<owner>.<repo>` of the popularity file that holds the star snapshots.'),
+        scope: z.literal('repository'),
+        source: z.literal('github'),
+      }),
+    ]),
   ),
   signals: z.record(keyword, z.union([z.number(), z.boolean()])),
   flags: z.array(flag),

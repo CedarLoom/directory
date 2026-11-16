@@ -3,6 +3,7 @@ import { z } from 'zod';
 import exclusionsFixture from '../fixtures/exclusions.json' with { type: 'json' };
 import indexFixture from '../fixtures/index.json' with { type: 'json' };
 import metaFixture from '../fixtures/meta.json' with { type: 'json' };
+import popularityFixture from '../fixtures/popularity.json' with { type: 'json' };
 import agent from '../fixtures/records/agent.json' with { type: 'json' };
 import hook from '../fixtures/records/hook.json' with { type: 'json' };
 import marketplace from '../fixtures/records/marketplace.json' with { type: 'json' };
@@ -21,6 +22,7 @@ import {
   metaFile,
   outputStyleRecord,
   pluginRecord,
+  popularityFile,
   rubricFile,
   skillRecord,
 } from './index.ts';
@@ -41,6 +43,7 @@ const files = [
   ['meta', metaFile, metaFixture],
   ['rubric', rubricFile, rubricFixture],
   ['exclusions', exclusionsFile, exclusionsFixture],
+  ['popularity', popularityFile, popularityFixture],
 ] as const;
 
 describe.each(files)('%s', (name, schema, fixture) => {
@@ -96,6 +99,7 @@ const objects: [string, z.ZodType, unknown, Path[]][] = [
   ['meta', metaFile, metaFixture, [[], ['sources', 0], ['stats']]],
   ['rubric', rubricFile, rubricFixture, [[], ['signals', 0], ['flagPenalties', 0]]],
   ['exclusions', exclusionsFile, exclusionsFixture, [[]]],
+  ['popularity', popularityFile, popularityFixture, [[], ['snapshots', 0]]],
 ];
 
 function isObject(value: unknown): value is Record<string | number, unknown> {
@@ -142,6 +146,17 @@ it('accepts a plugin on another git host, which has no source link or maintenanc
       pin: 'sha',
     }).error,
   ).toBeUndefined());
+
+it('refuses a star count in a record, which keeps a pointer to the popularity file', () =>
+  expect(
+    skillRecord.safeParse({
+      ...skill,
+      popularity: [{ signal: 'stars', value: 412, scope: 'repository', source: 'github' }],
+    }).error?.issues,
+  ).toMatchObject([
+    { code: 'invalid_type', path: ['popularity', 0, 'ref'] },
+    { code: 'unrecognized_keys', keys: ['value'], path: ['popularity', 0] },
+  ]));
 
 it('accepts an index row without a score', () =>
   expect(

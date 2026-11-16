@@ -46,6 +46,12 @@
             "minimum": 0,
             "maximum": 9007199254740991
           },
+          "starsGained30d": {
+            "description": "Current stars minus the newest snapshot 30 or more days before the run date; negative when unstars outweigh stars; absent while no snapshot is that old.",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "licenseClass": {
             "type": "string",
             "enum": [
