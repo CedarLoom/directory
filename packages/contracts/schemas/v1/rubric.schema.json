@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "marketplace",
+        "plugin",
+        "skill",
+        "agent",
+        "hook",
+        "mcp-server",
+        "output-style"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)$"
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "maintenance",
+              "license",
+              "quality",
+              "token-cost",
+              "safety",
+              "evals",
+              "provenance"
+            ]
+          },
+          "max": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "group",
+          "max"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "flagPenalties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "flag": {
+            "type": "string",
+            "enum": [
+              "hook-shell-command",
+              "hook-session-start",
+              "hook-match-all",
+              "hook-http",
+              "monitor-background-command",
+              "bin-executables",
+              "scripts-present",
+              "network-indicator",
+              "mcp-stdio-unpinned-package",
+              "mcp-remote",
+              "mcp-secrets-required",
+              "allowed-tools-unrestricted-bash",
+              "agent-inherits-all-tools",
+              "install-command-source",
+              "unpinned-source",
+              "listed-official-marketplace"
+            ]
+          },
+          "points": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "flag",
+          "points"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "kind",
+    "version",
+    "signals",
+    "flagPenalties"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.plugins.code-review",
+  "kind": "plugin",
+  "name": "code-review",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/example-org/plugins/tree/main/plugins/code-review",
+    "homepage": "https://claude.com/plugins/code-review"
+  },
+  "listedIn": ["gh.example-org.plugins"],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-10-30T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "value": 412,
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "bodyLines": 120,
+    "hasLicenseField": true
+  },
+  "flags": ["hook-shell-command", "unpinned-source"],
+  "tags": ["review"],
+  "cedarloomFit": {
+    "label": "overlaps",
+    "tags": ["review"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "plugin",
+      "version": "1.0.0"
+    },
+    "total": 74.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-02",
+  "container": "gh.example-org.plugins",
+  "version": "1.2.0",
+  "components": {
+    "skills": 2,
+    "agents": 1,
+    "commands": 3,
+    "hooksByEvent": {
+      "PreToolUse": 1,
+      "SessionStart": 1
+    },
+    "mcpServersByTransport": {
+      "stdio": 1
+    },
+    "lspServers": 0,
+    "outputStyles": 0,
+    "monitors": 0,
+    "binFiles": 0
+  },
+  "dependencies": [],
+  "hasEvals": true,
+  "sourceKind": "path",
+  "pin": "marketplace-commit"
+}

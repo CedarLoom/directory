@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.example-org.weather",
+  "kind": "mcp-server",
+  "name": "io.github.example-org/weather",
+  "aliases": [],
+  "links": {
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.example-org%2Fweather/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "popularity": [],
+  "signals": {
+    "bodyLines": 120,
+    "hasLicenseField": true
+  },
+  "flags": ["mcp-stdio-unpinned-package"],
+  "tags": ["review"],
+  "cedarloomFit": {
+    "label": "overlaps",
+    "tags": ["review"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 74.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      }
+    ]
+  },
+  "provenance": ["mcp-registry"],
+  "changedAt": "2026-11-02",
+  "registryStatus": "active",
+  "transports": ["stdio"],
+  "packageRegistryTypes": ["npm"],
+  "versionPinned": false,
+  "requiredSecrets": 1,
+  "remoteHosts": 0
+}

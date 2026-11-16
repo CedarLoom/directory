@@ -6,6 +6,7 @@ Node.js 26, pnpm 12 and uv. Install with `pnpm install --frozen-lockfile --ignor
 
 - `pnpm run check`: every gate ([scripts/check.sh](scripts/check.sh)), the one to run before a push.
 - Single gates, each as `pnpm run <name>`: `typecheck`, `lint`, `format:check` (`format` writes), `test`, `knip`, `jscpd`, `licenses`. Keep `run`: `pnpm licenses` alone is pnpm's built-in command.
+- `pnpm run test -u` rewrites the generated JSON Schemas in `packages/contracts/schemas/v1` after a schema change; commit them with it. The golden test fails on any difference.
 - The Python-packaged gate tools (typos, reuse, actionlint, zizmor) run through `uvx` with the versions of [tools/requirements.txt](tools/requirements.txt). In CI, `pnpm run check` runs reuse only; the reusable gates workflow runs typos, actionlint and zizmor.
 
 ## Before you push

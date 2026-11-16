@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "kind": "hook",
+  "version": "1.0.0",
+  "signals": [
+    { "id": "lastPush", "group": "maintenance", "max": 10 },
+    { "id": "recentCommits", "group": "maintenance", "max": 5 },
+    { "id": "release", "group": "maintenance", "max": 5 },
+    { "id": "license", "group": "license", "max": 10 },
+    { "id": "hooksFileValid", "group": "quality", "max": 15 },
+    { "id": "safety", "group": "safety", "max": 50 },
+    { "id": "testsShipped", "group": "evals", "max": 5 }
+  ],
+  "flagPenalties": [
+    { "flag": "hook-shell-command", "points": 10 },
+    { "flag": "hook-match-all", "points": 15 },
+    { "flag": "network-indicator", "points": 10 }
+  ]
+}
