@@ -2,6 +2,7 @@ import { itemName, marketplaceFile, type SourceId } from '@directory/contracts';
 import { ZodError } from 'zod';
 import type { Candidate } from './candidate.ts';
 import { type GitHubLocation, joinPath, locationId, locationLink, repositoryId } from './github-location.ts';
+import { analyzeHooks } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
 import { entrySources } from './marketplace-analyzer.ts';
 import { type DirectoryKey, directoryPaths, type Inspection } from './repository-tree.ts';
@@ -15,10 +16,12 @@ export interface InspectedPlace {
 
 type Refuse = (id: string, error: ZodError) => void;
 
-function itemCandidate(place: InspectedPlace, kind: 'skill' | 'agent', path: string, name: string): Candidate {
+type FileKind = 'skill' | 'agent' | 'output-style';
+
+function itemCandidate(place: InspectedPlace, kind: FileKind, path: string, name: string): Candidate {
   const location = { ...place.location, path };
-  // An agent is one file; its id leaves out the .md extension.
-  const idLocation = kind === 'agent' ? { ...location, path: path.slice(0, -'.md'.length) } : location;
+  // An agent or output style is one file; its id leaves out the .md extension.
+  const idLocation = kind === 'skill' ? location : { ...location, path: path.slice(0, -'.md'.length) };
   return {
     kind,
     id: locationId(idLocation),
@@ -33,9 +36,10 @@ function itemCandidate(place: InspectedPlace, kind: 'skill' | 'agent', path: str
 
 const skillFolders: readonly DirectoryKey[] = ['skills', 'claudeSkills'];
 const agentFolders: readonly DirectoryKey[] = ['agents', 'claudeAgents'];
+const outputStyleFolders: readonly DirectoryKey[] = ['outputStyles', 'claudeOutputStyles'];
 
 interface ItemPath {
-  kind: 'skill' | 'agent';
+  kind: FileKind;
   path: string;
   name: string;
 }
@@ -50,14 +54,20 @@ function folderEntries(place: InspectedPlace, { directories }: Inspection, keys:
   );
 }
 
-/** Each skill folder and agent file the place holds, as paths and names; the files are read later. */
+/** The Markdown files of the folders as items of one kind, named by their file stem. */
+function markdownFiles(place: InspectedPlace, inspection: Inspection, keys: readonly DirectoryKey[], kind: FileKind) {
+  return folderEntries(place, inspection, keys)
+    .filter((entry) => entry.type === 'blob' && entry.name.endsWith('.md'))
+    .map(({ path, name }) => ({ kind, path, name: name.slice(0, -'.md'.length) }));
+}
+
+/** Each skill folder, agent file and output style file the place holds, as paths and names; the files are read later. */
 function itemPaths(place: InspectedPlace, inspection: Inspection): ItemPath[] {
   const skills = folderEntries(place, inspection, skillFolders)
     .filter((entry) => entry.type === 'tree')
     .map(({ path, name }) => ({ kind: 'skill' as const, path, name }));
-  const agents = folderEntries(place, inspection, agentFolders)
-    .filter((entry) => entry.type === 'blob' && entry.name.endsWith('.md'))
-    .map(({ path, name }) => ({ kind: 'agent' as const, path, name: name.slice(0, -'.md'.length) }));
+  const agents = markdownFiles(place, inspection, agentFolders, 'agent');
+  const outputStyles = markdownFiles(place, inspection, outputStyleFolders, 'output-style');
   // A repository that is one skill holds SKILL.md at its root; a marketplace repository keeps its id for the marketplace.
   const rootSkill =
     place.container === undefined &&
@@ -66,6 +76,7 @@ function itemPaths(place: InspectedPlace, inspection: Inspection): ItemPath[] {
   return [
     ...skills,
     ...agents,
+    ...outputStyles,
     ...(rootSkill ? [{ kind: 'skill' as const, path: place.location.path, name: place.location.repo }] : []),
   ];
 }
@@ -84,9 +95,28 @@ function marketplaceCandidate(place: InspectedPlace, text: string): Candidate {
   };
 }
 
-function attempt(id: string, refuse: Refuse, build: () => Candidate): Candidate[] {
+/** The hooks file of the place as one item, named after the plugin folder or repository that holds it. */
+function hookCandidate(place: InspectedPlace, text: string): Candidate | undefined {
+  const hooks = analyzeHooks(text);
+  if (hooks === undefined) return undefined;
+  const { location } = place;
+  return {
+    kind: 'hook',
+    id: locationId({ ...location, path: joinPath(location.path, 'hooks') }),
+    name: itemName.parse(location.path.split('/').at(-1) || location.repo),
+    links: { source: locationLink({ ...location, path: joinPath(location.path, 'hooks/hooks.json') }) },
+    location,
+    ...(place.container === undefined ? {} : { container: place.container }),
+    listedIn: [],
+    provenance: place.provenance,
+    hooks,
+  };
+}
+
+function attempt(id: string, refuse: Refuse, build: () => Candidate | undefined): Candidate[] {
   try {
-    return [build()];
+    const built = build();
+    return built === undefined ? [] : [built];
   } catch (error) {
     if (!(error instanceof ZodError)) throw error;
     refuse(id, error);
@@ -94,12 +124,17 @@ function attempt(id: string, refuse: Refuse, build: () => Candidate): Candidate[
   }
 }
 
-/** The skills, agents and, at a topic repository's root, the marketplace an inspection found. */
+/** The skills, agents, output styles, hooks file and, at a topic repository's root, the marketplace an inspection found. */
 export function inspectionCandidates(place: InspectedPlace, inspection: Inspection, refuse: Refuse): Candidate[] {
-  const marketplace = inspection.files.marketplace;
-  const items = itemPaths(place, inspection).flatMap(({ kind, path, name }) =>
-    attempt(`${repositoryId(place.location)} ${kind}`, refuse, () => itemCandidate(place, kind, path, name)),
-  );
+  const { marketplace, hooks } = inspection.files;
+  const items = [
+    ...itemPaths(place, inspection).flatMap(({ kind, path, name }) =>
+      attempt(`${repositoryId(place.location)} ${kind}`, refuse, () => itemCandidate(place, kind, path, name)),
+    ),
+    ...(hooks === undefined
+      ? []
+      : attempt(`${repositoryId(place.location)} hook`, refuse, () => hookCandidate(place, hooks))),
+  ];
   if (marketplace === undefined || place.container !== undefined) return items;
   return [...attempt(repositoryId(place.location), refuse, () => marketplaceCandidate(place, marketplace)), ...items];
 }

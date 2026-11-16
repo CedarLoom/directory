@@ -1,0 +1,274 @@
+import { itemId, itemName, mcpServerRecord, metaFile } from '@directory/contracts';
+import { z } from 'zod';
+import type { Candidate } from './candidate.ts';
+import type { DataFiles } from './data-files.ts';
+import { userAgent } from './github-contents.ts';
+import { type GitHubLocation, locationLink, parseRepository } from './github-location.ts';
+import type { HttpClient } from './http-client.ts';
+import { issueSummary } from './issue-summary.ts';
+import { jsonText } from './json-text.ts';
+import { analyzeMcpServer, type McpServerFacts, registryServer } from './mcp-server-analyzer.ts';
+import type { SourceAdapter, SourceRead } from './source-adapter.ts';
+
+/** Headers of every MCP Registry request; its read API needs no authorization. */
+export const registryHeaders: Readonly<Record<string, string>> = { 'user-agent': userAgent };
+
+// Registry API: https://modelcontextprotocol.io/registry/registry-aggregators
+const listUrl = 'https://registry.modelcontextprotocol.io/v0.1/servers';
+const pageSize = 100;
+// One page of 100 entries is a few hundred KB; the cap only stops a runaway answer.
+const maxPageBytes = 8 * 1024 * 1024;
+// The next read starts an hour before the last one, so an update at the window's edge is read twice, not lost.
+const overlapMs = 3_600_000;
+// A share of known servers deleted in one window that only a data reset explains.
+const vanishedShare = 0.2;
+
+const official = z.object({
+  status: z.enum(['active', 'deprecated', 'deleted']),
+  publishedAt: z.iso.datetime({ offset: true }),
+});
+const entry = z.object({
+  server: registryServer,
+  _meta: z.object({ 'io.modelcontextprotocol.registry/official': official }),
+});
+// The name of a refused entry, so an incremental read drops what the last run knew of that server.
+const named = z.object({ server: registryServer.pick({ name: true }) });
+const page = z.object({
+  servers: z.array(z.unknown()),
+  metadata: z.object({ nextCursor: z.string().min(1).optional() }),
+});
+
+/** A registry server as the run keeps it: from this run's registry entry or from the record of the last run. */
+interface KnownServer {
+  name: string;
+  repository?: GitHubLocation;
+  facts: McpServerFacts;
+}
+
+interface ReadEntry {
+  server: KnownServer;
+  status: 'active' | 'deprecated' | 'deleted';
+  publishedAt: number;
+}
+
+const checkpointFile = metaFile.pick({ sources: true }).loose();
+const indexIds = z.object({ items: z.array(z.object({ id: z.string(), kind: z.string() })) });
+const recordFolder = 'records/mcp-server/';
+
+/** The ids of the MCP server records the last run built, as its `index.json` lists them. */
+function indexedServers(previous: DataFiles): Set<string> {
+  const index = previous.get('index.json');
+  if (index === undefined) return new Set();
+  const { items } = indexIds.parse(JSON.parse(index));
+  return new Set(items.filter(({ kind }) => kind === 'mcp-server').map(({ id }) => id));
+}
+
+/** The checkpoint and the servers of the last run, read from its `meta.json`, `index.json` and MCP server records. */
+function lastRun(previous: DataFiles): { checkpoint?: string; known: Map<string, KnownServer> } {
+  const meta = previous.get('meta.json');
+  const checkpoint =
+    meta === undefined
+      ? undefined
+      : checkpointFile.parse(JSON.parse(meta)).sources.find(({ id }) => id === 'mcp-registry')?.readAt;
+  // The record of a server a later run dropped stays in the folder; only the index names the last run's servers.
+  const indexed = indexedServers(previous);
+  const known = new Map<string, KnownServer>();
+  for (const [path, text] of previous) {
+    if (!path.startsWith(recordFolder) || !indexed.has(path.slice(recordFolder.length, -'.json'.length))) continue;
+    const { name, links, version, ...record } = mcpServerRecord.parse(JSON.parse(text));
+    const repository = parseRepository(links.source ?? '');
+    const facts: McpServerFacts = {
+      ...(version === undefined ? {} : { version }),
+      registryStatus: record.registryStatus,
+      transports: record.transports,
+      packageRegistryTypes: record.packageRegistryTypes,
+      versionPinned: record.versionPinned,
+      requiredSecrets: record.requiredSecrets,
+      remoteHosts: record.remoteHosts,
+    };
+    known.set(name, { name, ...(repository && { repository: { ...repository, path: '', ref: 'HEAD' } }), facts });
+  }
+  return { ...(checkpoint === undefined ? {} : { checkpoint }), known };
+}
+
+/**
+ * The repository of a registry entry when it is a GitHub repository root, the only place the run reads facts from. A
+ * server in an `io.github.<account>` namespace, which the registry grants by GitHub login, keeps only a repository of
+ * that account, so it cannot take another repository's stars; another namespace's repository is taken as declared.
+ */
+function gitHubRepository(name: string, url: string | undefined): GitHubLocation | undefined {
+  const repository = url?.startsWith('https://github.com/') === true ? parseRepository(url) : undefined;
+  const account = /^io\.github\.([^/]+)\//.exec(name)?.[1];
+  if (repository === undefined || (account !== undefined && account.toLowerCase() !== repository.owner.toLowerCase()))
+    return undefined;
+  return { ...repository, path: '', ref: 'HEAD' };
+}
+
+function readEntry(raw: unknown): ReadEntry {
+  const { server, _meta } = entry.parse(raw);
+  const { status, publishedAt } = _meta['io.modelcontextprotocol.registry/official'];
+  const repository = gitHubRepository(server.name, server.repository?.url);
+  return {
+    server: {
+      name: server.name,
+      ...(repository && { repository }),
+      // A deleted server is dropped before its facts are used.
+      facts: analyzeMcpServer(server, status === 'deleted' ? 'active' : status),
+    },
+    status,
+    publishedAt: Date.parse(publishedAt),
+  };
+}
+
+type Log = (line: string) => void;
+
+function keepLatest(entries: Map<string, ReadEntry>, read: ReadEntry): void {
+  const seen = entries.get(read.server.name);
+  if (seen === undefined || read.publishedAt >= seen.publishedAt) entries.set(read.server.name, read);
+}
+
+/**
+ * Reads every page of one listing and keeps the latest version of each server; an entry the contract refuses is
+ * logged by its index and left out. The filters stay the same while following `nextCursor`, as the registry asks.
+ */
+async function readListing(client: HttpClient, filters: Record<string, string>, log: Log) {
+  const entries = new Map<string, ReadEntry>();
+  const refusedNames = new Set<string>();
+  let refused = 0;
+  // Each page needs the cursor of the one before; the client's request cap stops a cursor that never ends.
+  const readPage = async (cursor: string | undefined, pageIndex: number): Promise<void> => {
+    const query = new URLSearchParams({ ...filters, limit: String(pageSize), ...(cursor && { cursor }) });
+    const url = `${listUrl}?${query.toString()}`;
+    const text = await client.getText(url, { accept: 'application/json', maxBytes: maxPageBytes });
+    const { servers, metadata } = jsonText.pipe(page).parse(text);
+    for (const [index, raw] of servers.entries()) {
+      try {
+        keepLatest(entries, readEntry(raw));
+      } catch (error) {
+        if (!(error instanceof z.ZodError)) throw error;
+        refused += 1;
+        log(`mcp-registry: refused page ${pageIndex} servers[${index}]: ${issueSummary(error, 'value')}`);
+        const name = named.safeParse(raw).data?.server.name;
+        if (name !== undefined) refusedNames.add(name);
+      }
+    }
+    if (metadata.nextCursor !== undefined) await readPage(metadata.nextCursor, pageIndex + 1);
+  };
+  await readPage(undefined, 0);
+  return { entries: [...entries.values()], refused, refusedNames };
+}
+
+/** Why the incremental result cannot be trusted, or undefined when it can. */
+function fullCrawlReason(
+  entries: readonly ReadEntry[],
+  known: ReadonlyMap<string, KnownServer>,
+  checkpoint: number,
+): SourceRead['reason'] {
+  // A name and version are immutable, so a known version published again after the checkpoint means the data was reset.
+  const republished = entries.some(
+    ({ server, publishedAt }) =>
+      server.facts.version !== undefined &&
+      known.get(server.name)?.facts.version === server.facts.version &&
+      publishedAt > checkpoint,
+  );
+  if (republished) return 'reset';
+  const deleted = entries.filter(({ server, status }) => status === 'deleted' && known.has(server.name)).length;
+  return deleted > known.size * vanishedShare ? 'vanished' : undefined;
+}
+
+function candidate(server: KnownServer): Candidate {
+  const name = itemName.parse(server.name);
+  const links = { registry: `${listUrl}/${encodeURIComponent(server.name)}/versions/latest` };
+  return {
+    kind: 'mcp-server',
+    id: itemId.parse(server.name.toLowerCase().replace('/', '.')),
+    name,
+    links: server.repository === undefined ? links : { source: locationLink(server.repository), ...links },
+    ...(server.repository && { location: server.repository }),
+    listedIn: [],
+    provenance: ['mcp-registry'],
+    mcpServer: server.facts,
+  };
+}
+
+// Code unit order, so which of two servers with one id is kept does not depend on the registry's order.
+function byName(first: KnownServer, second: KnownServer): number {
+  if (first.name === second.name) return 0;
+  return first.name < second.name ? -1 : 1;
+}
+
+/** The candidates of the servers; a server whose id another server already has is refused, not merged into it. */
+function candidates(servers: Iterable<KnownServer>, log: Log) {
+  const found = new Map<string, Candidate>();
+  let refused = 0;
+  for (const server of [...servers].toSorted(byName)) {
+    try {
+      const built = candidate(server);
+      if (found.has(built.id)) {
+        refused += 1;
+        log(`mcp-registry: ${built.id}: refused: another server has this id`);
+        continue;
+      }
+      found.set(built.id, built);
+    } catch (error) {
+      if (!(error instanceof z.ZodError)) throw error;
+      refused += 1;
+      log(`mcp-registry: refused a server: ${issueSummary(error, 'name')}`);
+    }
+  }
+  return { found: [...found.values()], refused };
+}
+
+/** The servers of the last run with the changes since its checkpoint applied, or why the whole registry must be read. */
+async function readChanges(
+  client: HttpClient,
+  checkpoint: string,
+  known: ReadonlyMap<string, KnownServer>,
+  log: Log,
+): Promise<{ servers: Map<string, KnownServer>; refused: number; reason: SourceRead['reason'] }> {
+  const since = new Date(Date.parse(checkpoint) - overlapMs).toISOString();
+  const listing = await readListing(client, { version: 'latest', updated_since: since }, log);
+  const servers = new Map(known);
+  for (const name of listing.refusedNames) servers.delete(name);
+  for (const { server, status } of listing.entries)
+    if (status === 'deleted') servers.delete(server.name);
+    else servers.set(server.name, server);
+  return { servers, refused: listing.refused, reason: fullCrawlReason(listing.entries, known, Date.parse(checkpoint)) };
+}
+
+/**
+ * The MCP Registry adapter; it reads through its own client, without the GitHub token. With a checkpoint it reads only
+ * what changed since and applies that to the servers of the last run; with none, or when the change looks like a data
+ * reset, it reads the whole registry. A deleted server is left out.
+ */
+export function mcpRegistryAdapter(previous: DataFiles, runAt: string): SourceAdapter {
+  return {
+    id: 'mcp-registry',
+    async collect(client, log) {
+      const { checkpoint, known } = lastRun(previous);
+      let reason: SourceRead['reason'] = 'no-checkpoint';
+      let servers = new Map<string, KnownServer>();
+      let refused = 0;
+      if (checkpoint !== undefined && known.size > 0)
+        ({ servers, refused, reason } = await readChanges(client, checkpoint, known, log));
+      if (reason !== undefined) {
+        log(`mcp-registry: full crawl (${reason})`);
+        const listing = await readListing(client, { version: 'latest' }, log);
+        servers = new Map(
+          listing.entries.filter(({ status }) => status !== 'deleted').map(({ server }) => [server.name, server]),
+        );
+        refused = listing.refused;
+      }
+      const { found, refused: unnamed } = candidates(servers.values(), log);
+      const crawl = reason === undefined ? 'incremental' : 'full';
+      const read: SourceRead = {
+        id: 'mcp-registry',
+        readAt: runAt,
+        crawl,
+        ...(reason && { reason }),
+        requests: client.requests,
+      };
+      return { candidates: found, refused: refused + unnamed, read };
+    },
+  };
+}

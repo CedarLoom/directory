@@ -7,7 +7,7 @@ const searchAnswer = z.object({
   items: z.array(z.object({ name, owner: z.object({ login: name }) })),
 });
 
-/** The topics whose repositories the collector inspects for marketplaces, skills and agents. */
+/** The topics whose repositories the collector inspects for marketplaces, skills, agents, hooks and output styles. */
 export const topics = [
   'claude-code-marketplace',
   'claude-code-plugin',
@@ -16,6 +16,7 @@ export const topics = [
   'agent-skills',
   'claude-code-skills',
   'claude-code-subagents',
+  'claude-code-hooks',
 ] as const;
 
 /** The most starred repositories of each topic, one search page each; a repository two topics share comes once. */

@@ -12,7 +12,7 @@ const repositoryPattern = /^(?:https:\/\/github\.com\/)?([A-Za-z0-9_.-]+)\/([A-Z
 const dotSegments: ReadonlySet<string> = new Set(['.', '..']);
 
 /** Reads `owner/repo` from a GitHub URL or shorthand; a repository on another host, or a `.` or `..` name, gives undefined. */
-function parseRepository(value: string): Repository | undefined {
+export function parseRepository(value: string): Repository | undefined {
   const [, owner, repo] = repositoryPattern.exec(value) ?? [];
   if (owner === undefined || repo === undefined || dotSegments.has(owner) || dotSegments.has(repo)) return undefined;
   return { owner, repo };

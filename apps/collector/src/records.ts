@@ -1,6 +1,9 @@
 import {
   agentRecord,
+  hookRecord,
   marketplaceRecord,
+  mcpServerRecord,
+  outputStyleRecord,
   pluginRecord,
   type Pin,
   type SourceId,
@@ -11,9 +14,12 @@ import type { z } from 'zod';
 import { analyzeAgent } from './agent-analyzer.ts';
 import type { Candidate, Located } from './candidate.ts';
 import { repositoryId } from './github-location.ts';
+import type { HookFacts } from './hook-analyzer.ts';
 import type { SkillFolders } from './item-files.ts';
 import { licenseOf } from './license-class.ts';
 import { analyzeMarketplace, type MarketplaceEntries } from './marketplace-analyzer.ts';
+import type { McpServerFacts } from './mcp-server-analyzer.ts';
+import { analyzeOutputStyle } from './output-style-analyzer.ts';
 import { analyzePlugin } from './plugin-analyzer.ts';
 import type { RepositoryFacts } from './repository-facts.ts';
 import type { Inspection } from './repository-tree.ts';
@@ -25,7 +31,10 @@ type RecordValue =
   | z.infer<typeof marketplaceRecord>
   | z.infer<typeof pluginRecord>
   | z.infer<typeof skillRecord>
-  | z.infer<typeof agentRecord>;
+  | z.infer<typeof agentRecord>
+  | z.infer<typeof hookRecord>
+  | z.infer<typeof mcpServerRecord>
+  | z.infer<typeof outputStyleRecord>;
 
 /** A record that passed its contract, the repository whose popularity file it points to and that repository's owner. */
 export interface ItemRecord {
@@ -42,6 +51,9 @@ export type RecordInput = { candidate: Located; facts: RepositoryFacts } & (
   | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin } }
   | { kind: 'skill'; text: string; folders: SkillFolders }
   | { kind: 'agent'; text: string }
+  | { kind: 'hook'; hooks: HookFacts }
+  | { kind: 'mcp-server'; mcpServer: McpServerFacts }
+  | { kind: 'output-style'; text: string }
 );
 type InputOf<K extends ItemKind> = Extract<RecordInput, { kind: K }>;
 
@@ -123,11 +135,30 @@ function agent(input: InputOf<'agent'>, runDate: string) {
   });
 }
 
+function hook(input: InputOf<'hook'>, runDate: string) {
+  return hookRecord.parse({ ...baseFields(input, runDate), kind: 'hook', ...input.hooks });
+}
+
+function mcpServer(input: InputOf<'mcp-server'>, runDate: string) {
+  return mcpServerRecord.parse({ ...baseFields(input, runDate), kind: 'mcp-server', ...input.mcpServer });
+}
+
+function outputStyle(input: InputOf<'output-style'>, runDate: string) {
+  return outputStyleRecord.parse({
+    ...baseFields(input, runDate),
+    kind: 'output-style',
+    ...analyzeOutputStyle(input.text),
+  });
+}
+
 function recordValue(input: RecordInput, runDate: string): ItemRecord['value'] {
   if (input.kind === 'marketplace') return marketplace(input, runDate);
   if (input.kind === 'plugin') return plugin(input, runDate);
   if (input.kind === 'skill') return skill(input, runDate);
-  return agent(input, runDate);
+  if (input.kind === 'agent') return agent(input, runDate);
+  if (input.kind === 'hook') return hook(input, runDate);
+  if (input.kind === 'mcp-server') return mcpServer(input, runDate);
+  return outputStyle(input, runDate);
 }
 
 /** Builds the record of one item and parses it with its contract; a refused record throws a ZodError. */
