@@ -1,0 +1,109 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "options": {
+    "typeAware": true,
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "rules": {
+    "complexity": ["error", { "max": 10 }],
+    "max-depth": ["error", { "max": 3 }],
+    "max-lines-per-function": ["error", { "max": 50, "skipBlankLines": true, "skipComments": true }],
+    "max-params": ["error", { "max": 4 }],
+    "no-nested-ternary": "error",
+    "no-else-return": "error",
+    "no-lonely-if": "error",
+    "no-unneeded-ternary": "error",
+    "no-useless-return": "error",
+    "no-useless-catch": "error",
+    "prefer-const": "error",
+    "import/no-cycle": "error",
+    "unicorn/prefer-node-protocol": "error",
+    "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/no-unnecessary-boolean-literal-compare": "error",
+    "typescript/no-unnecessary-type-parameters": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-floating-promises": "error"
+  },
+  "overrides": [
+    {
+      "files": ["packages/*/src/index.ts", "apps/*/src/index.ts"],
+      "rules": { "unicorn/no-empty-file": "off" }
+    },
+    {
+      "files": ["packages/contracts/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["node:*"], "message": "Logic packages use no Node APIs." },
+              {
+                "group": [
+                  "@directory/scoring",
+                  "@directory/collector",
+                  "@directory/site",
+                  "**/apps/**",
+                  "**/scoring/**"
+                ],
+                "message": "contracts is the bottom layer and imports no other workspace package."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/scoring/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["node:*"], "message": "Logic packages use no Node APIs." },
+              {
+                "group": ["@directory/collector", "@directory/site", "**/apps/**"],
+                "message": "Imports point down: apps import packages, never the reverse."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/collector/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["@directory/site", "**/site/**"], "message": "The apps do not import each other." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/site/src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["node:*"], "message": "The site runs in the browser and uses no Node APIs." },
+              { "group": ["@directory/collector", "**/collector/**"], "message": "The apps do not import each other." }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

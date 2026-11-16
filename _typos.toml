@@ -1,0 +1,6 @@
+# US spelling everywhere.
+[default]
+locale = "en-us"
+
+[files]
+extend-exclude = ["pnpm-lock.yaml", "LICENSES/", "LICENSE"]

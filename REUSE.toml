@@ -1,0 +1,24 @@
+version = 1
+
+# A license text goes into LICENSES/ with the first file that uses it; `reuse lint` names it when it is missing.
+
+# Code, site text and everything not matched below: ISC.
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Eike Landin"
+SPDX-License-Identifier = "ISC"
+
+# Own records (facts, scores, flags, tags), rubrics and curation files: CC0 1.0.
+[[annotations]]
+path = ["data/**", "rubrics/**", "curation/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Eike Landin"
+SPDX-License-Identifier = "CC0-1.0"
+
+# Names and logos: not licensed.
+[[annotations]]
+path = ["apps/site/src/assets/brand/**", "apps/site/public/favicon.svg"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Eike Landin"
+SPDX-License-Identifier = "LicenseRef-Brand"

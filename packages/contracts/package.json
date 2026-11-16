@@ -1,0 +1,13 @@
+{
+  "name": "@directory/contracts",
+  "private": true,
+  "type": "module",
+  "license": "ISC",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

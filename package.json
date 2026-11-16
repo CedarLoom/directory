@@ -1,0 +1,32 @@
+{
+  "name": "directory",
+  "private": true,
+  "type": "module",
+  "license": "ISC",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "typecheck": "pnpm --recursive --parallel run typecheck && tsc --project tsconfig.json",
+    "lint": "oxlint && stylelint --allow-empty-input \"apps/site/**/*.css\"",
+    "format": "biome check --write .",
+    "format:check": "biome ci .",
+    "test": "vitest run",
+    "knip": "knip --max-issues 0",
+    "jscpd": "jscpd .",
+    "licenses": "pnpm licenses list --json | node scripts/licenses.ts",
+    "check": "sh scripts/check.sh"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@types/node": "catalog:",
+    "jscpd": "catalog:",
+    "knip": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "stylelint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  }
+}

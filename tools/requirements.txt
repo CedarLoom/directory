@@ -1,0 +1,6 @@
+# Versions of the Python-packaged gate tools that scripts/check.sh runs through uvx; Dependabot updates them.
+actionlint-py==1.7.12.25
+charset-normalizer==3.5.2
+reuse==6.3.0
+typos==1.52.2
+zizmor==1.32.0

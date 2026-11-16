@@ -1,0 +1,5 @@
+rules:
+  # Dependabot waits 3 days before it proposes a release; the audit defaults to 7.
+  dependabot-cooldown:
+    config:
+      days: 3

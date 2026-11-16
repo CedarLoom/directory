@@ -1,0 +1,12 @@
+{
+  "name": "@directory/site",
+  "private": true,
+  "type": "module",
+  "license": "ISC",
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}
