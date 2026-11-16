@@ -29,7 +29,8 @@ export const registryServer = z.object({
     .max(200)
     .regex(/^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/),
   version: z.string().max(255),
-  repository: z.object({ url: z.string() }).optional(),
+  // The registry leaves out an empty URL, so a repository can come without one.
+  repository: z.object({ url: z.string().optional() }).optional(),
   packages: z.array(registryPackage).optional(),
   remotes: z.array(remote).optional(),
 });

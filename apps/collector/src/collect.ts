@@ -51,6 +51,8 @@ const perKind = 60;
 // Hooks and output styles are fewer; v1 keeps up to 20 of each.
 const perSmallKind = 20;
 const perTopic = 30;
+// The MCP Registry lists tens of thousands of servers; 500 repositories keep their facts at 10 GitHub requests.
+const serverRepositories = 500;
 const kinds = [
   'marketplace',
   'plugin',
@@ -268,6 +270,23 @@ function recordInputs(selection: Selection): RecordInput[] {
   ];
 }
 
+/**
+ * The repositories to read facts of: each listed and topic repository, and the MCP server repositories up to the budget
+ * in the registry adapter's name order; a server past the budget gets no facts, so no record.
+ */
+function factsRepositories(
+  listed: readonly Located[],
+  topicRepositories: readonly Repository[],
+  log: (line: string) => void,
+) {
+  const locations = (servers: boolean) =>
+    listed.filter(({ kind }) => (kind === 'mcp-server') === servers).map(({ location }) => location);
+  const servers = uniqueRepositories(locations(true));
+  if (servers.length > serverRepositories)
+    log(`mcp-registry: facts of the first ${serverRepositories} of ${servers.length} server repositories`);
+  return uniqueRepositories([...locations(false), ...topicRepositories, ...servers.slice(0, serverRepositories)]);
+}
+
 /** The listed plugins to inspect, with the skills and agents they contain, and each topic repository GitHub found. */
 function placesToInspect(
   plugins: readonly Located[],
@@ -335,8 +354,7 @@ export async function collect(
   const topicRepositories = identified(await searchTopics(client, options.topics, perTopic), refuse).filter(
     (repository) => !excluded.has(repositoryId(repository)),
   );
-  const repositories = uniqueRepositories([...listed.map(({ location }) => location), ...topicRepositories]);
-  const facts = await readFacts(client, repositories, runDate);
+  const facts = await readFacts(client, factsRepositories(listed, topicRepositories, log), runDate);
   const plugins = top(listed, 'plugin', facts, perKind);
   const { inspected, found } = await inspectPlaces(client, placesToInspect(plugins, topicRepositories, facts), refuse);
   const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found]);

@@ -88,8 +88,8 @@ const registryEntries = [
   },
 ];
 
-async function registryFetch(): Promise<Response> {
-  return Response.json({ servers: registryEntries, metadata: { count: registryEntries.length } });
+function registryFetch(servers: readonly unknown[]) {
+  return async (): Promise<Response> => Response.json({ servers, metadata: { count: servers.length } });
 }
 
 function marketplaceRepository(index: number): FakeRepository {
@@ -224,6 +224,7 @@ function fakeFetch(world: World, topicRepositories: readonly string[]) {
 
 interface RunOptions {
   topicRepositories?: readonly string[];
+  registry?: readonly unknown[];
   log?: (line: string) => void;
 }
 
@@ -231,7 +232,7 @@ async function run(
   world: World,
   runDate: string,
   previous: ReadonlyMap<string, string> = new Map(),
-  { topicRepositories = [], log = () => undefined }: RunOptions = {},
+  { topicRepositories = [], registry = registryEntries, log = () => undefined }: RunOptions = {},
 ) {
   const client = createHttpClient({
     fetch: fakeFetch(world, [
@@ -248,7 +249,7 @@ async function run(
     log: () => undefined,
   });
   const registryClient = createHttpClient({
-    fetch: registryFetch,
+    fetch: registryFetch(registry),
     clock: { now: () => 0, sleep: async () => undefined },
     headers: {},
     cap: 10,
@@ -302,6 +303,27 @@ it('builds a first batch of each kind in under 300 requests', async () => {
     items: firstItems,
     sources: [{ id: 'mcp-registry', readAt: '2026-11-16T06:00:00Z', crawl: 'full', reason: 'no-checkpoint' }],
   });
+});
+
+it('finishes inside the GitHub request cap when the registry has more servers than the cap allows facts for', async () => {
+  const world = fakeWorld();
+  const registry = Array.from({ length: 30_000 }, (_, index) => {
+    world.set(`example-org/server-${index}`, { stars: index, files: {} });
+    return {
+      server: {
+        name: `com.example/server-${index}`,
+        version: '1.0.0',
+        repository: { url: `https://github.com/example-org/server-${index}`, source: 'github' },
+      },
+      _meta: { 'io.modelcontextprotocol.registry/official': { status: 'active', publishedAt: '2026-11-01T10:00:00Z' } },
+    };
+  });
+  const { report } = await run(world, '2026-11-16', new Map(), { registry });
+  expect({
+    requests: report.requests < 300,
+    discovered: report.discovered['mcp-server'],
+    items: report.items['mcp-server'],
+  }).toEqual({ requests: true, discovered: 30_000, items: 60 });
 });
 
 it('refuses a topic repository whose name is too long for an id and finishes the run', async () => {

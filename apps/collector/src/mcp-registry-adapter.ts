@@ -4,7 +4,7 @@ import type { Candidate } from './candidate.ts';
 import type { DataFiles } from './data-files.ts';
 import { userAgent } from './github-contents.ts';
 import { type GitHubLocation, locationLink, parseRepository } from './github-location.ts';
-import type { HttpClient } from './http-client.ts';
+import { type HttpClient, RequestCapError, RequestError } from './http-client.ts';
 import { issueSummary } from './issue-summary.ts';
 import { jsonText } from './json-text.ts';
 import { analyzeMcpServer, type McpServerFacts, registryServer } from './mcp-server-analyzer.ts';
@@ -236,36 +236,63 @@ async function readChanges(
   return { servers, refused: listing.refused, reason: fullCrawlReason(listing.entries, known, Date.parse(checkpoint)) };
 }
 
+interface ServersRead {
+  servers: Map<string, KnownServer>;
+  refused: number;
+  reason: SourceRead['reason'];
+  stopped?: SourceRead['stopped'];
+}
+
+/**
+ * Reads the changes since the checkpoint, or the whole registry when there is none or the changes look like a reset. A
+ * read that stops before its last page keeps the servers of the last run.
+ */
+async function readServers(
+  client: HttpClient,
+  checkpoint: string | undefined,
+  known: ReadonlyMap<string, KnownServer>,
+  log: Log,
+): Promise<ServersRead> {
+  let reason: SourceRead['reason'] = checkpoint === undefined || known.size === 0 ? 'no-checkpoint' : undefined;
+  try {
+    if (checkpoint !== undefined && reason === undefined) {
+      const changes = await readChanges(client, checkpoint, known, log);
+      if (changes.reason === undefined) return changes;
+      reason = changes.reason;
+    }
+    log(`mcp-registry: full crawl (${reason})`);
+    const listing = await readListing(client, { version: 'latest' }, log);
+    const kept = listing.entries.filter(({ status }) => status !== 'deleted');
+    return { servers: new Map(kept.map(({ server }) => [server.name, server])), refused: listing.refused, reason };
+  } catch (error) {
+    if (!(error instanceof RequestError)) throw error;
+    log(`mcp-registry: stopped, the last run's servers and checkpoint are kept: ${error.message}`);
+    const stopped = error instanceof RequestCapError ? 'request-cap' : 'request-error';
+    return { servers: new Map(known), refused: 0, reason, stopped };
+  }
+}
+
 /**
  * The MCP Registry adapter; it reads through its own client, without the GitHub token. With a checkpoint it reads only
  * what changed since and applies that to the servers of the last run; with none, or when the change looks like a data
- * reset, it reads the whole registry. A deleted server is left out.
+ * reset, it reads the whole registry. A deleted server is left out. A read that stops before its last page keeps the
+ * servers and the checkpoint of the last run, as the registry asks a new checkpoint to follow only a complete read.
  */
 export function mcpRegistryAdapter(previous: DataFiles, runAt: string): SourceAdapter {
   return {
     id: 'mcp-registry',
     async collect(client, log) {
       const { checkpoint, known } = lastRun(previous);
-      let reason: SourceRead['reason'] = 'no-checkpoint';
-      let servers = new Map<string, KnownServer>();
-      let refused = 0;
-      if (checkpoint !== undefined && known.size > 0)
-        ({ servers, refused, reason } = await readChanges(client, checkpoint, known, log));
-      if (reason !== undefined) {
-        log(`mcp-registry: full crawl (${reason})`);
-        const listing = await readListing(client, { version: 'latest' }, log);
-        servers = new Map(
-          listing.entries.filter(({ status }) => status !== 'deleted').map(({ server }) => [server.name, server]),
-        );
-        refused = listing.refused;
-      }
+      const { servers, refused, reason, stopped } = await readServers(client, checkpoint, known, log);
       const { found, refused: unnamed } = candidates(servers.values(), log);
-      const crawl = reason === undefined ? 'incremental' : 'full';
+      const nextCheckpoint = stopped === undefined ? runAt : checkpoint;
       const read: SourceRead = {
         id: 'mcp-registry',
-        readAt: runAt,
-        crawl,
+        ...(nextCheckpoint !== undefined && { readAt: nextCheckpoint }),
+        crawl: reason === undefined ? 'incremental' : 'full',
         ...(reason && { reason }),
+        ...(stopped && { stopped }),
+        withoutRepository: [...servers.values()].filter(({ repository }) => repository === undefined).length,
         requests: client.requests,
       };
       return { candidates: found, refused: refused + unnamed, read };

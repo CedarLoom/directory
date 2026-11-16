@@ -17,8 +17,9 @@ const defaultExclusions = fileURLToPath(new URL('../../../curation/exclusions.js
 const requestCap = 600;
 // GitHub's secondary limit allows 900 REST points per minute; one request per second stays far below it.
 const requestIntervalMs = 1000;
-// A full crawl of the MCP Registry reads 100 servers a page; the cap stops a cursor that never ends.
-const registryRequestCap = 200;
+// A full crawl reads 100 servers a page, and 200 pages reached only names starting with `dev.`: 2,000 pages leave room
+// for the whole registry and its growth, at one request a second, and still stop a cursor that never ends.
+const registryRequestCap = 2000;
 
 /** sysexits codes: usage 64, bad data 65, missing input 66, internal error 70; 1 when a source stopped the run. */
 function exitCode(error: unknown): number {
