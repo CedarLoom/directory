@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.plugins",
+  "kind": "marketplace",
+  "name": "plugins",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/example-org/plugins"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-10-30T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "value": 1830,
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "bodyLines": 120,
+    "hasLicenseField": true
+  },
+  "flags": [],
+  "tags": ["review"],
+  "cedarloomFit": {
+    "label": "overlaps",
+    "tags": ["review"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 74.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-02",
+  "pluginCount": 12,
+  "sourceKinds": {
+    "path": 6,
+    "github": 2,
+    "url": 1,
+    "git-subdir": 1,
+    "npm": 1,
+    "archive": 0,
+    "command": 0,
+    "other": 1
+  },
+  "pinnedShare": 0.75,
+  "ownerType": "organization"
+}

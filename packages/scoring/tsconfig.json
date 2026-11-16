@@ -4,6 +4,6 @@
     "lib": ["es2025"],
     "types": []
   },
-  "include": ["src"],
+  "include": ["src", "../contracts/src/zod-globals.d.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

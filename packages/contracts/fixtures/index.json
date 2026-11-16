@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "gh.example-org.plugins.code-review",
+      "kind": "plugin",
+      "name": "code-review",
+      "owner": "example-org",
+      "score": 74.5,
+      "stars": 412,
+      "licenseClass": "permissive",
+      "fit": "overlaps",
+      "listedOfficial": false,
+      "pushedAt": "2026-10-30T08:15:00Z",
+      "archived": false,
+      "flagCount": 2,
+      "tags": ["review"]
+    },
+    {
+      "id": "io.github.example-org.weather",
+      "kind": "mcp-server",
+      "name": "io.github.example-org/weather",
+      "score": 61,
+      "licenseClass": "permissive",
+      "fit": "complements",
+      "listedOfficial": false,
+      "archived": false,
+      "flagCount": 1,
+      "tags": []
+    }
+  ]
+}

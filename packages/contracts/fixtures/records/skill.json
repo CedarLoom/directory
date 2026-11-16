@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.skills.pdf-forms",
+  "kind": "skill",
+  "name": "pdf-forms",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/example-org/skills/tree/main/pdf-forms",
+    "install": "https://github.com/example-org/skills/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "frontmatter",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-10-30T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "value": 412,
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "bodyLines": 120,
+    "hasLicenseField": true
+  },
+  "flags": [],
+  "tags": ["review"],
+  "cedarloomFit": {
+    "label": "overlaps",
+    "tags": ["review"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "skill",
+      "version": "1.0.0"
+    },
+    "total": 74.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-02",
+  "frontmatterFields": ["name", "description", "license", "allowed-tools"],
+  "bodyLines": 210,
+  "tokens": {
+    "metadata": 95,
+    "body": 2400
+  },
+  "allowedTools": ["read", "bash"],
+  "files": {
+    "scripts": 2,
+    "references": 1,
+    "assets": 0
+  }
+}

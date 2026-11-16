@@ -5,11 +5,13 @@ packages:
 # One version per dependency across the workspace; packages refer to it as "catalog:".
 catalog:
   "@biomejs/biome": 2.6.7
+  "@noble/hashes": 2.4.0
   "@types/node": 26.6.6
   jscpd: 5.4.3
   knip: 6.45.1
   oxlint: 1.93.0
   oxlint-tsgolint: 7.0.2007
+  spdx-license-ids: 3.0.24
   stylelint: 18.0.0
   typescript: 7.0.2
   vitest: 5.1.0

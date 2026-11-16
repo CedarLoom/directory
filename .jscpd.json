@@ -1,7 +1,7 @@
 {
   "threshold": 0,
   "gitignore": true,
-  "ignore": ["**/pnpm-lock.yaml", "**/LICENSES/**"],
+  "ignore": ["**/pnpm-lock.yaml", "**/LICENSES/**", "packages/contracts/schemas/**", "packages/contracts/fixtures/**"],
   "reporters": ["console"],
   "exitCode": 1
 }

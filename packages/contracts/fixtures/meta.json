@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "runAt": "2026-11-02T03:17:42Z",
+  "schemaVersions": {
+    "marketplace": 1,
+    "plugin": 1,
+    "skill": 1,
+    "agent": 1,
+    "hook": 1,
+    "mcp-server": 1,
+    "output-style": 1
+  },
+  "rubricVersions": {
+    "marketplace": "1.0.0",
+    "plugin": "1.0.0",
+    "skill": "1.0.0",
+    "agent": "1.0.0",
+    "hook": "1.0.0",
+    "mcp-server": "1.0.0",
+    "output-style": "1.0.0"
+  },
+  "sources": [
+    { "id": "official-marketplace", "readAt": "2026-11-02T03:17:44Z" },
+    { "id": "github", "readAt": "2026-11-02T03:18:10Z" },
+    { "id": "mcp-registry", "readAt": "2026-11-02T03:19:02Z" }
+  ],
+  "stats": {
+    "requests": 214,
+    "itemsByKind": {
+      "marketplace": 50,
+      "plugin": 50,
+      "skill": 50,
+      "agent": 50,
+      "hook": 20,
+      "mcp-server": 50,
+      "output-style": 12
+    },
+    "otherSourceKinds": 1
+  }
+}

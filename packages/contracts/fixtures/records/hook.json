@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.hooks.format-on-save",
+  "kind": "hook",
+  "name": "format-on-save",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/example-org/format-on-save"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "GPL-3.0-only",
+    "source": "github-detected",
+    "class": "copyleft"
+  },
+  "maintenance": {
+    "pushedAt": "2026-10-30T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "value": 412,
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "bodyLines": 120,
+    "hasLicenseField": true
+  },
+  "flags": ["hook-shell-command"],
+  "tags": ["review"],
+  "cedarloomFit": {
+    "label": "overlaps",
+    "tags": ["review"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.0.0"
+    },
+    "total": 74.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-02",
+  "events": ["PostToolUse"],
+  "handlerTypes": ["command"],
+  "commandForms": ["shell"],
+  "matcherBreadth": "specific"
+}

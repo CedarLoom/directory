@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "runAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    },
+    "schemaVersions": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "marketplace",
+          "plugin",
+          "skill",
+          "agent",
+          "hook",
+          "mcp-server",
+          "output-style"
+        ]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      },
+      "required": [
+        "marketplace",
+        "plugin",
+        "skill",
+        "agent",
+        "hook",
+        "mcp-server",
+        "output-style"
+      ]
+    },
+    "rubricVersions": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "marketplace",
+          "plugin",
+          "skill",
+          "agent",
+          "hook",
+          "mcp-server",
+          "output-style"
+        ]
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)$"
+      },
+      "required": [
+        "marketplace",
+        "plugin",
+        "skill",
+        "agent",
+        "hook",
+        "mcp-server",
+        "output-style"
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "official-marketplace",
+              "community-marketplace",
+              "anthropic-marketplaces",
+              "github",
+              "mcp-registry",
+              "seeds"
+            ]
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "readAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "stats": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "itemsByKind": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "enum": [
+              "marketplace",
+              "plugin",
+              "skill",
+              "agent",
+              "hook",
+              "mcp-server",
+              "output-style"
+            ]
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "required": [
+            "marketplace",
+            "plugin",
+            "skill",
+            "agent",
+            "hook",
+            "mcp-server",
+            "output-style"
+          ]
+        },
+        "otherSourceKinds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "requests",
+        "itemsByKind",
+        "otherSourceKinds"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runAt",
+    "schemaVersions",
+    "rubricVersions",
+    "sources",
+    "stats"
+  ],
+  "additionalProperties": false
+}

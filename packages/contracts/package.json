@@ -7,6 +7,11 @@
   "scripts": {
     "typecheck": "tsc"
   },
+  "dependencies": {
+    "@noble/hashes": "catalog:",
+    "spdx-license-ids": "catalog:",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "typescript": "catalog:"
   }

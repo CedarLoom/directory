@@ -45,7 +45,7 @@
           "error",
           {
             "patterns": [
-              { "group": ["node:*"], "message": "Logic packages use no Node APIs." },
+              { "group": ["node:*", "node:*/**"], "message": "Logic packages use no Node APIs." },
               {
                 "group": [
                   "@directory/scoring",
@@ -68,7 +68,7 @@
           "error",
           {
             "patterns": [
-              { "group": ["node:*"], "message": "Logic packages use no Node APIs." },
+              { "group": ["node:*", "node:*/**"], "message": "Logic packages use no Node APIs." },
               {
                 "group": ["@directory/collector", "@directory/site", "**/apps/**"],
                 "message": "Imports point down: apps import packages, never the reverse."
@@ -98,7 +98,7 @@
           "error",
           {
             "patterns": [
-              { "group": ["node:*"], "message": "The site runs in the browser and uses no Node APIs." },
+              { "group": ["node:*", "node:*/**"], "message": "The site runs in the browser and uses no Node APIs." },
               { "group": ["@directory/collector", "**/collector/**"], "message": "The apps do not import each other." }
             ]
           }
