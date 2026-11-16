@@ -1,11 +1,18 @@
 import type { Pin, SourceId, SourceKind } from '@directory/contracts';
+import type { GitHubLocation } from './github-location.ts';
+import type { MarketplaceEntries } from './marketplace-analyzer.ts';
+
+/** A candidate GitHub holds; only these get records. */
+export type Located = Candidate & { location: GitHubLocation };
 
 /** An item a source names, before analysis: ids, names, links and facts, no third-party text. */
 export interface Candidate {
-  kind: 'marketplace' | 'plugin' | 'skill';
+  kind: 'marketplace' | 'plugin' | 'skill' | 'agent';
   id: string;
   name: string;
   links: { source?: string; homepage?: string };
+  /** Where the item lives on GitHub; absent for npm, archive and command sources and other hosts. */
+  location?: GitHubLocation;
   /** The id of the plugin a skill belongs to. */
   container?: string;
   /** Ids of the marketplaces that list the item. */
@@ -13,6 +20,8 @@ export interface Candidate {
   provenance: SourceId[];
   /** A plugin's source kind and pin as its marketplace entry sets them. */
   source?: { kind: SourceKind; pin: Pin };
+  /** A marketplace's plugin entries. */
+  entries?: MarketplaceEntries;
 }
 
 function union<T>(first: readonly T[], second: readonly T[]): T[] {

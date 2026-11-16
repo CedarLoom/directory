@@ -12,6 +12,12 @@ export const indexFile = z.strictObject({
       owner: itemName.optional(),
       score: z.number().min(0).max(100).optional(),
       stars: count.optional(),
+      starsGained30d: z
+        .int()
+        .optional()
+        .describe(
+          'Current stars minus the newest snapshot 30 or more days before the run date; negative when unstars outweigh stars; absent while no snapshot is that old.',
+        ),
       licenseClass,
       fit: fitLabel,
       listedOfficial: z.boolean(),
