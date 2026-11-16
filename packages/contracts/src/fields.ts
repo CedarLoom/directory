@@ -61,6 +61,7 @@ const sourceIds = [
   'seeds',
 ] as const;
 export const sourceId = z.enum(sourceIds);
+export type SourceId = z.infer<typeof sourceId>;
 
 const flags = [
   'hook-shell-command',

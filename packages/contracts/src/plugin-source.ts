@@ -4,10 +4,10 @@ import { gitSha } from './fields.ts';
 /** The source kinds of a marketplace entry; `path` is a relative path, `other` any kind outside the official list. */
 const sourceKinds = ['path', 'github', 'url', 'git-subdir', 'npm', 'archive', 'command', 'other'] as const;
 export const sourceKind = z.enum(sourceKinds);
-type SourceKind = z.infer<typeof sourceKind>;
+export type SourceKind = z.infer<typeof sourceKind>;
 
 export const pin = z.enum(['sha', 'ref', 'version', 'marketplace-commit', 'none']);
-type Pin = z.infer<typeof pin>;
+export type Pin = z.infer<typeof pin>;
 
 // Upstream entries carry more keys than these; only the keys that decide the pin are read.
 const gitSource = z.looseObject({ sha: gitSha.optional(), ref: z.string().min(1).optional() });

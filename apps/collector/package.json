@@ -4,7 +4,14 @@
   "type": "module",
   "license": "ISC",
   "scripts": {
+    "collect": "node src/index.ts",
     "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "catalog:",
+    "@directory/contracts": "workspace:*",
+    "commander": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
