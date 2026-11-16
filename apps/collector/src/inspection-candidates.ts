@@ -4,7 +4,7 @@ import type { Candidate } from './candidate.ts';
 import { type GitHubLocation, joinPath, locationId, locationLink, repositoryId } from './github-location.ts';
 import { jsonText } from './json-text.ts';
 import { entrySources } from './marketplace-analyzer.ts';
-import type { DirectoryKey, Inspection } from './repository-tree.ts';
+import { type DirectoryKey, directoryPaths, type Inspection } from './repository-tree.ts';
 
 /** The place an inspection read: a listed plugin, whose skills and agents it contains, or a topic repository. */
 export interface InspectedPlace {
@@ -33,12 +33,6 @@ function itemCandidate(place: InspectedPlace, kind: 'skill' | 'agent', path: str
 
 const skillFolders: readonly DirectoryKey[] = ['skills', 'claudeSkills'];
 const agentFolders: readonly DirectoryKey[] = ['agents', 'claudeAgents'];
-const folderPaths: Partial<Record<DirectoryKey, string>> = {
-  skills: 'skills',
-  claudeSkills: '.claude/skills',
-  agents: 'agents',
-  claudeAgents: '.claude/agents',
-};
 
 interface ItemPath {
   kind: 'skill' | 'agent';
@@ -51,7 +45,7 @@ function folderEntries(place: InspectedPlace, { directories }: Inspection, keys:
     (directories[key] ?? []).map(({ name, type }) => ({
       name,
       type,
-      path: joinPath(place.location.path, folderPaths[key] ?? '', name),
+      path: joinPath(place.location.path, directoryPaths[key], name),
     })),
   );
 }

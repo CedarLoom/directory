@@ -86,7 +86,8 @@ export interface License {
 }
 
 function classOf(id: string): LicenseClass {
-  const found = classes[id];
+  // GPL-3.0-only and GPL-3.0-or-later share the class of GitHub's GPL-3.0.
+  const found = classes[id.replace(/-(only|or-later)$/, '')];
   // The id is an SPDX id or GitHub's, never free text.
   if (found === undefined) throw new UnknownLicenseError(`no license class for ${id}`);
   return found;

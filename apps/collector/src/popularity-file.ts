@@ -15,7 +15,7 @@ function weekStart(date: string): string {
 
 /**
  * The file with the run's star count: unchanged when the count equals the last snapshot, else one snapshot per week,
- * dated the Monday of the run's week, which a later run in the same week overwrites.
+ * dated the Monday of the run's week, which a later run in the same week overwrites or, back at the count before, removes.
  */
 export function withSnapshot(
   file: PopularityFile | undefined,
@@ -28,7 +28,7 @@ export function withSnapshot(
   if (file !== undefined && last?.stars === stars) return file;
   const date = weekStart(runDate);
   const kept = last?.date === date ? snapshots.slice(0, -1) : snapshots;
-  return { schemaVersion: 1, id, snapshots: [...kept, { date, stars }] };
+  return { schemaVersion: 1, id, snapshots: kept.at(-1)?.stars === stars ? kept : [...kept, { date, stars }] };
 }
 
 /** Stars minus the newest snapshot 30 or more days before the run date; undefined while no snapshot is that old. */

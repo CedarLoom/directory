@@ -2,9 +2,7 @@ import { z } from 'zod';
 import { queryEach } from './github-graphql.ts';
 import type { GitHubLocation } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
-import { expression } from './repository-tree.ts';
-
-const blob = z.object({ text: z.string().nullable().optional() }).nullable();
+import { blob, expression } from './repository-tree.ts';
 const subdirectory = z.object({
   entries: z
     .array(
@@ -26,7 +24,7 @@ export interface SkillFolders {
 }
 
 export interface ItemFile {
-  /** Absent for a missing or binary file. */
+  /** Absent for a missing, binary or cut file. */
   text?: string;
   folders: SkillFolders;
 }
@@ -56,7 +54,7 @@ export async function readItemFiles(
     name: withFolders ? 'SkillFiles' : 'ItemFiles',
     variables: { owner: 'String!', name: 'String!', file: 'String!', ...(withFolders ? { directory: 'String!' } : {}) },
     field: (variable) =>
-      `repository(owner: ${variable('owner')}, name: ${variable('name')}) { file: object(expression: ${variable('file')}) { ... on Blob { text } } ${folderField(variable)} }`,
+      `repository(owner: ${variable('owner')}, name: ${variable('name')}) { file: object(expression: ${variable('file')}) { ... on Blob { text isTruncated } } ${folderField(variable)} }`,
     values: ({ location, file }) => ({
       owner: location.owner,
       name: location.repo,
@@ -68,7 +66,7 @@ export async function readItemFiles(
   });
   return answers.map((raw) => {
     const read = answer.parse(raw);
-    const text = read?.file?.text;
+    const text = read?.file?.isTruncated === true ? undefined : read?.file?.text;
     const found = folders(read?.directory);
     return text == null ? { folders: found } : { text, folders: found };
   });

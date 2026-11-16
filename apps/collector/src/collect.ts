@@ -1,11 +1,12 @@
 import { ZodError } from 'zod';
-import { type Candidate, mergeCandidates } from './candidate.ts';
+import { type Candidate, type Located, mergeCandidates } from './candidate.ts';
 import { type DataFiles, dataFiles } from './data-files.ts';
 import { applyExclusions } from './exclusions.ts';
 import type { Repository } from './github-contents.ts';
 import { repositoryId } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
 import { type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
+import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
 import { UnknownLicenseError } from './license-class.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
@@ -42,8 +43,6 @@ const perKind = 60;
 const perTopic = 30;
 const kinds: readonly ItemKind[] = ['marketplace', 'plugin', 'skill', 'agent'];
 
-type Located = Candidate & { location: NonNullable<Candidate['location']> };
-
 function isLocated(candidate: Candidate): candidate is Located {
   return candidate.location !== undefined;
 }
@@ -75,10 +74,7 @@ function countByKind(items: readonly { kind: ItemKind }[]): Record<ItemKind, num
 function refusalLogger(log: (line: string) => void, counter: { refused: number }) {
   return (id: string, error: Error) => {
     counter.refused += 1;
-    const detail =
-      error instanceof ZodError
-        ? error.issues.map(({ path, code }) => `${path.join('.') || 'value'} ${code}`).join(', ')
-        : error.message;
+    const detail = error instanceof ZodError ? issueSummary(error, 'value') : error.message;
     log(`${id}: refused: ${detail}`);
   };
 }
@@ -221,7 +217,10 @@ export async function collect(
   const listed = applyExclusions(mergeCandidates(results.flatMap((result) => result.candidates)), excluded).filter(
     isLocated,
   );
-  const topicRepositories = await searchTopics(client, options.topics, perTopic);
+  // An excluded repository found by topic is not inspected, so the items it holds stay out too.
+  const topicRepositories = (await searchTopics(client, options.topics, perTopic)).filter(
+    (repository) => !excluded.has(repositoryId(repository)),
+  );
   const repositories = uniqueRepositories([...listed.map(({ location }) => location), ...topicRepositories]);
   const facts = await readFacts(client, repositories, runDate);
   const plugins = top(listed, 'plugin', facts, perKind);

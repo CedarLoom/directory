@@ -5,12 +5,12 @@ export interface Repository {
   repo: string;
 }
 
-/** Headers of every GitHub API request; without a token the requests go unauthenticated (60 per hour). */
-export function gitHubHeaders(token: string | undefined): Record<string, string> {
+/** Headers of every GitHub API request. */
+export function gitHubHeaders(token: string): Record<string, string> {
   return {
     'user-agent': 'cedarloom-directory-collector',
     'x-github-api-version': '2026-03-10',
-    ...(token === undefined ? {} : { authorization: `Bearer ${token}` }),
+    authorization: `Bearer ${token}`,
   };
 }
 

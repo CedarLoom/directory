@@ -5,7 +5,8 @@ import type { HttpClient } from './http-client.ts';
 
 // Third-party file text stays in memory: it is parsed for facts and never written.
 
-const directories = {
+/** The layout folders an inspection lists, by key. */
+export const directoryPaths = {
   root: '',
   skills: 'skills',
   claudeSkills: '.claude/skills',
@@ -24,7 +25,7 @@ const files = {
   lsp: '.lsp.json',
 } as const;
 
-export type DirectoryKey = keyof typeof directories;
+export type DirectoryKey = keyof typeof directoryPaths;
 type FileKey = keyof typeof files;
 
 const entry = z.object({ name: z.string(), type: z.enum(['blob', 'tree', 'commit']) });
@@ -32,7 +33,10 @@ export type Entry = z.infer<typeof entry>;
 
 // A path that is a file where a directory is read, or the reverse, reads as an empty object.
 const directory = z.object({ entries: z.array(entry).optional() }).nullable();
-const blob = z.object({ text: z.string().nullable().optional() }).nullable();
+/** A Blob read with `text isTruncated`; GitHub cuts a large file's text and sets isTruncated. */
+export const blob = z
+  .object({ text: z.string().nullable().optional(), isTruncated: z.boolean().optional() })
+  .nullable();
 
 /** What one location holds of the plugin, skill, agent and marketplace layout. */
 export interface Inspection {
@@ -50,27 +54,37 @@ function keysOf<T extends object>(value: T): Extract<keyof T, string>[] {
   return Object.keys(value).filter((key): key is Extract<keyof T, string> => key in value);
 }
 
+/** The text of each layout file; a cut file gives undefined. */
+function layoutFiles(answer: Readonly<Record<string, unknown>>): Inspection['files'] | undefined {
+  const found: Inspection['files'] = {};
+  for (const key of keysOf(files)) {
+    const file = blob.parse(answer[key]);
+    if (file?.isTruncated === true) return undefined;
+    if (file?.text != null) found[key] = file.text;
+  }
+  return found;
+}
+
+/** The layout a location holds; a missing location or a cut layout file gives undefined, so no record is built from part of it. */
 function toInspection(raw: unknown): Inspection | undefined {
   if (raw === null) return undefined;
   const answer = z.record(z.string(), z.unknown()).parse(raw);
-  const inspection: Inspection = { directories: {}, files: {} };
-  for (const key of keysOf(directories)) {
+  const found = layoutFiles(answer);
+  if (directory.parse(answer['root']) === null || found === undefined) return undefined;
+  const inspection: Inspection = { directories: {}, files: found };
+  for (const key of keysOf(directoryPaths)) {
     const entries = directory.parse(answer[key])?.entries;
     if (entries !== undefined) inspection.directories[key] = entries;
-  }
-  for (const key of keysOf(files)) {
-    const text = blob.parse(answer[key])?.text;
-    if (text != null) inspection.files[key] = text;
   }
   return inspection;
 }
 
-/** Reads the layout of each location, ten to a query; a location in a missing repository gives undefined. */
+/** Reads the layout of each location, ten to a query. */
 export async function inspectLocations(
   client: HttpClient,
   locations: readonly GitHubLocation[],
 ): Promise<(Inspection | undefined)[]> {
-  const paths: Record<string, string> = { ...directories, ...files };
+  const paths: Record<string, string> = { ...directoryPaths, ...files };
   const answers = await queryEach(client, locations, {
     name: 'Inspect',
     variables: {
@@ -80,7 +94,7 @@ export async function inspectLocations(
     },
     field: (variable) => {
       const objects = [
-        ...Object.keys(directories).map((key) => `${key}: object(expression: ${variable(key)}) { ...Dir }`),
+        ...Object.keys(directoryPaths).map((key) => `${key}: object(expression: ${variable(key)}) { ...Dir }`),
         ...Object.keys(files).map((key) => `${key}: object(expression: ${variable(key)}) { ...File }`),
       ];
       return `repository(owner: ${variable('owner')}, name: ${variable('name')}) { ${objects.join(' ')} }`;
@@ -90,7 +104,7 @@ export async function inspectLocations(
       name: location.repo,
       ...Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, expression(location, path)])),
     }),
-    fragments: 'fragment Dir on Tree { entries { name type } } fragment File on Blob { text }',
+    fragments: 'fragment Dir on Tree { entries { name type } } fragment File on Blob { text isTruncated }',
     batchSize: 10,
   });
   return answers.map(toInspection);

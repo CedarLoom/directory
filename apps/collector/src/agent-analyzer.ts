@@ -9,10 +9,11 @@ export function analyzeAgent(text: string) {
   const tools = frontmatter.fields.get('tools');
   return {
     ...(name.success ? { name: name.data } : {}),
-    // Without a `tools` field the agent inherits every tool of the session.
-    toolsDeclared: tools !== undefined,
+    // Without a `tools` value the agent inherits every tool of the session.
+    toolsDeclared: tools !== undefined && tools !== '',
     toolClasses: toolClasses(tools),
-    modelSet: textField(frontmatter, 'model') !== undefined,
+    // `inherit` is the same as no model.
+    modelSet: !['inherit', undefined].includes(textField(frontmatter, 'model')),
     tokens: tokenEstimate(frontmatter),
   };
 }

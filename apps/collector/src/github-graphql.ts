@@ -12,14 +12,14 @@ const answer = z.object({
     .optional(),
 });
 
-/** Sends one query; a missing repository reads as null, any other error stops the run. */
+/** Sends one query; a missing or blocked repository reads as null, any other error stops the run. */
 async function query(client: HttpClient, text: string, variables: Record<string, unknown>) {
   const body = await client.postText(endpoint, JSON.stringify({ query: text, variables }), {
     accept: 'application/json',
     maxBytes,
   });
   const { data, errors = [] } = answer.parse(JSON.parse(body));
-  const fatal = errors.filter(({ type }) => type !== 'NOT_FOUND');
+  const fatal = errors.filter(({ type }) => type !== 'NOT_FOUND' && type !== 'FORBIDDEN');
   // Types and paths only: an error message can quote third-party text.
   if (fatal.length > 0 || data == null)
     throw new RequestError(
@@ -69,7 +69,7 @@ async function queryBatch<T>(client: HttpClient, batch: readonly T[], spec: Alia
   return batch.map((_, index) => data[`a${index}`] ?? null);
 }
 
-/** Runs the query over `items` in batches and returns each item's field, null for a missing repository. */
+/** Runs the query over `items` in batches and returns each item's field, null for a missing or blocked repository. */
 export async function queryEach<T>(client: HttpClient, items: readonly T[], spec: AliasedQuery<T>): Promise<unknown[]> {
   const batches = Array.from({ length: Math.ceil(items.length / spec.batchSize) }, (_, index) =>
     items.slice(index * spec.batchSize, (index + 1) * spec.batchSize),

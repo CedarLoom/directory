@@ -2,6 +2,9 @@ import type { Pin, SourceId, SourceKind } from '@directory/contracts';
 import type { GitHubLocation } from './github-location.ts';
 import type { MarketplaceEntries } from './marketplace-analyzer.ts';
 
+/** A candidate GitHub holds; only these get records. */
+export type Located = Candidate & { location: GitHubLocation };
+
 /** An item a source names, before analysis: ids, names, links and facts, no third-party text. */
 export interface Candidate {
   kind: 'marketplace' | 'plugin' | 'skill' | 'agent';

@@ -19,9 +19,9 @@ const lspConfig = z.record(z.string(), z.unknown());
 
 const transports: Readonly<Record<string, 'stdio' | 'http' | 'sse'>> = { stdio: 'stdio', http: 'http', sse: 'sse' };
 
-/** A manifest value that is an object holds the configuration inline; a string is a path, which is not followed. */
+/** A manifest value that is an object holds the configuration inline; a path or a list of paths is not followed. */
 function inline(value: unknown): unknown {
-  return typeof value === 'object' && value !== null ? value : undefined;
+  return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : undefined;
 }
 
 function hooksByEvent(configs: readonly unknown[]): Record<string, number> {

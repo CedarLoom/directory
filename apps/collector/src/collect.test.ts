@@ -17,7 +17,12 @@ function pluginRepository(index: number): FakeRepository {
   return {
     stars: 5000 - index,
     files: {
-      '.claude-plugin/plugin.json': JSON.stringify({ name: `plugin-${index}`, version: '1.4.0', description: marker }),
+      '.claude-plugin/plugin.json': JSON.stringify({
+        name: `plugin-${index}`,
+        version: '1.4.0',
+        description: marker,
+        mcpServers: ['./more-servers.json'],
+      }),
       [`skills/skill-${index}/SKILL.md`]: `---\nname: skill-${index}\ndescription: ${marker}\nlicense: Apache-2.0\nallowed-tools: Read, Grep, Bash(git diff:*)\n---\n# Skill\n\n${marker}\n`,
       [`skills/skill-${index}/scripts/run.sh`]: `echo ${marker}`,
       [`skills/skill-${index}/references/guide.md`]: marker,
@@ -46,7 +51,7 @@ function marketplaceRepository(index: number): FakeRepository {
   };
 }
 
-/** A GitHub of 1,000 listed plugin repositories, two listing marketplaces and 25 topic marketplaces. */
+/** A GitHub of 1,000 listed plugin repositories, a listed plugin that moved away, two listing marketplaces and 25 topic marketplaces. */
 function fakeWorld() {
   const listed = Array.from({ length: 1000 }, (_, index) => ({
     name: `plugin-${index}`,
@@ -65,11 +70,17 @@ function fakeWorld() {
         files: {
           '.claude-plugin/marketplace.json': JSON.stringify({
             name: 'claude-plugins-official',
-            plugins: [listed[0], { name: 'npm-tool', source: { source: 'npm', package: 'npm-tool' } }],
+            plugins: [
+              listed[0],
+              { name: 'npm-tool', source: { source: 'npm', package: 'npm-tool' } },
+              { name: 'moved', source: { source: 'github', repo: 'example-org/moved' } },
+              { name: 'Bad Name', source: './bad' },
+            ],
           }),
         },
       },
     ],
+    ['example-org/moved', { stars: 9000, files: {} }],
     ...listed.map((_, index): [string, FakeRepository] => [`example-org/plugin-${index}`, pluginRepository(index)]),
     ...Array.from({ length: 25 }, (_, index): [string, FakeRepository] => [
       `example-org/market-${index}`,
@@ -152,10 +163,10 @@ function fakeFetch(world: World, topicRepositories: readonly string[]) {
 
 async function run(world: World, runDate: string, previous: ReadonlyMap<string, string> = new Map()) {
   const client = createHttpClient({
-    fetch: fakeFetch(
-      world,
-      Array.from({ length: 25 }, (_, index) => `example-org/market-${index}`),
-    ),
+    fetch: fakeFetch(world, [
+      ...Array.from({ length: 25 }, (_, index) => `example-org/market-${index}`),
+      'example-org/plugin-1',
+    ]),
     clock: { now: () => 0, sleep: async () => undefined },
     headers: {},
     cap: 600,
@@ -183,10 +194,10 @@ it('builds a first batch of each kind in under 300 requests', async () => {
     format: 'directory-run-report',
     schemaVersion: 2,
     requests: true,
-    refused: 0,
+    refused: 1,
     excluded: 1,
-    discovered: { marketplace: 27, plugin: 1000, skill: 60, agent: 60 },
-    items: { marketplace: 27, plugin: 60, skill: 60, agent: 60 },
+    discovered: { marketplace: 27, plugin: 1001, skill: 59, agent: 59 },
+    items: { marketplace: 27, plugin: 59, skill: 59, agent: 59 },
   });
 });
 
@@ -200,7 +211,7 @@ it('writes records, popularity files and the index, and no third-party text', as
       (path) => !/^(records\/(marketplace|plugin|skill|agent)|popularity)\/[a-z0-9._-]+\.json$/.test(path),
     ),
     quoting: paths.filter((path) => files.get(path)?.includes('curl') === true),
-  }).toEqual({ records: 207, popularity: 87, others: ['index.json'], quoting: [] });
+  }).toEqual({ records: 204, popularity: 86, others: ['index.json'], quoting: [] });
 });
 
 it('leaves every file byte-identical on a later run with unchanged star counts', async () => {

@@ -9,7 +9,7 @@ import {
 } from '@directory/contracts';
 import type { z } from 'zod';
 import { analyzeAgent } from './agent-analyzer.ts';
-import type { Candidate } from './candidate.ts';
+import type { Candidate, Located } from './candidate.ts';
 import { repositoryId } from './github-location.ts';
 import type { SkillFolders } from './item-files.ts';
 import { licenseOf } from './license-class.ts';
@@ -36,8 +36,6 @@ export interface ItemRecord {
   value: RecordValue;
 }
 
-type Located = Candidate & { location: NonNullable<Candidate['location']> };
-
 /** What a record is built from: the candidate, its repository's facts and what was read for its kind. */
 export type RecordInput = { candidate: Located; facts: RepositoryFacts } & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
@@ -56,7 +54,7 @@ const sourceOrder: readonly SourceId[] = [
   'seeds',
 ];
 
-function common({ candidate, facts }: RecordInput, runDate: string, declaredLicense?: string) {
+function baseFields({ candidate, facts }: RecordInput, runDate: string, declaredLicense?: string) {
   const repository = repositoryId(candidate.location);
   const pointer = { ref: repository, scope: 'repository', source: 'github' } as const;
   const provenance = new Set<SourceId>([...candidate.provenance, 'github']);
@@ -85,7 +83,7 @@ function common({ candidate, facts }: RecordInput, runDate: string, declaredLice
 
 function marketplace(input: InputOf<'marketplace'>, runDate: string) {
   return marketplaceRecord.parse({
-    ...common(input, runDate),
+    ...baseFields(input, runDate),
     kind: 'marketplace',
     ...analyzeMarketplace(input.entries),
     ownerType: input.facts.ownerType,
@@ -94,7 +92,7 @@ function marketplace(input: InputOf<'marketplace'>, runDate: string) {
 
 function plugin(input: InputOf<'plugin'>, runDate: string) {
   return pluginRecord.parse({
-    ...common(input, runDate),
+    ...baseFields(input, runDate),
     kind: 'plugin',
     ...analyzePlugin(input.inspection),
     // The dependency format is not read yet.
@@ -107,7 +105,7 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
 function skill(input: InputOf<'skill'>, runDate: string) {
   const { name, declaredLicense, ...facts } = analyzeSkill(input.text);
   return skillRecord.parse({
-    ...common(input, runDate, declaredLicense),
+    ...baseFields(input, runDate, declaredLicense),
     ...(name === undefined ? {} : { name }),
     kind: 'skill',
     ...facts,
@@ -118,7 +116,7 @@ function skill(input: InputOf<'skill'>, runDate: string) {
 function agent(input: InputOf<'agent'>, runDate: string) {
   const { name, ...facts } = analyzeAgent(input.text);
   return agentRecord.parse({
-    ...common(input, runDate),
+    ...baseFields(input, runDate),
     ...(name === undefined ? {} : { name }),
     kind: 'agent',
     ...facts,

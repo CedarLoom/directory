@@ -38,12 +38,15 @@ const program = new Command()
   .exitOverride()
   .action(async ({ dryRun, out, exclusions }) => {
     if ((dryRun === true) === (out !== undefined)) program.error('collect: pass either --dry-run or --out <folder>');
+    const token = process.env['GITHUB_TOKEN'] ?? '';
+    // GitHub's GraphQL API refuses anonymous requests.
+    if (token === '') program.error('collect: set GITHUB_TOKEN');
     const excluded = parseExclusions(await readFile(exclusions, 'utf8'));
     const previous = out === undefined ? new Map<string, string>() : await readDataFolder(out);
     const client = createHttpClient({
       fetch,
       clock: systemClock,
-      headers: gitHubHeaders(process.env['GITHUB_TOKEN'] || undefined),
+      headers: gitHubHeaders(token),
       cap: requestCap,
       intervalMs: requestIntervalMs,
       maxRetries: 3,

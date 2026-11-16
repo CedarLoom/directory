@@ -17,7 +17,9 @@ function unquote(value: string): string {
   return /^(["']).*\1$/.test(trimmed) ? trimmed.slice(1, -1) : trimmed;
 }
 
-function inlineValue(value: string): string | string[] {
+function inlineValue(raw: string): string | string[] {
+  // A ` #` starts a comment unless the value is quoted.
+  const value = /^["']/.test(raw) ? raw : raw.replace(/\s+#.*$/, '');
   if (/^\[.*\]$/.test(value))
     return value
       .slice(1, -1)

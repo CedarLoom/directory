@@ -18,6 +18,8 @@ import {
   locationLink,
 } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
+import { issueSummary } from './issue-summary.ts';
+import { jsonText } from './json-text.ts';
 import { entrySources } from './marketplace-analyzer.ts';
 import type { SourceAdapter, SourceResult } from './source-adapter.ts';
 
@@ -75,15 +77,6 @@ function entryCandidates(raw: unknown, listing: Listing): Candidate[] {
   return [plugin, ...skills];
 }
 
-function parseJson(text: string, marketplaceId: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    // The parser's own message quotes the file, which is third-party text.
-    throw new SyntaxError(`${marketplaceId}: ${marketplacePath} is not JSON`);
-  }
-}
-
 async function readMarketplace(
   client: HttpClient,
   repository: Repository,
@@ -93,7 +86,7 @@ async function readMarketplace(
   const text = await readRepositoryFile(client, repository, marketplacePath, marketplaceMaxBytes);
   const marketplace = { ...repository, path: '', ref: 'HEAD' };
   const listing = { source, marketplace, marketplaceId: locationId(marketplace) };
-  const file = marketplaceFile.parse(parseJson(text, listing.marketplaceId));
+  const file = jsonText.pipe(marketplaceFile).parse(text);
   const candidates: Candidate[] = [
     {
       kind: 'marketplace',
@@ -113,9 +106,7 @@ async function readMarketplace(
     } catch (error) {
       if (!(error instanceof ZodError)) throw error;
       refused += 1;
-      // Paths and codes only: an issue message could quote the refused text.
-      const issues = error.issues.map(({ path, code }) => `${path.join('.') || 'entry'} ${code}`).join(', ');
-      log(`${listing.marketplaceId}: refused plugins[${index}]: ${issues}`);
+      log(`${listing.marketplaceId}: refused plugins[${index}]: ${issueSummary(error, 'entry')}`);
     }
   }
   return { candidates, refused };

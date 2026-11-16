@@ -31,6 +31,10 @@ it('adds a snapshot dated Monday only when the count changed, one per week', () 
     { date: '2026-11-09', stars: 170 },
     { date: '2026-11-16', stars: 180 },
   ]);
+  expect(withSnapshot(file, file.id, 150, '2026-11-12').snapshots.slice(-2)).toEqual([
+    { date: '2026-10-05', stars: 120 },
+    { date: '2026-10-19', stars: 150 },
+  ]);
   expect(withSnapshot(undefined, 'gh.example-org.new', 3, '2026-11-16')).toEqual({
     schemaVersion: 1,
     id: 'gh.example-org.new',
