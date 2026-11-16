@@ -8,7 +8,7 @@ on:
     types: [opened, edited, reopened, synchronize]
   merge_group:
   schedule:
-    - cron: '37 5 * * 1' # Monday 05:37, zizmor and the audit on unchanged code
+    - cron: "37 5 * * 1" # Monday 05:37, zizmor and the audit on unchanged code
       timezone: Europe/Berlin
 permissions: {}
 concurrency:
