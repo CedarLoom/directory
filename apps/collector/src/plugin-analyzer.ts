@@ -246,7 +246,7 @@ export function analyzePlugin({ directories, files }: Inspection) {
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
     manifestFields: manifestFields(plugin, version.success),
-    manifestLicense: text.safeParse(plugin.license).data,
+    manifestLicense: manifestLicense(files.manifest),
     rootClaudeMd: directories.root?.some((entry) => entry.name === 'CLAUDE.md') ?? false,
     hooks: hookConfigs.map(hookFacts),
     mcpUnpinnedPackage: stdio.some(({ command, args = [] }) => command !== undefined && unpinnedPackage(command, args)),

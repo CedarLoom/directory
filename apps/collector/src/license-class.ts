@@ -258,26 +258,30 @@ export function isLicenseValue(value: string): boolean {
   return given(value) && !withholdsLicense.test(value);
 }
 
-const withholds = (value: string | undefined): value is string => given(value) && withholdsLicense.test(value);
+const withholds = (value: string | undefined): boolean => given(value) && withholdsLicense.test(value);
 
-// The field that decides over GitHub's detection: any frontmatter value, a manifest value that withholds the license, or
-// one of the containing plugin's manifest unless the item has a license file in its own folder.
+// The field that decides over GitHub's detection: any frontmatter value, or a manifest value that withholds the license.
 function ownField(
   declared: string | undefined,
   manifest: string | undefined,
-  container: string | undefined,
-  folderLicenseFile: boolean,
 ): { value: string; source: 'manifest' | 'frontmatter' } | undefined {
   if (given(declared)) return { value: declared, source: 'frontmatter' };
-  if (withholds(manifest)) return { value: manifest, source: 'manifest' };
-  return withholds(container) && !folderLicenseFile ? { value: container, source: 'manifest' } : undefined;
+  return given(manifest) && withholdsLicense.test(manifest) ? { value: manifest, source: 'manifest' } : undefined;
+}
+
+// The repository's license does not cover an item its plugin withholds; only the item's own license file can.
+function withheldByContainer(container: string | undefined, folderLicenseFile: boolean): License | undefined {
+  if (!withholds(container)) return undefined;
+  return folderLicenseFile
+    ? { source: 'license-file', class: 'none' }
+    : { source: 'manifest', class: 'none', withheld: true };
 }
 
 /**
- * The item's license: a frontmatter value first, else a manifest value that withholds the license, else such a value of
- * the containing plugin's manifest (`container`) unless a license file in the item's folder states its own, else GitHub's
- * detected one, else a manifest value, else a license file in the item's folder, which GitHub does not name, as it reads
- * the root only.
+ * The item's license: a frontmatter value first, else a manifest value that withholds the license, else, when the
+ * containing plugin's manifest value (`container`) withholds it, a license file in the item's folder or that withheld
+ * value, else GitHub's detected one, else a manifest value, else a license file in the item's folder, which GitHub does
+ * not name, as it reads the root only.
  */
 export function licenseOf(
   detected: string | undefined,
@@ -293,11 +297,13 @@ export function licenseOf(
     folderLicenseFile?: boolean;
   } = {},
 ): License {
-  const own = ownField(declared, manifest, container, folderLicenseFile);
+  const own = ownField(declared, manifest);
   if (own !== undefined) {
     const { value, source } = own;
     return withholdsLicense.test(value) ? { source, class: 'none', withheld: true } : stated(value, source);
   }
+  const inherited = withheldByContainer(container, folderLicenseFile);
+  if (inherited !== undefined) return inherited;
   const inFolder: License = folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
   if (detected === undefined) return given(manifest) ? stated(manifest, 'manifest') : inFolder;
   // NOASSERTION: GitHub found a license file it could not name.

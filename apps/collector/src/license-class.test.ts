@@ -154,7 +154,7 @@ it("reads a containing plugin's withholding manifest value for an item without a
     { source: 'manifest', class: 'none', withheld: true },
     { source: 'manifest', class: 'none', withheld: true },
     { spdx: 'Apache-2.0', source: 'frontmatter', class: 'permissive' },
-    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+    { source: 'license-file', class: 'none' },
     { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
     { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
   ]);

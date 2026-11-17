@@ -521,7 +521,7 @@ it('lists a skill whose license field withholds the license as withheld, not as 
   expect(rows.find((row) => row.id === 'gh.example-org.plugin-0.skills.skill-0')?.licenseClass).toBe('withheld');
 });
 
-it("records a plugin's withholding manifest license for the items it holds that state no license of their own", async () => {
+it("records a plugin's withholding manifest license for the items it holds, and no other plugin's", async () => {
   const world = fakeWorld();
   const repository = world.get('example-org/plugin-0');
   if (repository === undefined) throw new Error('example-org/plugin-0 is missing');
@@ -530,18 +530,11 @@ it("records a plugin's withholding manifest license for the items it holds that 
   const license = (path: string) => z.object({ license: z.unknown() }).parse(JSON.parse(files.get(path) ?? '')).license;
   const withheld = { source: 'manifest', class: 'none', withheld: true };
   expect([
-    license('records/skill/gh.example-org.plugin-0.skills.skill-0.json'),
     license('records/agent/gh.example-org.plugin-0.agents.agent-0.json'),
     license('records/hook/gh.example-org.plugin-0.hooks.json'),
     license('records/output-style/gh.example-org.plugin-0.output-styles.terse.json'),
     license('records/agent/gh.example-org.plugin-2.agents.agent-2.json'),
-  ]).toEqual([
-    { spdx: 'Apache-2.0', source: 'frontmatter', class: 'permissive' },
-    withheld,
-    withheld,
-    withheld,
-    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
-  ]);
+  ]).toEqual([withheld, withheld, withheld, { spdx: 'MIT', source: 'github-detected', class: 'permissive' }]);
 });
 
 it("records a plugin's manifest license, else a license file in its folder, when the repository root has none", async () => {
