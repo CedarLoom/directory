@@ -12,7 +12,7 @@ const reportUrl = 'https://github.com/CedarLoom/directory/issues/new';
 
 function Links({ links }: { links: ItemRecord['links'] }) {
   return (
-    <Group gap="md">
+    <Group gap="md" className="link-row">
       {links.source !== undefined && (
         <ExternalLink href={links.source}>
           <Trans id="item.source">Source</Trans>
