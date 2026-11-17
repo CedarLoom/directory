@@ -91,12 +91,13 @@ export function spdxText(expression: SpdxExpression): string {
 
 // A LicenseRef is text the item's author chooses, so a record names listed ids only; plus ids are written in the list.
 const listed = (ids: readonly string[]) => ids.map((id) => id.replaceAll('.', '\\.')).join('|');
-const plusIds = [...licenseIds.values()].filter((id) => !id.endsWith('+'));
+const ids = [...licenseIds.values()];
 // A plus follows only an id that has no -or-later id of its own and is not one.
 const takesPlus = (id: string) => !versionScoped.test(id) && listedLicenseId(`${id}-or-later`) === undefined;
-const listedTerm = `(?:(?:${listed(plusIds.filter(takesPlus))})\\+?|${listed(plusIds.filter((id) => !takesPlus(id)))})(?: WITH (?:${listed(spdxExceptionIds)}))?`;
+const listedTerm = `(?:(?:${listed(ids.filter(takesPlus))})\\+?|${listed(ids.filter((id) => !takesPlus(id)))})(?: WITH (?:${listed(spdxExceptionIds)}))?`;
 const listedOperand = `\\(*${listedTerm}\\)*`;
 
+// Zod is the authority: the pattern also admits unbalanced and redundant parentheses, such as `((MIT` and `(MIT)`.
 /** An SPDX license expression such as `MIT OR Apache-2.0`; a single license id is one too. */
 export const spdxExpression = z
   .string()

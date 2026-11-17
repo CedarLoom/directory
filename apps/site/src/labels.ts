@@ -29,6 +29,7 @@ export const licenseClassLabels = {
   'source-available': msg({ id: 'license.source-available', message: 'Source available' }),
   // The class also holds licenses without an SPDX id or a known class, so the label does not assert that there is none.
   none: msg({ id: 'license.none', message: 'None detected or class not known' }),
+  withheld: msg({ id: 'license.withheld', message: 'Withheld: no license granted' }),
 } satisfies Record<LicenseClass, MessageDescriptor>;
 
 /** The class next to an SPDX id: an id of class `none` names a license, so only its class is missing. */
@@ -40,7 +41,7 @@ export function licenseClassOfId(licenseClass: LicenseClass): MessageDescriptor 
 
 /** A license with no SPDX id: one withheld, one found without an id, none detected, or its class. */
 export function licenseWithoutId({ class: licenseClass, source, withheld }: ItemRecord['license']): MessageDescriptor {
-  if (withheld === true) return msg({ id: 'license.withheld', message: 'Withheld: no license granted' });
+  if (withheld === true) return licenseClassLabels.withheld;
   if (licenseClass !== 'none') return licenseClassLabels[licenseClass];
   return source === undefined
     ? msg({ id: 'license.notDetected', message: 'No license detected' })
@@ -149,7 +150,7 @@ export const signalLabels: Readonly<Record<string, MessageDescriptor>> = {
   noRootClaudeMd: msg({ id: 'signal.noRootClaudeMd', message: 'No CLAUDE.md at the plugin root' }),
   alwaysOnComponents: msg({ id: 'signal.alwaysOnComponents', message: 'Always-on components' }),
   hasEvals: msg({ id: 'signal.hasEvals', message: 'Ships evals' }),
-  licenseField: msg({ id: 'signal.licenseField', message: 'Has a license field that grants a license' }),
+  licenseField: msg({ id: 'signal.licenseField', message: 'Has a license field that is neither blank nor withheld' }),
   testsShipped: msg({ id: 'signal.testsShipped', message: 'Ships tests' }),
 };
 

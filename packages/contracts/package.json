@@ -13,6 +13,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "ajv": "catalog:",
     "typescript": "catalog:"
   }
 }

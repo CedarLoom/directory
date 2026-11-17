@@ -33,9 +33,16 @@ const licenseField = (declaredLicense: string | undefined) =>
     'lint',
   ).signals['licenseField'];
 
-it('counts a license field only when it grants a license', () =>
+it('counts a license field only when it is neither blank, NOASSERTION nor withheld', () =>
   expect(
-    ['MIT', 'See LICENSE.txt', 'UNLICENSED', 'Proprietary, all rights reserved', 'NOASSERTION', ' ', undefined].map(
-      licenseField,
-    ),
-  ).toEqual([true, true, false, false, false, false, false]));
+    [
+      'MIT',
+      'See LICENSE.txt',
+      'UNLICENSED',
+      'Proprietary',
+      'Proprietary, all rights reserved',
+      'NOASSERTION',
+      ' ',
+      undefined,
+    ].map(licenseField),
+  ).toEqual([true, true, false, false, true, false, false, false]));

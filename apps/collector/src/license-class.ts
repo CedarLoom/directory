@@ -1,4 +1,5 @@
 import {
+  type ItemRecord,
   listedLicenseId,
   parseSpdxExpression,
   type SpdxExpression,
@@ -161,12 +162,7 @@ const classes: Readonly<Record<string, LicenseClass>> = {
   ),
 };
 
-export interface License {
-  spdx?: string;
-  source?: 'github-detected' | 'manifest' | 'frontmatter' | 'license-file';
-  class: LicenseClass;
-  withheld?: true;
-}
+export type License = ItemRecord['license'];
 
 // LICENSE-MIT, COPYING.LESSER or UNLICENSE count; a file such as license.js is code, not a license.
 const licenseFileName =
@@ -244,35 +240,35 @@ function stated(value: string, source: 'manifest' | 'frontmatter'): License {
   if (expression === undefined) return { source, class: 'none' };
   const spdx = spdxText(expression);
   const licenseClass = expressionClass(expression);
-  // A LicenseRef is the author's own text, which a record does not copy.
+  // A LicenseRef is the author's own text, which a record does not copy, nor is an expression whose spelling exceeds the contract's length.
   return spdxExpression.safeParse(spdx).success
     ? { spdx, source, class: licenseClass }
     : { source, class: licenseClass };
 }
 
-// npm's UNLICENSED, SPDX's NONE, proprietary or a sentence that starts with it grants no license.
-const withholdsLicense = /^\s*(?:unlicensed\s*|none\s*|proprietary\b[\s\S]*)$/i;
-// SPDX's NOASSERTION states nothing about the license, nor does a blank value.
-const assertsNothing = /^\s*(?:noassertion)?\s*$/i;
+// npm's UNLICENSED, SPDX's NONE or the bare word proprietary grants no license; a sentence that starts with it is a license of its own.
+const withholdsLicense = /^\s*(?:unlicensed|none|proprietary\.?)\s*$/i;
+// A blank value and SPDX's NOASSERTION, which implies no meaning (SPDX 2.3), state nothing: the next source applies.
+const statesNothing = /^\s*(?:noassertion\s*)?$/i;
 
-const given = (value: string | undefined): value is string => value !== undefined && value.trim() !== '';
+const given = (value: string | undefined): value is string => value !== undefined && !statesNothing.test(value);
 
-/** Whether a license field grants a license: it neither withholds one nor asserts nothing. */
-export function grantsLicense(value: string): boolean {
-  return !withholdsLicense.test(value) && !assertsNothing.test(value);
+/** Whether a license field has a value that is neither blank, NOASSERTION nor a withholding word; its text is not read. */
+export function isLicenseValue(value: string): boolean {
+  return given(value) && !withholdsLicense.test(value);
 }
 
-// The field that decides over GitHub's detection: any frontmatter value, or a manifest value that grants no license.
+// The field that decides over GitHub's detection: any frontmatter value, or a manifest value that withholds the license.
 function ownField(
   declared: string | undefined,
   manifest: string | undefined,
 ): { value: string; source: 'manifest' | 'frontmatter' } | undefined {
   if (given(declared)) return { value: declared, source: 'frontmatter' };
-  return given(manifest) && !grantsLicense(manifest) ? { value: manifest, source: 'manifest' } : undefined;
+  return given(manifest) && withholdsLicense.test(manifest) ? { value: manifest, source: 'manifest' } : undefined;
 }
 
 /**
- * The item's license: a frontmatter value first, else a manifest value that grants none, else GitHub's detected one,
+ * The item's license: a frontmatter value first, else a manifest value that withholds the license, else GitHub's detected one,
  * else a manifest value, else a license file in the item's folder, which GitHub does not name, as it reads the root only.
  */
 export function licenseOf(
@@ -283,14 +279,12 @@ export function licenseOf(
     folderLicenseFile = false,
   }: { declared?: string | undefined; manifest?: string | undefined; folderLicenseFile?: boolean } = {},
 ): License {
-  const inFolder: License = folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
   const own = ownField(declared, manifest);
   if (own !== undefined) {
     const { value, source } = own;
-    if (grantsLicense(value)) return stated(value, source);
-    // A NOASSERTION field states no license, so the item's folder decides, not the repository root.
-    return withholdsLicense.test(value) ? { source, class: 'none', withheld: true } : inFolder;
+    return withholdsLicense.test(value) ? { source, class: 'none', withheld: true } : stated(value, source);
   }
+  const inFolder: License = folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
   if (detected === undefined) return given(manifest) ? stated(manifest, 'manifest') : inFolder;
   // NOASSERTION: GitHub found a license file it could not name.
   if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };

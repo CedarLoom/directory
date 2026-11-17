@@ -1,3 +1,4 @@
+import { Ajv2020 } from 'ajv/dist/2020.js';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import departuresFixture from '../fixtures/departures.json' with { type: 'json' };
@@ -170,14 +171,24 @@ describe.each(objects)('%s', (_name, schema, fixture, paths) => {
 });
 
 describe('license', () => {
-  it('refuses a withheld license with an SPDX id or a class', () =>
-    expect(
-      [
-        { spdx: 'MIT', source: 'manifest', class: 'none', withheld: true },
-        { source: 'manifest', class: 'permissive', withheld: true },
-        { source: 'manifest', class: 'none', withheld: true },
-      ].map((license) => pluginRecord.safeParse({ ...plugin, license }).success),
-    ).toEqual([false, false, true]));
+  const validatePlugin = new Ajv2020({ strict: false }).compile(z.toJSONSchema(pluginRecord));
+
+  // The JSON Schema must hold what zod holds: a withheld license has a manifest or frontmatter source, class none and no spdx.
+  it.each([
+    ['no source', { class: 'none' }, true],
+    ['MIT from a manifest', { spdx: 'MIT', source: 'manifest', class: 'permissive' }, true],
+    ['withheld from frontmatter', { source: 'frontmatter', class: 'none', withheld: true }, true],
+    ['withheld from a manifest', { source: 'manifest', class: 'none', withheld: true }, true],
+    ['withheld without a source', { class: 'none', withheld: true }, false],
+    ['withheld from GitHub', { source: 'github-detected', class: 'none', withheld: true }, false],
+    ['withheld from a license file', { source: 'license-file', class: 'none', withheld: true }, false],
+    ['withheld with an SPDX id', { spdx: 'MIT', source: 'manifest', class: 'none', withheld: true }, false],
+    ['withheld with a class', { source: 'manifest', class: 'permissive', withheld: true }, false],
+    ['withheld false', { source: 'manifest', class: 'none', withheld: false }, false],
+  ])('zod and the JSON Schema agree on a license with %s', (_name, license, accepted) => {
+    const record = { ...plugin, license };
+    expect([pluginRecord.safeParse(record).success, validatePlugin(record)]).toEqual([accepted, accepted]);
+  });
 
   it.each(['GPL-2.0', 'GPL-3.0', 'AGPL-3.0', 'LGPL-2.1'])('accepts %s, a deprecated id GitHub detects', (spdx) =>
     expect(

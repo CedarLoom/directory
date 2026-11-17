@@ -15,7 +15,6 @@ export {
   semver,
   type SourceId,
   sourceId,
-  spdxId,
   versionLabel,
 } from './fields.ts';
 export { type HistoryFile, historyFile } from './history.ts';

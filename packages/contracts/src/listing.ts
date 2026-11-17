@@ -14,7 +14,9 @@ const row = z.strictObject({
     .describe(
       'Current stars minus the newest snapshot 30 or more days before the run date; negative when unstars outweigh stars; absent while no snapshot is that old.',
     ),
-  licenseClass,
+  licenseClass: z
+    .enum([...licenseClass.options, 'withheld'])
+    .describe('The class of the license; `withheld` where the license field of the item withholds the license.'),
   fit: fitLabel,
   listedOfficial: z.boolean(),
   pushedAt: dateTime.optional(),

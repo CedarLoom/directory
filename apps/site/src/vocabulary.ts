@@ -14,6 +14,12 @@ export const kinds = everyValueOf<Kind>()([
   'mcp-server',
   'output-style',
 ]);
-export const licenseClasses = everyValueOf<LicenseClass>()(['permissive', 'copyleft', 'source-available', 'none']);
+export const licenseClasses = everyValueOf<LicenseClass>()([
+  'permissive',
+  'copyleft',
+  'source-available',
+  'none',
+  'withheld',
+]);
 export const fitLabels = everyValueOf<FitLabel>()(['complements', 'overlaps', 'may-conflict', 'not-assessed']);
 export const maintenanceStates = everyValueOf<Maintenance>()(['active', 'inactive', 'archived', 'unknown']);

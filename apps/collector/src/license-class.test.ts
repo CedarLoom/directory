@@ -86,11 +86,18 @@ it('classes an earlier version of a license like the version GitHub detects', ()
   ]);
 });
 
-it('reads a NOASSERTION field as no license stated there, leaving the folder license file and not the root license', () => {
+it('reads a NOASSERTION field like a blank one, so the next source applies, GitHub at the root included', () => {
   expect([
     licenseOf('MIT', { manifest: 'NOASSERTION', folderLicenseFile: true }),
     licenseOf('MIT', { declared: 'noassertion' }),
-  ]).toEqual([{ source: 'license-file', class: 'none' }, { class: 'none' }]);
+    licenseOf(undefined, { declared: 'NOASSERTION', manifest: 'Apache-2.0' }),
+    licenseOf(undefined, { manifest: ' NOASSERTION ', folderLicenseFile: true }),
+  ]).toEqual([
+    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+    { spdx: 'Apache-2.0', source: 'manifest', class: 'permissive' },
+    { source: 'license-file', class: 'none' },
+  ]);
 });
 
 it('counts LICENSE-<suffix> for a license family the class table holds, without a version', () => {
@@ -217,11 +224,21 @@ it('reads an UNLICENSED or proprietary frontmatter value as withheld, not as the
   expect([
     licenseOf('MIT', { declared: 'UNLICENSED' }),
     licenseOf('MIT', { declared: 'proprietary' }),
-    licenseOf('MIT', { declared: 'Proprietary. LICENSE.txt has complete terms' }),
+    licenseOf('MIT', { declared: ' Proprietary. ' }),
   ]).toEqual([
     { source: 'frontmatter', class: 'none', withheld: true },
     { source: 'frontmatter', class: 'none', withheld: true },
     { source: 'frontmatter', class: 'none', withheld: true },
+  ]);
+});
+
+it('reads a sentence that starts with Proprietary as a license of its own, not as withheld', () => {
+  expect([
+    licenseOf('MIT', { declared: 'Proprietary. LICENSE.txt has complete terms' }),
+    licenseOf(undefined, { manifest: 'Proprietary, all rights reserved' }),
+  ]).toEqual([
+    { source: 'frontmatter', class: 'none' },
+    { source: 'manifest', class: 'none' },
   ]);
 });
 
