@@ -1,15 +1,15 @@
 import { isDeepStrictEqual } from 'node:util';
-import { indexFile, type PopularityFile, popularityFile } from '@directory/contracts';
+import { historyFile, indexFile, type PopularityFile, popularityFile } from '@directory/contracts';
+import { nextHistory } from '@directory/scoring';
 import { z } from 'zod';
 import { byCodeUnits } from './code-unit-order.ts';
+import { officialMarketplace } from './item-signals.ts';
 import { starsGained30d, withSnapshot } from './popularity-file.ts';
 import type { ItemRecord } from './records.ts';
 import type { RepositoryFacts } from './repository-facts.ts';
 
 /** Published data files by path relative to the data folder; every file is written by the collector itself. */
 export type DataFiles = ReadonlyMap<string, string>;
-
-const officialMarketplace = 'gh.anthropics.claude-plugins-official';
 
 function jsonFile(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
@@ -22,6 +22,14 @@ function recordText(record: ItemRecord, previous: string | undefined): string {
     if (isDeepStrictEqual(before, { ...record.value, changedAt: before.changedAt })) return previous;
   }
   return jsonFile(record.value);
+}
+
+/** The previous text while the history gains no entry, else the history with the record's score added. */
+function historyText({ kind, id, value }: ItemRecord, previous: string | undefined, runDate: string): string {
+  const entries = previous === undefined ? [] : historyFile.parse(JSON.parse(previous)).entries;
+  const next = nextHistory(entries, value.score, runDate);
+  if (previous !== undefined && next === entries) return previous;
+  return jsonFile(historyFile.parse({ schemaVersion: 1, id, kind, entries: next }));
 }
 
 interface Popularity {
@@ -57,6 +65,7 @@ function indexRow({ value, owner }: ItemRecord, popularity: Popularity | undefin
     kind: value.kind,
     name: value.name,
     owner,
+    score: value.score.total,
     ...(popularity === undefined ? {} : { stars: popularity.stars }),
     ...(popularity?.gained === undefined ? {} : { starsGained30d: popularity.gained }),
     licenseClass: value.license.class,
@@ -69,7 +78,7 @@ function indexRow({ value, owner }: ItemRecord, popularity: Popularity | undefin
   };
 }
 
-/** The record files, the popularity file of each repository the records point to, and index.json. */
+/** The record and history files, the popularity file of each repository the records point to, and index.json. */
 export function dataFiles(
   records: readonly ItemRecord[],
   facts: ReadonlyMap<string, RepositoryFacts>,
@@ -83,6 +92,8 @@ export function dataFiles(
   for (const record of sorted) {
     const path = `records/${record.kind}/${record.id}.json`;
     files.set(path, recordText(record, previous.get(path)));
+    const history = `history/${record.kind}/${record.id}.json`;
+    files.set(history, historyText(record, previous.get(history), runDate));
   }
   const repositories = new Set(sorted.map((record) => record.repository));
   const { files: popularity, popularity: counts } = popularityFiles(repositories, facts, previous, runDate);

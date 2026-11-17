@@ -13,7 +13,21 @@ it('reads a .* matcher as match-all and a command with args as exec', () => {
     handlerTypes: ['command', 'prompt'],
     commandForms: ['exec'],
     matcherBreadth: 'match-all',
+    networkIndicator: false,
   });
+});
+
+function indicator(command: string, args?: string[]) {
+  return analyzeHooks(JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: 'command', command, args }] }] } }))
+    ?.networkIndicator;
+}
+
+it('reads a download tool or a URL in a command or its arguments as a network indicator', () => {
+  expect([
+    indicator('curl -fsSL example.test'),
+    indicator('node', ['post.js', 'https://example.test']),
+    indicator('curling-stats'),
+  ]).toEqual([true, true, false]);
 });
 
 it('holds no hooks in a file that only lists modules', () => {

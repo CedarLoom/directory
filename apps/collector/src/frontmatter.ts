@@ -42,16 +42,32 @@ function addListItem(fields: Map<string, string | string[]>, key: string, line: 
   else if (list === '') fields.set(key, [unquote(item)]);
 }
 
-/** Reads the top-level keys only; nested maps and multi-line text are not parsed, as no stored fact needs them. */
+const continuation = /^[ \t]+(\S.*)$/s;
+
+/** Adds an indented line to the text of the key above it, joined by a space. */
+function addTextLine(fields: Map<string, string | string[]>, key: string, line: string): void {
+  const [, more] = continuation.exec(line) ?? [];
+  const text = fields.get(key);
+  if (more !== undefined && typeof text === 'string') fields.set(key, text === '' ? more : `${text} ${more}`);
+}
+
+/**
+ * Reads the top-level keys only; nested maps are not parsed, as no stored fact needs them. A block scalar or a plain
+ * value that continues on indented lines reads as its lines joined by spaces, which keeps its length.
+ */
 function readFields(block: string): Map<string, string | string[]> {
   const fields = new Map<string, string | string[]>();
   let current: string | undefined;
+  let text = false;
   for (const line of block.split(/\r?\n/)) {
     const [, key, value] = keyLine.exec(line) ?? [];
     if (key !== undefined) {
-      current = key;
-      fields.set(key, inlineValue(value?.trim() ?? ''));
-    } else if (current !== undefined) addListItem(fields, current, line);
+      const raw = value?.trim() ?? '';
+      const parsed = inlineValue(raw);
+      [current, text] = [key, raw !== '' && typeof parsed === 'string'];
+      fields.set(key, parsed);
+    } else if (current !== undefined && text) addTextLine(fields, current, line);
+    else if (current !== undefined) addListItem(fields, current, line);
   }
   return fields;
 }

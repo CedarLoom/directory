@@ -418,15 +418,16 @@ it('writes records, popularity files and the index, and no third-party text', as
   const paths = [...files.keys()];
   expect({
     records: paths.filter((path) => path.startsWith('records/')).length,
+    history: paths.filter((path) => path.startsWith('history/')).length,
     popularity: paths.filter((path) => path.startsWith('popularity/')).length,
     others: paths.filter(
       (path) =>
-        !/^(records\/(marketplace|plugin|skill|agent|hook|mcp-server|output-style)|popularity)\/[a-z0-9._-]+\.json$/.test(
+        !/^((records|history)\/(marketplace|plugin|skill|agent|hook|mcp-server|output-style)|popularity)\/[a-z0-9._-]+\.json$/.test(
           path,
         ),
     ),
     quoting: paths.filter((path) => files.get(path)?.includes('curl') === true),
-  }).toEqual({ records: 254, popularity: 111, others: ['index.json'], quoting: [] });
+  }).toEqual({ records: 254, history: 254, popularity: 111, others: ['index.json'], quoting: [] });
 });
 
 it('leaves every file byte-identical on a later run with unchanged star counts', async () => {
@@ -467,6 +468,7 @@ function ownFields(files: ReadonlyMap<string, string>, path: string) {
     'flags',
     'tags',
     'cedarloomFit',
+    'score',
     'changedAt',
   ]);
   const record = z.record(z.string(), z.unknown()).parse(JSON.parse(files.get(path) ?? '{}'));
@@ -606,6 +608,120 @@ it('records the facts read for each kind', async () => {
     ownFields(files, 'records/mcp-server/io.github.example-org.mcp-0.json'),
     ownFields(files, 'records/output-style/gh.example-org.plugin-0.output-styles.terse.json'),
   ]).toEqual(expectedFacts);
+});
+
+const scoredPaths = [
+  'records/marketplace/gh.example-org.market-3.json',
+  'records/plugin/gh.example-org.plugin-0.json',
+  'records/skill/gh.example-org.plugin-0.skills.skill-0.json',
+  'records/agent/gh.example-org.plugin-0.agents.agent-0.json',
+  'records/hook/gh.example-org.plugin-0.hooks.json',
+  'records/mcp-server/io.github.example-org.mcp-0.json',
+  'records/output-style/gh.example-org.plugin-0.output-styles.terse.json',
+];
+const scoredFields = z.object({ signals: z.unknown(), flags: z.unknown(), score: z.object({ total: z.number() }) });
+
+const expectedScores = [
+  {
+    signals: { release: true, validEntryShare: 1, describedShare: 0, noDuplicateNames: true },
+    flags: [],
+    total: 87.5,
+  },
+  {
+    signals: {
+      release: true,
+      manifestFields: 2,
+      nameValid: true,
+      noRootClaudeMd: true,
+      alwaysOnComponents: 3,
+      hasEvals: true,
+    },
+    // The hook command holds `curl`.
+    flags: ['hook-shell-command', 'network-indicator', 'mcp-remote', 'unpinned-source', 'listed-official-marketplace'],
+    total: 75.3,
+  },
+  {
+    signals: {
+      release: true,
+      nameValid: true,
+      descriptionLength: 59,
+      bodyLines: 3,
+      licenseField: true,
+      metadataTokens: 38,
+      bodyTokens: 18,
+      testsShipped: false,
+    },
+    flags: ['scripts-present'],
+    total: 77.5,
+  },
+  {
+    signals: {
+      release: true,
+      nameValid: true,
+      descriptionLength: 59,
+      toolsDeclared: true,
+      bodyLines: 1,
+      metadataTokens: 34,
+      bodyTokens: 15,
+    },
+    flags: [],
+    total: 87.5,
+  },
+  {
+    signals: { release: true, matchersSpecific: true },
+    flags: ['hook-shell-command', 'network-indicator'],
+    total: 72.5,
+  },
+  {
+    signals: {
+      release: true,
+      transportDeclared: true,
+      versionPinned: true,
+      versionLabel: true,
+      registryActive: true,
+      namespaceMatches: true,
+    },
+    flags: ['mcp-remote', 'mcp-secrets-required'],
+    total: 72.5,
+  },
+  {
+    signals: { release: true, nameField: true, descriptionField: true, bodyLines: 1, tokens: 46 },
+    flags: [],
+    total: 97.5,
+  },
+];
+
+it('scores each kind from the signals and flags read for it', async () => {
+  const { files } = await run(fakeWorld(), '2026-11-16');
+  expect(
+    scoredPaths.map((path) => {
+      const { signals, flags, score } = scoredFields.parse(JSON.parse(files.get(path) ?? '{}'));
+      return { signals, flags, total: score.total };
+    }),
+  ).toEqual(expectedScores);
+});
+
+it('adds a history entry once the push age crosses a step and keeps the history while it does not', async () => {
+  const path = 'history/hook/gh.example-org.plugin-0.hooks.json';
+  const first = await run(fakeWorld(), '2026-11-16');
+  // Pushed on 2026-11-10 at 09:00: the age reaches 91 whole days on 2027-02-10.
+  const same = await run(fakeWorld(), '2027-02-09', first.files);
+  const later = await run(fakeWorld(), '2027-02-10', same.files);
+  expect({
+    same: same.files.get(path) === first.files.get(path),
+    later: JSON.parse(later.files.get(path) ?? ''),
+  }).toEqual({
+    same: true,
+    later: {
+      schemaVersion: 1,
+      id: 'gh.example-org.plugin-0.hooks',
+      kind: 'hook',
+      entries: [
+        { date: '2026-11-16', rubric: '1.0.0', total: 73 },
+        { date: '2027-02-10', rubric: '1.0.0', total: 70 },
+      ],
+    },
+  });
 });
 
 it('keeps a deprecated server and leaves out a deleted one and one without a GitHub repository', async () => {

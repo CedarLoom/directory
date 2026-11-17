@@ -36,8 +36,11 @@
     }
   ],
   "signals": {
-    "bodyLines": 120,
-    "hasLicenseField": true
+    "release": true,
+    "nameField": true,
+    "descriptionField": true,
+    "bodyLines": 12,
+    "tokens": 340
   },
   "flags": [],
   "tags": ["review"],
@@ -50,17 +53,52 @@
       "kind": "output-style",
       "version": "1.0.0"
     },
-    "total": 74.5,
+    "total": 90,
     "parts": [
       {
         "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "nameField",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "descriptionField",
         "points": 15,
         "max": 15
       },
       {
-        "signal": "license",
-        "points": 10,
-        "max": 10
+        "signal": "bodyLines",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "tokens",
+        "points": 25,
+        "max": 25
+      },
+      {
+        "signal": "safety",
+        "points": 5,
+        "max": 5
       }
     ]
   },

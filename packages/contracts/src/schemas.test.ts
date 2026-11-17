@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import exclusionsFixture from '../fixtures/exclusions.json' with { type: 'json' };
+import historyFixture from '../fixtures/history.json' with { type: 'json' };
 import indexFixture from '../fixtures/index.json' with { type: 'json' };
 import metaFixture from '../fixtures/meta.json' with { type: 'json' };
 import popularityFixture from '../fixtures/popularity.json' with { type: 'json' };
@@ -15,6 +16,7 @@ import rubricFixture from '../fixtures/rubric.json' with { type: 'json' };
 import {
   agentRecord,
   exclusionsFile,
+  historyFile,
   hookRecord,
   indexFile,
   marketplaceRecord,
@@ -43,6 +45,7 @@ const files = [
   ['meta', metaFile, metaFixture],
   ['rubric', rubricFile, rubricFixture],
   ['exclusions', exclusionsFile, exclusionsFixture],
+  ['history', historyFile, historyFixture],
   ['popularity', popularityFile, popularityFixture],
 ] as const;
 
@@ -97,8 +100,9 @@ const objects: [string, z.ZodType, unknown, Path[]][] = [
   ['output-style', outputStyleRecord, outputStyle, [...commonObjects, ...maintenanceObjects]],
   ['index', indexFile, indexFixture, [[], ['items', 0]]],
   ['meta', metaFile, metaFixture, [[], ['sources', 0], ['stats']]],
-  ['rubric', rubricFile, rubricFixture, [[], ['signals', 0], ['flagPenalties', 0]]],
+  ['rubric', rubricFile, rubricFixture, [[], ['signals', 0], ['signals', 0, 'scale'], ['flagPenalties', 0]]],
   ['exclusions', exclusionsFile, exclusionsFixture, [[]]],
+  ['history', historyFile, historyFixture, [[], ['entries', 0]]],
   ['popularity', popularityFile, popularityFixture, [[], ['snapshots', 0]]],
 ];
 

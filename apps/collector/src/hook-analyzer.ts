@@ -4,7 +4,7 @@ import { jsonText } from './json-text.ts';
 
 const handlerTypes = ['command', 'http', 'prompt', 'agent'] as const;
 // Upstream files carry more keys than these; only the keys a fact needs are read, the rest is stripped.
-const handler = z.object({ type: z.enum(handlerTypes), args: z.unknown().optional() });
+const handler = z.object({ type: z.enum(handlerTypes), command: z.unknown().optional(), args: z.unknown().optional() });
 const group = z.object({ matcher: z.string().optional(), hooks: z.array(handler) });
 const hooksFile = z.object({ hooks: z.record(z.string(), z.array(group)).optional() });
 
@@ -13,7 +13,12 @@ export interface HookFacts {
   handlerTypes: (typeof handlerTypes)[number][];
   commandForms: ('shell' | 'exec')[];
   matcherBreadth: 'match-all' | 'specific' | 'none';
+  /** A command or its arguments name a download tool or a URL; scored as a flag, not stored as a fact. */
+  networkIndicator: boolean;
 }
+
+// A command that fetches or posts over the network; `\b` keeps names such as `curling` out.
+const networkCommand = /\b(?:curl|wget|Invoke-WebRequest)\b|https?:\/\//i;
 
 // On these events a group without a matcher runs for every tool.
 const toolEvents: ReadonlySet<string> = new Set([
@@ -50,5 +55,8 @@ export function analyzeHooks(text: string): HookFacts | undefined {
     handlerTypes: handlerTypes.filter((type) => types.has(type)),
     commandForms: (['shell', 'exec'] as const).filter((form) => forms.has(form)),
     matcherBreadth: matcherBreadth(groups),
+    networkIndicator: commands
+      .flatMap(({ command, args }) => (Array.isArray(args) ? [command].concat(args) : [command]))
+      .some((word) => typeof word === 'string' && networkCommand.test(word)),
   };
 }

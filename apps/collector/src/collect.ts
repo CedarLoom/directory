@@ -212,10 +212,16 @@ function marketplaceInputs(candidates: readonly Located[], factsOf: FactsOf): Re
 }
 
 function pluginInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
+  // The hooks file a plugin holds is a hook candidate of its own; one the hook analyzer refused raises no hook flags.
+  const hooksOf = new Map(
+    selection.candidates.flatMap(({ kind, container, hooks }) =>
+      kind === 'hook' && container !== undefined && hooks !== undefined ? [[container, hooks] as const] : [],
+    ),
+  );
   return selection.plugins.flatMap((candidate): RecordInput[] => {
     const [facts, inspection, source] = [factsOf(candidate), selection.inspected.get(candidate.id), candidate.source];
     return facts !== undefined && inspection !== undefined && source !== undefined
-      ? [{ kind: 'plugin', candidate, facts, inspection, source }]
+      ? [{ kind: 'plugin', candidate, facts, inspection, source, hooks: hooksOf.get(candidate.id) }]
       : [];
   });
 }
@@ -225,7 +231,7 @@ function skillInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
     const [facts, file] = [factsOf(candidate), selection.skillFiles[index]];
     const text = textOf(file);
     return facts !== undefined && file !== undefined && text !== undefined
-      ? [{ kind: 'skill', candidate, facts, text, folders: file.folders }]
+      ? [{ kind: 'skill', candidate, facts, text, folders: file.folders, tests: file.tests }]
       : [];
   });
 }

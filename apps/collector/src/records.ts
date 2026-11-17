@@ -10,12 +10,23 @@ import {
   type SourceKind,
   skillRecord,
 } from '@directory/contracts';
+import { currentRubric, type Scorable, type Score, score } from '@directory/scoring';
 import type { z } from 'zod';
 import { analyzeAgent } from './agent-analyzer.ts';
 import type { Candidate, Located } from './candidate.ts';
 import { repositoryId } from './github-location.ts';
 import type { HookFacts } from './hook-analyzer.ts';
 import type { SkillFolders } from './item-files.ts';
+import {
+  type Assessment,
+  agentAssessment,
+  hookAssessment,
+  marketplaceAssessment,
+  mcpServerAssessment,
+  outputStyleAssessment,
+  pluginAssessment,
+  skillAssessment,
+} from './item-signals.ts';
 import { licenseOf } from './license-class.ts';
 import { analyzeMarketplace, type MarketplaceEntries } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
@@ -42,14 +53,14 @@ export interface ItemRecord {
   id: string;
   repository: string;
   owner: string;
-  value: RecordValue;
+  value: RecordValue & { score: Score };
 }
 
 /** What a record is built from: the candidate, its repository's facts and what was read for its kind. */
 export type RecordInput = { candidate: Located; facts: RepositoryFacts } & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
-  | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin } }
-  | { kind: 'skill'; text: string; folders: SkillFolders }
+  | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin }; hooks: HookFacts | undefined }
+  | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean }
   | { kind: 'agent'; text: string }
   | { kind: 'hook'; hooks: HookFacts }
   | { kind: 'mcp-server'; mcpServer: McpServerFacts }
@@ -66,7 +77,13 @@ const sourceOrder: readonly SourceId[] = [
   'seeds',
 ];
 
-function baseFields({ candidate, facts }: RecordInput, runDate: string, declaredLicense?: string) {
+/** The fields every kind shares; a release or a version label counts as a release. */
+function baseFields(
+  { candidate, facts }: RecordInput,
+  runDate: string,
+  { signals, flags, version }: Assessment & { version?: string | undefined },
+  declaredLicense?: string,
+) {
   const repository = repositoryId(candidate.location);
   const pointer = { ref: repository, scope: 'repository', source: 'github' } as const;
   const provenance = new Set<SourceId>([...candidate.provenance, 'github']);
@@ -84,8 +101,8 @@ function baseFields({ candidate, facts }: RecordInput, runDate: string, declared
       { signal: 'stars', ...pointer },
       { signal: 'starsGained30d', ...pointer },
     ],
-    signals: {},
-    flags: [],
+    signals: { release: facts.maintenance?.latestRelease !== undefined || version !== undefined, ...signals },
+    flags,
     tags: [],
     cedarloomFit: { label: 'not-assessed', tags: [] },
     provenance: sourceOrder.filter((source) => provenance.has(source)),
@@ -93,62 +110,132 @@ function baseFields({ candidate, facts }: RecordInput, runDate: string, declared
   };
 }
 
+/** Parses the record with its score, which the scorer computes from the fields the contract then checks. */
+function scored<T extends z.ZodType<RecordValue>>(
+  contract: T,
+  fields: Scorable & Record<string, unknown>,
+  runDate: string,
+): z.output<T> & { score: Score } {
+  const value = score(fields, currentRubric(fields.kind), runDate);
+  return { ...contract.parse({ ...fields, score: value }), score: value };
+}
+
 function marketplace(input: InputOf<'marketplace'>, runDate: string) {
-  return marketplaceRecord.parse({
-    ...baseFields(input, runDate),
-    kind: 'marketplace',
-    ...analyzeMarketplace(input.entries),
-    ownerType: input.facts.ownerType,
-  });
+  return scored(
+    marketplaceRecord,
+    {
+      ...baseFields(input, runDate, marketplaceAssessment(input.entries)),
+      kind: 'marketplace',
+      ...analyzeMarketplace(input.entries),
+      ownerType: input.facts.ownerType,
+    },
+    runDate,
+  );
 }
 
 function plugin(input: InputOf<'plugin'>, runDate: string) {
-  return pluginRecord.parse({
-    ...baseFields(input, runDate),
-    kind: 'plugin',
-    ...analyzePlugin(input.inspection),
-    // The dependency format is not read yet.
-    dependencies: [],
-    sourceKind: input.source.kind,
-    pin: input.source.pin,
+  const { manifestName, manifestFields, rootClaudeMd, ...facts } = analyzePlugin(input.inspection);
+  const assessment = pluginAssessment({
+    ...facts,
+    name: manifestName ?? input.candidate.name,
+    manifestFields,
+    rootClaudeMd,
+    hooks: input.hooks,
+    source: input.source,
+    listedIn: input.candidate.listedIn,
   });
+  return scored(
+    pluginRecord,
+    {
+      ...baseFields(input, runDate, { ...assessment, version: facts.version }),
+      kind: 'plugin',
+      ...facts,
+      // The dependency format is not read yet.
+      dependencies: [],
+      sourceKind: input.source.kind,
+      pin: input.source.pin,
+    },
+    runDate,
+  );
 }
 
 function skill(input: InputOf<'skill'>, runDate: string) {
-  const { name, declaredLicense, ...facts } = analyzeSkill(input.text);
-  return skillRecord.parse({
-    ...baseFields(input, runDate, declaredLicense),
-    ...(name === undefined ? {} : { name }),
-    kind: 'skill',
-    ...facts,
-    files: input.folders,
-  });
+  const analysis = analyzeSkill(input.text);
+  // The scoring-only facts stay out of the record.
+  const {
+    name,
+    declaredLicense,
+    declaredName: _declaredName,
+    descriptionLength: _descriptionLength,
+    unrestrictedBash: _unrestrictedBash,
+    ...facts
+  } = analysis;
+  const assessment = skillAssessment(
+    { ...analysis, scripts: input.folders.scripts, tests: input.tests },
+    input.candidate.name,
+  );
+  return scored(
+    skillRecord,
+    {
+      ...baseFields(input, runDate, assessment, declaredLicense),
+      ...(name === undefined ? {} : { name }),
+      kind: 'skill',
+      ...facts,
+      files: input.folders,
+    },
+    runDate,
+  );
 }
 
 function agent(input: InputOf<'agent'>, runDate: string) {
-  const { name, ...facts } = analyzeAgent(input.text);
-  return agentRecord.parse({
-    ...baseFields(input, runDate),
-    ...(name === undefined ? {} : { name }),
-    kind: 'agent',
-    ...facts,
-  });
+  const analysis = analyzeAgent(input.text);
+  const {
+    name,
+    declaredName: _declaredName,
+    descriptionLength: _descriptionLength,
+    bodyLines: _bodyLines,
+    unrestrictedBash: _unrestrictedBash,
+    ...facts
+  } = analysis;
+  return scored(
+    agentRecord,
+    {
+      ...baseFields(input, runDate, agentAssessment(analysis)),
+      ...(name === undefined ? {} : { name }),
+      kind: 'agent',
+      ...facts,
+    },
+    runDate,
+  );
 }
 
 function hook(input: InputOf<'hook'>, runDate: string) {
-  return hookRecord.parse({ ...baseFields(input, runDate), kind: 'hook', ...input.hooks });
+  const { networkIndicator: _networkIndicator, ...facts } = input.hooks;
+  return scored(
+    hookRecord,
+    { ...baseFields(input, runDate, hookAssessment(input.hooks)), kind: 'hook', ...facts },
+    runDate,
+  );
 }
 
 function mcpServer(input: InputOf<'mcp-server'>, runDate: string) {
-  return mcpServerRecord.parse({ ...baseFields(input, runDate), kind: 'mcp-server', ...input.mcpServer });
+  const { candidate, mcpServer: server } = input;
+  const assessment = mcpServerAssessment(server, candidate.name, candidate.location.owner);
+  return scored(
+    mcpServerRecord,
+    { ...baseFields(input, runDate, { ...assessment, version: server.version }), kind: 'mcp-server', ...server },
+    runDate,
+  );
 }
 
 function outputStyle(input: InputOf<'output-style'>, runDate: string) {
-  return outputStyleRecord.parse({
-    ...baseFields(input, runDate),
-    kind: 'output-style',
-    ...analyzeOutputStyle(input.text),
-  });
+  const { named, described, bodyLines, ...facts } = analyzeOutputStyle(input.text);
+  const assessment = outputStyleAssessment({ named, described, bodyLines, tokens: facts.tokens });
+  return scored(
+    outputStyleRecord,
+    { ...baseFields(input, runDate, assessment), kind: 'output-style', ...facts },
+    runDate,
+  );
 }
 
 function recordValue(input: RecordInput, runDate: string): ItemRecord['value'] {

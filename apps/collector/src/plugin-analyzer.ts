@@ -5,7 +5,13 @@ import type { Entry, Inspection } from './repository-tree.ts';
 
 // Upstream files carry more keys than these; only the keys a fact needs are read, the rest is stripped.
 const manifest = z.object({
+  name: z.unknown().optional(),
   version: z.unknown().optional(),
+  description: z.unknown().optional(),
+  author: z.unknown().optional(),
+  repository: z.unknown().optional(),
+  homepage: z.unknown().optional(),
+  license: z.unknown().optional(),
   hooks: z.unknown().optional(),
   mcpServers: z.unknown().optional(),
   lspServers: z.unknown().optional(),
@@ -84,5 +90,15 @@ export function analyzePlugin({ directories, files }: Inspection) {
       binFiles: countEntries(directories.bin, false),
     },
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
+    ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
+    // Of version, description, author, repository or homepage, and license.
+    manifestFields: [
+      version.success,
+      plugin.description !== undefined,
+      plugin.author !== undefined,
+      (plugin.repository ?? plugin.homepage) !== undefined,
+      plugin.license !== undefined,
+    ].filter(Boolean).length,
+    rootClaudeMd: directories.root?.some((entry) => entry.name === 'CLAUDE.md') ?? false,
   };
 }
