@@ -1,5 +1,5 @@
 import { indexFile } from '@directory/contracts';
-import { expect, it } from 'vitest';
+import { expect, it, onTestFinished, vi } from 'vitest';
 import { z } from 'zod';
 import { collect } from './collect.ts';
 import { createHttpClient } from './http-client.ts';
@@ -15,6 +15,8 @@ interface FakeRepository {
   files: Record<string, string>;
   /** GitHub detects no license at the repository root. */
   unlicensed?: true;
+  /** The license id GitHub detects at the repository root, MIT when not set. */
+  license?: string;
 }
 
 function pluginRepository(index: number): FakeRepository {
@@ -183,7 +185,7 @@ function facts(repository: FakeRepository) {
     stargazerCount: repository.stars,
     pushedAt: '2026-11-10T09:00:00Z',
     isArchived: false,
-    licenseInfo: repository.unlicensed === true ? null : { spdxId: 'MIT' },
+    licenseInfo: repository.unlicensed === true ? null : { spdxId: repository.license ?? 'MIT' },
     owner: { kind: 'Organization' },
     defaultBranchRef: { target: { oid: sha, history: { totalCount: 3 } } },
     latestRelease: { tagName: 'v1.4.0', publishedAt: '2026-10-01T12:00:00Z' },
@@ -332,6 +334,22 @@ it('finishes inside the GitHub request cap when the registry has more servers th
   }).toEqual({ requests: true, discovered: 30_000, items: 60 });
 });
 
+it('refills MCP server places past three rounds of refusals, as a refill reads no file', async () => {
+  const world = fakeWorld();
+  // The most stars of the run, under a license id without a class, so its servers rank first and are refused.
+  world.set('example-org/odd', { stars: 99_999, files: {}, license: 'Odd-1.0' });
+  const odd = Array.from({ length: 180 }, (_, index) => ({
+    server: {
+      name: `io.github.example-org/odd-${index}`,
+      version: '1.0.0',
+      repository: { url: 'https://github.com/example-org/odd', source: 'github' },
+    },
+    _meta: { 'io.modelcontextprotocol.registry/official': { status: 'active', publishedAt: '2026-11-01T10:00:00Z' } },
+  }));
+  const { report } = await run(world, '2026-11-16', new Map(), { registry: [...registryEntries, ...odd] });
+  expect(report.items['mcp-server']).toBe(25);
+});
+
 it('refuses a topic repository whose name is too long for an id and finishes the run', async () => {
   const lines: string[] = [];
   const { report } = await run(fakeWorld(), '2026-11-16', new Map(), {
@@ -473,7 +491,7 @@ it('refuses a hooks file with more than 64 events before selection, so the next 
     hooks: report.items.hook,
     last: files.has('records/hook/gh.example-org.plugin-20.hooks.json'),
     refusals,
-  }).toEqual({ hooks: 20, last: true, refusals: ['gh.example-org.top hook: refused: events too_big'] });
+  }).toEqual({ hooks: 20, last: true, refusals: ['gh.example-org.top.hooks: refused: events too_big'] });
 });
 
 it('refuses a plugin with hooks on more than 64 events before selection, so the next plugin takes its place', async () => {
@@ -1115,8 +1133,12 @@ it('reads no further registry page once another source has failed', async () => 
     log: () => undefined,
   });
   await expect(collecting).rejects.toThrow('source failed');
+  // Fake timers let the crawl settle whatever promise turns and timers lie between its pages.
+  vi.useFakeTimers();
+  onTestFinished(() => {
+    vi.useRealTimers();
+  });
   firstPage.resolve(registryPage('next'));
-  // The registry reads its next page once its answer is parsed, a few promise turns after the first page arrives.
-  await new Promise((resolve) => setImmediate(resolve));
+  await vi.runAllTimersAsync();
   expect(urls).toEqual(['https://registry.modelcontextprotocol.io/v0.1/servers?version=latest&limit=100']);
 });

@@ -346,13 +346,10 @@ async function itemRecords(
   }: { candidates: readonly Located[]; facts: ReadonlyMap<string, RepositoryFacts>; plugins: readonly ItemRecord[] },
 ): Promise<ItemRecord[]> {
   const select = (kind: ItemKind, limit: number) =>
-    fill(
-      ranked(candidates, kind, facts),
-      limit,
-      kind === 'skill' || kind === 'agent' || kind === 'output-style'
-        ? fileReader(reading, kind)
-        : listedReader(reading),
-    );
+    kind === 'skill' || kind === 'agent' || kind === 'output-style'
+      ? fill(ranked(candidates, kind, facts), limit, fileReader(reading, kind))
+      : // Hooks and MCP servers were read with their candidates, so a refill makes no request and needs no bound.
+        fill(ranked(candidates, kind, facts), limit, listedReader(reading), Number.POSITIVE_INFINITY);
   const [skills, agents, hooks, mcpServers, outputStyles] = await Promise.all([
     select('skill', perKind),
     select('agent', perKind),
