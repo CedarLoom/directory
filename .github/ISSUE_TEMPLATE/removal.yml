@@ -1,6 +1,7 @@
 name: Remove an item
 description: Ask for an item to be removed from the Directory. No reason is needed.
 title: "Remove: "
+labels: [triage]
 body:
   - type: markdown
     attributes:
