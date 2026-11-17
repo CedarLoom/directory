@@ -188,24 +188,76 @@ it('reads the runner a shell wrapper starts from plain words', () => {
 
 it('reads a wrapped line it cannot read as unpinned only when it names a runner', () => {
   const cases: [string, string[]][] = [
-    ['cmd', ['/c', 'npx -y docs-mcp@1.2.3 & calc']],
-    ['bash', ['-c', 'cd app && node server.js']],
-    ['sh', ['-c', 'cd ${CLAUDE_PLUGIN_ROOT} && node server.js']],
-    ['bash', ['-c', 'cd "${CLAUDE_PLUGIN_ROOT}" && npx -y evil-server']],
+    ['sh', ['-c', 'npx -y docs-mcp@1.2.3 $(cat args)']],
+    ['bash', ['-c', '(cd app && node server.js)']],
     ['sh', ['-c', 'cd app && uv run --with "mcp>=1.0" server.py']],
     ['sh', ['-c', 'cd app && uv run --no-project server.py']],
     ['env', ['-S', 'npx docs-mcp@1.2.3']],
-    ['env', [...Array.from({ length: 10_000 }, () => 'env'), 'npx', 'evil-server']],
+    ['env', [...Array.from({ length: 10_000 }, () => 'env'), 'npx', 'docs-mcp@1.2.3']],
   ];
   expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
     true,
     false,
-    false,
-    true,
     true,
     false,
     true,
     true,
+  ]);
+});
+
+it('reads each command of a compound line, with the plugin paths of Claude Code as local paths', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'cd ${CLAUDE_PLUGIN_ROOT}/docker && ./start.sh']],
+    ['bash', ['-c', 'echo "install via npx" >&2; exec node s.js']],
+    ['sh', ['-c', 'cd app && uv run server.py | grep -w ERROR']],
+    ['sh', ['-c', 'cd app && npx -y docs-mcp@1.2.3']],
+    ['sh', ['-c', 'cd $HOME && npx -y docs-mcp@1.2.3']],
+    ['cmd', ['/c', 'npx -y docs-mcp@1.2.3 & calc']],
+    ['sh', ['-c', 'node s.js 2>/dev/null || npx -y evil-server']],
+    ['bash', ['-c', `cd "\${CLAUDE_PLUGIN_DATA}" && npx -y 'evil-server'`]],
+    ['sh', ['-c', 'npx -y docs-mcp@$VERSION']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+  ]);
+});
+
+it('reads the command that other shells and command prefixes start', () => {
+  const cases: [string, string[]][] = [
+    ['zsh', ['-c', 'npx -y evil-server']],
+    ['dash', ['-c', 'npx -y evil-server']],
+    ['/bin/ksh', ['-c', 'npx -y evil-server']],
+    ['pwsh', ['-NoProfile', '-Command', 'npx', '-y', 'evil-server']],
+    ['powershell.exe', ['-c', String.raw`& 'C:\Program Files\nodejs\npx.cmd' -y evil-server`]],
+    ['cmd', ['/c', '@npx -y evil-server']],
+    ['cmd', ['/c', 'call npx -y evil-server']],
+    ['nohup', ['npx', '-y', 'evil-server']],
+    ['sh', ['-c', 'command npx -y evil-server']],
+    ['sh', ['-c', 'exec -a docs npx -y evil-server']],
+    ['sh', ['-c', 'command -v npx && node server.js']],
+    ['pwsh', ['-File', 'server.ps1']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
   ]);
 });
 
@@ -229,6 +281,29 @@ it('reads uv run as local code unless it installs a package without an exact ver
     true,
     false,
     false,
+    false,
+    true,
+  ]);
+});
+
+it('reads --with behind the hidden value options of uv run and in single-letter options given together', () => {
+  const cases: [string, string[]][] = [
+    ['uv', ['run', '--trusted-host', 'pypi.test', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '--config-settings', 'key=value', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '--python-preference', 'managed', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '--preview-features', 'pylock', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '-wrequests', 'server.py']],
+    ['uv', ['run', '-qw', 'requests', 'server.py']],
+    ['npx', ['-yp', 'docs-mcp@1.2.3', 'docs']],
+    ['npx', ['-pdocs-mcp@1.2.3', 'docs']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
     false,
     true,
   ]);

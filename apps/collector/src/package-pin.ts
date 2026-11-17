@@ -20,7 +20,12 @@ interface Runner {
   pinned: (reference: string) => boolean;
   /** The first argument is a local script or command unless it is a URL, so only the options name packages. */
   localFirst?: true;
+  /** A short option takes its value attached, as in `-wrequests`. */
+  attachedValues?: true;
 }
+
+/** What reads the options of a command. */
+type Parser = Pick<Runner, 'options' | 'attachedValues'>;
 
 function roles(
   source: readonly string[],
@@ -73,9 +78,11 @@ const uv: Runner = {
     ['-q', '--quiet', '-v', '--verbose', '-n', '--no-cache', '--offline', '--isolated', '--refresh', '--no-progress'],
   ),
   pinned: (reference: string) => uvExact.test(reference),
+  attachedValues: true,
 };
 
-// `uv run` starts local code and installs what `--with` names next to it; the options of `uv run --help`.
+// `uv run` starts local code and installs what `--with` names next to it: the options of `uv run --help`, and the
+// aliases and hidden options it accepts with a value.
 const uvRun: Runner = {
   options: roles(
     [],
@@ -128,6 +135,10 @@ const uvRun: Runner = {
       '--directory',
       '--project',
       '--config-file',
+      '--trusted-host',
+      '--config-settings',
+      '--python-preference',
+      '--preview-features',
     ],
     [
       '--all-extras',
@@ -181,6 +192,7 @@ const uvRun: Runner = {
   ),
   pinned: uv.pinned,
   localFirst: true,
+  attachedValues: true,
 };
 
 const pipx: Runner = {
@@ -249,25 +261,38 @@ const commands: readonly (readonly [string, readonly string[], Runner])[] = [
 
 const isOption = (arg: string | undefined): boolean => arg !== undefined && arg !== '--' && arg.startsWith('-');
 
-/** `-it`: single-letter flags given together. */
-function flagCluster(options: ReadonlyMap<string, Role>, name: string): boolean {
-  return (
-    /^-[A-Za-z]{2,}$/.test(name) && Array.from(name.slice(1)).every((letter) => options.get(`-${letter}`) === 'flag')
-  );
-}
-
 interface Option {
   role: Role | undefined;
   value: string | undefined;
   next: number;
 }
 
+/**
+ * `-it`, `-qw requests`, `-qw=requests` and, where the runner reads attached values, `-qwrequests`: single-letter
+ * options given together, of which the last may take a value.
+ */
+function clusterAt({ options, attachedValues }: Parser, args: readonly string[], index: number): Option {
+  const arg = args[index] ?? '';
+  for (let at = 1; at < arg.length; at += 1) {
+    const role = options.get(`-${arg.charAt(at)}`);
+    if (role === 'flag') continue;
+    const rest = arg.slice(at + 1);
+    if (role === undefined || (/^[^=]/.test(rest) && attachedValues !== true)) {
+      return { role: undefined, value: undefined, next: index + 1 };
+    }
+    if (rest === '') return { role, value: args[index + 1], next: index + 2 };
+    return { role, value: rest.replace(/^=/, ''), next: index + 1 };
+  }
+  return { role: 'flag', value: undefined, next: index + 1 };
+}
+
 /** The option at `index`: its role, the value it carries after `=` or as the next argument, and where the rest starts. */
-function optionAt(options: ReadonlyMap<string, Role>, args: readonly string[], index: number): Option {
+function optionAt(parser: Parser, args: readonly string[], index: number): Option {
   const arg = args[index] ?? '';
   const equals = arg.indexOf('=');
   const name = equals === -1 ? arg : arg.slice(0, equals);
-  const role = options.get(name) ?? (flagCluster(options, name) ? 'flag' : undefined);
+  const role = parser.options.get(name);
+  if (role === undefined && /^-[^-]/.test(arg)) return clusterAt(parser, args, index);
   if (equals !== -1) return { role, value: arg.slice(equals + 1), next: index + 1 };
   return role === undefined || role === 'flag'
     ? { role, value: undefined, next: index + 1 }
@@ -291,7 +316,7 @@ function fetched(runner: Runner, args: readonly string[]): string[] | undefined 
   let named = false;
   let index = 0;
   while (isOption(args[index])) {
-    const { role, value, next } = optionAt(runner.options, args, index);
+    const { role, value, next } = optionAt(runner, args, index);
     if (role === undefined && runner.localFirst !== true) return undefined;
     if (role === 'source' || role === 'extra') packages.push(value ?? '');
     named ||= role === 'source';
@@ -305,7 +330,7 @@ function fetched(runner: Runner, args: readonly string[]): string[] | undefined 
  * command names another subcommand, `unreadable` when an unknown option comes before a word that follows later.
  */
 function withoutWords(
-  { options }: Runner,
+  runner: Runner,
   words: readonly string[],
   args: readonly string[],
 ): readonly string[] | 'other' | 'unreadable' {
@@ -313,7 +338,7 @@ function withoutWords(
   let index = 0;
   for (const word of words) {
     while (isOption(rest[index])) {
-      const { role, next } = optionAt(options, rest, index);
+      const { role, next } = optionAt(runner, rest, index);
       // Without the word later on, the command names another subcommand, such as `bun --hot server.ts`.
       if (role === undefined) return rest.includes(word, index + 1) ? 'unreadable' : 'other';
       index = next;
@@ -324,31 +349,159 @@ function withoutWords(
   return rest;
 }
 
-/** The program a command names; on Windows that is `npx.cmd` or `NPX.EXE`, behind a path with backslashes. */
+/**
+ * The program a command names; on Windows that is `npx.cmd` or `NPX.EXE`, behind a path with backslashes, and cmd
+ * reads an `@` before it as an order not to echo the command.
+ */
 function program(command: string): string {
   return command
     .replace(/^.*[/\\]/, '')
     .replace(/\.(?:cmd|exe)$/i, '')
+    .replace(/^@/, '')
     .toLowerCase();
 }
 
-// The characters a POSIX shell reads literally, as Python's `shlex.quote` leaves them.
-const shellPlain = /^[\w@%+=:,./-]+$/;
-// cmd reads all but its operators, quotes and variable expansions literally.
-const cmdPlain = /^[^\s"%!&|<>^()]+$/;
+/** A command of a line a wrapper starts: its words, and whether they hold nothing the shell replaces at run time. */
+interface Command {
+  words: readonly string[];
+  readable: boolean;
+}
+
+type TokenKind = 'blank' | 'redirection' | 'separator' | 'part';
+type Token = readonly [TokenKind, string];
+
+/** How a shell splits a line: its tokens in order of precedence, and what a part reads as, undefined when replaced. */
+interface Dialect {
+  tokens: readonly (readonly [TokenKind, RegExp])[];
+  part: (text: string) => string | undefined;
+  /** Leading `NAME=value` words set variables for the command. */
+  assignments: boolean;
+}
+
+// Claude Code replaces its plugin paths in a server's command and arguments before a shell reads them.
+const pluginPath = /\$\{CLAUDE_PLUGIN_(?:ROOT|DATA)\}/g;
+// `>`, `2>&`, `&>` and `<`, followed by their target; a here-document (`<<`) matches no token.
+const redirection = /(?:\d*|&)(?:>|<(?!<))[>&|]?/y;
+
+function tokenKinds(separator: RegExp, part: RegExp): Dialect['tokens'] {
+  return [
+    ['blank', /[ \t]+/y],
+    ['redirection', redirection],
+    ['separator', separator],
+    ['part', part],
+  ];
+}
+
+/** A part of a line of sh or PowerShell: single quotes hold text literally, `$` elsewhere expands a variable. */
+function expandingPart(text: string, unescape: (quoted: string) => string): string | undefined {
+  if (text.startsWith("'")) return text.slice(1, -1);
+  if (text.replaceAll(pluginPath, '').includes('$')) return undefined;
+  return text.startsWith('"') ? unescape(text.slice(1, -1)) : text;
+}
+
+const posixEscape = /\\([$`"\\\n])/g;
+const unescaped = (_escape: string, char: string): string => (char === '\n' ? '' : char);
+
+/** sh and the shells that share its syntax; a subshell, group, command substitution or comment matches no token. */
+const posix: Dialect = {
+  tokens: tokenKinds(/[;&|\n]/y, /'[^']*'|"(?:[^"\\`]|\\[\s\S])*"|\\[\s\S]|(?:\$\{\w+\}|[^\s'"\\;&|<>(){}`!#])+/y),
+  part: (text) =>
+    text.startsWith('\\')
+      ? unescaped(text, text.slice(1))
+      : expandingPart(text, (quoted) => quoted.replace(posixEscape, unescaped)),
+  assignments: true,
+};
+
+/** PowerShell: a backslash is a path character, and the backtick escape matches no token. */
+const powershell: Dialect = {
+  tokens: tokenKinds(/[;&|\n]/y, /'[^']*'|"[^"`]*"|(?:\$\{\w+\}|[^\s'"`;&|<>(){}#])+/y),
+  part: (text) => expandingPart(text, (quoted) => quoted),
+  assignments: false,
+};
+
+/** cmd: a quote, a parenthesis or a caret matches no token, `%` and `!` expand variables, `;` is a plain character. */
+const cmd: Dialect = {
+  tokens: tokenKinds(/[&|\n]/y, /[^\s"&|<>()^]+/y),
+  part: (text) => (/[%!]/.test(text) ? undefined : text),
+  assignments: false,
+};
+
+function tokenAt(kinds: Dialect['tokens'], line: string, at: number): Token | undefined {
+  for (const [kind, pattern] of kinds) {
+    pattern.lastIndex = at;
+    const text = pattern.exec(line)?.[0];
+    if (text !== undefined) return [kind, text];
+  }
+  return undefined;
+}
+
+/** The tokens of a line; undefined when a character matches none. */
+function tokens(line: string, dialect: Dialect): Token[] | undefined {
+  const found: Token[] = [];
+  let at = 0;
+  while (at < line.length) {
+    const token = tokenAt(dialect.tokens, line, at);
+    if (token === undefined) return undefined;
+    found.push(token);
+    at += token[1].length;
+  }
+  return found;
+}
+
+/** The parts of each word of one command, without its redirections and their targets. */
+function wordParts(found: readonly Token[]): readonly (readonly string[])[] {
+  const words: string[][] = [];
+  let word: string[] | undefined;
+  let target = false;
+  for (const [kind, text] of [...found, ['blank', ''] as const]) {
+    if (kind === 'part') {
+      (word ??= []).push(text);
+      continue;
+    }
+    if (word !== undefined && !target) words.push(word);
+    target = kind === 'redirection' || (target && word === undefined);
+    word = undefined;
+  }
+  return words;
+}
+
+/** The words of one command, without its redirections and leading assignments. */
+function commandOf(found: readonly Token[], dialect: Dialect): Command {
+  const parts = wordParts(found);
+  const words = parts.map((word) => word.map((part) => dialect.part(part) ?? part).join(''));
+  return {
+    words: dialect.assignments ? withoutAssignments(words, shellAssignment) : words,
+    readable: parts.every((word) => word.every((part) => dialect.part(part) !== undefined)),
+  };
+}
+
+/** The commands of a line, split at `;`, `&`, `|` and their doubles; undefined when the line cannot be split. */
+function lineCommands(line: string, dialect: Dialect): readonly Command[] | undefined {
+  const found = tokens(line, dialect);
+  if (found === undefined) return undefined;
+  const split: Command[] = [];
+  let start = 0;
+  for (const [index, [kind]] of [...found, ['separator', ''] as const].entries()) {
+    if (kind !== 'separator') continue;
+    const command = commandOf(found.slice(start, index), dialect);
+    if (command.words.length > 0) split.push(command);
+    start = index + 1;
+  }
+  return split;
+}
+
 const shellAssignment = /^[A-Za-z_]\w*=/;
 // env reads every argument holding `=` as an assignment.
 const envAssignment = /=/;
-const envOptions = roles([], [], ['-u', '--unset', '-C', '--chdir'], ['-i', '--ignore-environment']);
 const shellValueOptions: ReadonlySet<string> = new Set(['--rcfile', '--init-file']);
+const noOptions: Parser = { options: new Map() };
+const envOptions: Parser = {
+  options: roles([], [], ['-u', '--unset', '-C', '--chdir'], ['-i', '--ignore-environment']),
+};
+const execOptions: Parser = { options: roles([], [], ['-a'], ['-c', '-l']) };
+const commandOptions: Parser = { options: roles([], [], [], ['-p', '-v', '-V']) };
 // Deeper nesting reads as unreadable, so a crafted command line costs bounded work.
 const maxWrappers = 8;
-
-/** The words of a command line of plain words between spaces; undefined when it holds anything a shell would read. */
-function plainWords(line: string, plain: RegExp): string[] | undefined {
-  const words = line.split(/[ \t]+/).filter((word) => word !== '');
-  return words.every((word) => plain.test(word)) ? words : undefined;
-}
 
 /** The command after the leading `NAME=value` assignments. */
 function withoutAssignments(words: readonly string[], assignment: RegExp): readonly string[] {
@@ -357,11 +510,10 @@ function withoutAssignments(words: readonly string[], assignment: RegExp): reado
 }
 
 /** `cmd /c` or `/k`, after switches such as `/d` and `/s`, runs the rest as one command line. */
-function cmdCommand(words: readonly string[]): readonly string[] | undefined {
+function cmdCommands(words: readonly string[]): readonly Command[] | undefined {
   const args = words.slice(1);
   const run = args.findIndex((arg) => !arg.startsWith('/') || /^\/[ck]$/i.test(arg));
-  if (!/^\/[ck]$/i.test(args[run] ?? '')) return words;
-  return plainWords(args.slice(run + 1).join(' '), cmdPlain);
+  return /^\/[ck]$/i.test(args[run] ?? '') ? lineCommands(args.slice(run + 1).join(' '), cmd) : [];
 }
 
 /** Where the operands of sh or bash start, after their options, and whether one of these is `-c`. */
@@ -376,48 +528,65 @@ function shellOptions(args: readonly string[]): { operand: number; command: bool
   return { operand: args[index] === '--' ? index + 1 : index, command };
 }
 
-/** `sh -c` and `bash -c` run their first operand as a command line; without `-c` they run a local script. */
-function shellCommand(words: readonly string[]): readonly string[] | undefined {
+/** sh and the shells like it run their first operand as a command line with `-c`; without it, a local script. */
+function shellCommands(words: readonly string[]): readonly Command[] | undefined {
   const args = words.slice(1);
   const { operand, command } = shellOptions(args);
-  if (!command) return words;
-  const line = plainWords(args[operand] ?? '', shellPlain);
-  if (line === undefined) return undefined;
-  const run = withoutAssignments(line, shellAssignment);
-  return run[0] === 'exec' ? run.slice(1) : run;
+  return command ? lineCommands(args[operand] ?? '', posix) : [];
 }
 
-/** `env` runs the command after its options and assignments. */
-function envCommand(words: readonly string[]): readonly string[] | undefined {
+/** `pwsh -Command` runs the rest of its arguments as one command line; without it, a local script. */
+function powershellCommands(words: readonly string[]): readonly Command[] | undefined {
+  const run = words.findIndex((word, index) => index > 0 && /^-(?:c|command)$/i.test(word));
+  return run === -1 ? [] : lineCommands(words.slice(run + 1).join(' '), powershell);
+}
+
+/** The words a prefix command runs after its options; undefined when an option is unknown. */
+function afterOptions(parser: Parser, words: readonly string[]): readonly string[] | undefined {
   const args = words.slice(1);
   let index = 0;
   while (isOption(args[index])) {
-    const { role, next } = optionAt(envOptions, args, index);
+    const { role, next } = optionAt(parser, args, index);
     if (role === undefined) return undefined;
     index = next;
   }
-  return withoutAssignments(args.slice(args[index] === '--' ? index + 1 : index), envAssignment);
+  return args.slice(args[index] === '--' ? index + 1 : index);
 }
 
-/** What a wrapper starts: the command words, the given words when it wraps nothing, undefined when unreadable. */
-const wrappers: ReadonlyMap<string, (words: readonly string[]) => readonly string[] | undefined> = new Map([
-  ['cmd', cmdCommand],
-  ['sh', shellCommand],
-  ['bash', shellCommand],
-  ['env', envCommand],
+function started(words: readonly string[] | undefined): readonly Command[] | undefined {
+  return words === undefined ? undefined : [{ words, readable: true }];
+}
+
+/** `env` runs the command after its options and assignments. */
+function envCommands(words: readonly string[]): readonly Command[] | undefined {
+  const rest = afterOptions(envOptions, words);
+  return started(rest === undefined ? undefined : withoutAssignments(rest, envAssignment));
+}
+
+/** `command` runs the command after its options; with `-v` or `-V` it only names it. */
+function commandCommands(words: readonly string[]): readonly Command[] | undefined {
+  const rest = afterOptions(commandOptions, words);
+  if (rest === undefined) return undefined;
+  const options = words.slice(1, words.length - rest.length);
+  return options.some((option) => /^-\w*[vV]/.test(option)) ? [] : started(rest);
+}
+
+/** What a wrapper or prefix starts: the commands, none when it runs a local script, undefined when unreadable. */
+const wrappers: ReadonlyMap<string, (words: readonly string[]) => readonly Command[] | undefined> = new Map([
+  ['cmd', cmdCommands],
+  ['sh', shellCommands],
+  ['bash', shellCommands],
+  ['dash', shellCommands],
+  ['ksh', shellCommands],
+  ['zsh', shellCommands],
+  ['pwsh', powershellCommands],
+  ['powershell', powershellCommands],
+  ['env', envCommands],
+  ['command', commandCommands],
+  ['exec', (words: readonly string[]) => started(afterOptions(execOptions, words))],
+  ['nohup', (words: readonly string[]) => started(afterOptions(noOptions, words))],
+  ['call', (words: readonly string[]) => started(afterOptions(noOptions, words))],
 ]);
-
-/** The command and arguments a shell wrapper starts, through nested wrappers; undefined when they cannot be read. */
-function unwrapped(words: readonly string[]): readonly string[] | undefined {
-  let current = words;
-  for (let depth = 0; depth <= maxWrappers; depth += 1) {
-    const unwrap = wrappers.get(program(current[0] ?? ''));
-    const inner = unwrap === undefined ? current : unwrap(current);
-    if (inner === undefined || inner === current) return inner;
-    current = inner;
-  }
-  return undefined;
-}
 
 // The words of a line a wrapper starts, between blanks, operators and quotes.
 const lineWord = /[^\s;&|()<>"'`^]+/g;
@@ -443,15 +612,8 @@ function namesRunner(line: readonly string[]): boolean {
   });
 }
 
-/**
- * Whether a stdio server's command fetches a package at start without naming its exact version.
- * An unknown command runs local code and fetches nothing; a runner whose package cannot be found counts as unpinned,
- * and so does a shell wrapper whose command cannot be read when the line names a runner.
- */
-export function unpinnedPackage(command: string, args: readonly string[]): boolean {
-  const line = [command, ...args];
-  const words = unwrapped(line);
-  if (words === undefined) return namesRunner(line);
+/** Whether the command of a runner fetches a package without its exact version; another command runs local code. */
+function runnerUnpinned(words: readonly string[]): boolean {
   const [inner = '', ...own] = words;
   const name = program(inner);
   for (const [known, subcommand, runner] of commands) {
@@ -462,4 +624,22 @@ export function unpinnedPackage(command: string, args: readonly string[]): boole
     return packages.length === 0 ? runner.localFirst !== true : !packages.every(runner.pinned);
   }
   return false;
+}
+
+/** Whether a command, or a command its wrappers start, fetches a package without its exact version. */
+function unpinnedCommand({ words, readable }: Command, depth: number): boolean {
+  const unwrap = wrappers.get(program(words[0] ?? ''));
+  if (!readable || (unwrap !== undefined && depth === maxWrappers)) return namesRunner(words);
+  if (unwrap === undefined) return runnerUnpinned(words);
+  const inner = unwrap(words);
+  return inner === undefined ? namesRunner(words) : inner.some((command) => unpinnedCommand(command, depth + 1));
+}
+
+/**
+ * Whether a stdio server's command fetches a package at start without naming its exact version.
+ * An unknown command runs local code and fetches nothing; a runner whose package cannot be found counts as unpinned,
+ * and so does a wrapped command that cannot be read when it names a runner.
+ */
+export function unpinnedPackage(command: string, args: readonly string[]): boolean {
+  return unpinnedCommand({ words: [command, ...args], readable: true }, 0);
 }
