@@ -418,6 +418,83 @@ it('refuses a skill whose SKILL.md is over 256 KB', async () => {
   });
 });
 
+// One more than the 64 keys a record holds.
+const wideKeys = Array.from({ length: 65 }, (_, index) => `field${index}`);
+const wideFrontmatter = `---\nname: wide\n${wideKeys.map((key) => `${key}: ${marker}`).join('\n')}\n---\n${marker}\n`;
+const wideHooks = Object.fromEntries(wideKeys.map((key) => [key, [{ hooks: [{ type: 'command', command: marker }] }]]));
+
+/** Runs the fake world with `example-org/top`, a topic repository with more stars than any other, holding `files`. */
+async function runWithTop(files: Record<string, string>) {
+  const world = fakeWorld();
+  world.set('example-org/top', { stars: 99_999, files });
+  const lines: string[] = [];
+  const result = await run(world, '2026-11-16', new Map(), {
+    topicRepositories: ['example-org/top'],
+    log: (line) => lines.push(line),
+  });
+  return { ...result, refusals: lines.filter((line) => line.includes(': refused: ')) };
+}
+
+it('refuses a skill with more than 64 frontmatter fields before selection, so the next skill takes its place', async () => {
+  const skills = Object.fromEntries(
+    Array.from({ length: 60 }, (_, index) => [`skills/skill-${String(index).padStart(2, '0')}/SKILL.md`, marker]),
+  );
+  const { report, files, refusals } = await runWithTop({ 'skills/a-wide/SKILL.md': wideFrontmatter, ...skills });
+  expect({
+    skills: report.items.skill,
+    last: files.has('records/skill/gh.example-org.top.skills.skill-59.json'),
+    refusals,
+  }).toEqual({
+    skills: 60,
+    last: true,
+    refusals: ['gh.example-org.top.skills.a-wide: refused: frontmatterFields too_big'],
+  });
+});
+
+it('refuses an output style with more than 64 frontmatter fields before selection, so the next one takes its place', async () => {
+  const styles = Object.fromEntries(
+    Array.from({ length: 20 }, (_, index) => [`output-styles/style-${String(index).padStart(2, '0')}.md`, marker]),
+  );
+  const { report, files, refusals } = await runWithTop({ 'output-styles/a-wide.md': wideFrontmatter, ...styles });
+  expect({
+    outputStyles: report.items['output-style'],
+    last: files.has('records/output-style/gh.example-org.top.output-styles.style-19.json'),
+    refusals,
+  }).toEqual({
+    outputStyles: 20,
+    last: true,
+    refusals: ['gh.example-org.top.output-styles.a-wide: refused: frontmatterFields too_big'],
+  });
+});
+
+it('refuses a hooks file with more than 64 events before selection, so the next hooks file takes its place', async () => {
+  const { report, files, refusals } = await runWithTop({ 'hooks/hooks.json': JSON.stringify({ hooks: wideHooks }) });
+  expect({
+    hooks: report.items.hook,
+    last: files.has('records/hook/gh.example-org.plugin-20.hooks.json'),
+    refusals,
+  }).toEqual({ hooks: 20, last: true, refusals: ['gh.example-org.top hook: refused: events too_big'] });
+});
+
+it('refuses a plugin with hooks on more than 64 events before selection, so the next plugin takes its place', async () => {
+  const world = fakeWorld();
+  const files = world.get('example-org/plugin-0')?.files ?? {};
+  files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-0', hooks: wideHooks });
+  const lines: string[] = [];
+  const { report, files: written } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
+  expect({
+    plugins: report.items.plugin,
+    refused: written.has('records/plugin/gh.example-org.plugin-0.json'),
+    next: written.has('records/plugin/gh.example-org.plugin-60.json'),
+    refusals: lines.filter((line) => line.startsWith('gh.example-org.plugin-0')),
+  }).toEqual({
+    plugins: 59,
+    refused: false,
+    next: true,
+    refusals: ['gh.example-org.plugin-0: refused: hooksByEvent too_big'],
+  });
+});
+
 it('records a license file in a skill folder when the repository root has none', async () => {
   const world = fakeWorld();
   const repository = world.get('example-org/plugin-0');
@@ -929,4 +1006,39 @@ it('changes only meta.json on a second run on the same run date without upstream
     license: 'CC0 1.0 Universal',
   });
   expect({ changed: [...files.keys()], removed }).toEqual({ changed: ['meta.json'], removed: [] });
+});
+
+function registryPage(nextCursor?: string) {
+  return JSON.stringify({ servers: [], metadata: { ...(nextCursor && { nextCursor }) } });
+}
+
+it('reads no further registry page once another source has failed', async () => {
+  const firstPage = Promise.withResolvers<string>();
+  const urls: string[] = [];
+  const getText = async (url: string) => {
+    urls.push(url);
+    return urls.length === 1 ? firstPage.promise : registryPage();
+  };
+  const client = { requests: 0, getText, postText: getText };
+  const collecting = collect(client, {
+    adapters: [
+      {
+        id: 'community-marketplace',
+        collect: async () => {
+          throw new Error('source failed');
+        },
+      },
+    ],
+    registryClient: client,
+    topics: [],
+    excluded: new Set(),
+    previous: new Map(),
+    runAt: '2026-11-16T06:00:00Z',
+    log: () => undefined,
+  });
+  await expect(collecting).rejects.toThrow('source failed');
+  firstPage.resolve(registryPage('next'));
+  // The registry reads its next page once its answer is parsed, a few promise turns after the first page arrives.
+  await new Promise((resolve) => setImmediate(resolve));
+  expect(urls).toEqual(['https://registry.modelcontextprotocol.io/v0.1/servers?version=latest&limit=100']);
 });

@@ -1,4 +1,4 @@
-import { keyword } from '@directory/contracts';
+import { hookRecord, keyword } from '@directory/contracts';
 import { z } from 'zod';
 import { jsonText } from './json-text.ts';
 
@@ -65,9 +65,14 @@ export function inlineHookEvents(value: unknown): HookEvents {
   return inlineHooks.parse(value).hooks;
 }
 
+const recordEvents = hookRecord.pick({ events: true });
+
+/** The facts of a hooks file; more events than the record holds throw a ZodError. */
 export function analyzeHooks(text: string): HookFacts | undefined {
   const hooks = hookEvents(text);
-  return hooks === undefined ? undefined : hookFacts(hooks);
+  if (hooks === undefined) return undefined;
+  const facts = hookFacts(hooks);
+  return { ...facts, events: recordEvents.parse({ events: facts.events }).events };
 }
 
 export function hookFacts(hooks: HookEvents): HookFacts {

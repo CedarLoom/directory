@@ -1,3 +1,6 @@
+import { authorKeys, keyword } from '@directory/contracts';
+import { z } from 'zod';
+
 /** A Markdown file split into its YAML frontmatter fields and its body. */
 export interface Frontmatter {
   /** Top-level keys in file order: a string, or a list for a flow or block list. */
@@ -123,4 +126,12 @@ export function bodyLines({ body }: Frontmatter): number {
 export function textField(frontmatter: Frontmatter, key: string): string | undefined {
   const value = frontmatter.fields.get(key);
   return typeof value === 'string' && value !== '' ? value : undefined;
+}
+
+const fieldsInRecord = z.object({ frontmatterFields: authorKeys });
+
+/** The keys that are keywords, in file order; more than a record holds throw a ZodError. */
+export function frontmatterFields({ fields }: Frontmatter): string[] {
+  const keys = [...fields.keys()].filter((key) => keyword.safeParse(key).success);
+  return fieldsInRecord.parse({ frontmatterFields: keys }).frontmatterFields;
 }

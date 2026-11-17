@@ -22,3 +22,5 @@ export function analyzeAgent(text: string) {
     tokens: tokenEstimate(frontmatter),
   };
 }
+
+export type AgentAnalysis = ReturnType<typeof analyzeAgent>;

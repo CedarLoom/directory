@@ -54,7 +54,11 @@ function pinned({ version, identifier }: z.infer<typeof registryPackage>): boole
 }
 
 function secrets(inputs: readonly z.infer<typeof input>[] = []): number {
-  const values = inputs.flatMap((one) => [one, ...Object.values(one.variables ?? {})]);
+  // A templated input is filled from its variables, so the user supplies the variables, not the input.
+  const values = inputs.flatMap((one) => {
+    const filled = Object.values(one.variables ?? {});
+    return filled.length > 0 ? filled : [one];
+  });
   return values.filter(({ isRequired, isSecret }) => isRequired === true && isSecret === true).length;
 }
 

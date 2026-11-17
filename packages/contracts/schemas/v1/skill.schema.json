@@ -427,6 +427,7 @@
       "const": "skill"
     },
     "frontmatterFields": {
+      "maxItems": 64,
       "type": "array",
       "items": {
         "type": "string",
