@@ -17,10 +17,11 @@ const report: RunReport = {
 };
 
 /** The files of one item: its record, which points to the popularity file of its repository, and its history. */
-function itemFiles(kind: string, id: string, repository: string): [string, string][] {
+function itemFiles(kind: string, id: string, repository: string, container?: string): [string, string][] {
   const stars = { signal: 'stars', ref: repository, scope: 'repository', source: 'github' };
+  const record = { id, kind, container, provenance: ['github'], popularity: [stars] };
   return [
-    [`records/${kind}/${id}.json`, JSON.stringify({ id, kind, provenance: ['github'], popularity: [stars] })],
+    [`records/${kind}/${id}.json`, JSON.stringify(record)],
     [`history/${kind}/${id}.json`, JSON.stringify({ id, kind, entries: [] })],
   ];
 }
@@ -83,10 +84,11 @@ it('keeps a file outside the data layout whose name is an excluded id', () => {
   expect(publication(candidate, files, report, { excluded: new Set(['gh.acme.tool']), license }).removed).toEqual([]);
 });
 
-const departuresText = (files: Record<string, string>) => JSON.stringify({ schemaVersion: 1, files });
+type Departure = { since: string; ids: string[] };
+const departuresText = (files: Record<string, Departure>) => JSON.stringify({ schemaVersion: 1, files });
 
 it('dates the files kept for an item that left the index and forgets an item that returned', () => {
-  const before = departuresText({ 'history/skill/gh.acme.skills.kept.json': '2026-11-01' });
+  const before = departuresText({ 'history/skill/gh.acme.skills.kept.json': { since: '2026-11-01', ids: [] } });
   const { files } = publication(candidate, new Map([...published, ['departures.json', before]]), report, {
     excluded: new Set(),
     license,
@@ -94,14 +96,44 @@ it('dates the files kept for an item that left the index and forgets an item tha
   expect(JSON.parse(files.get('departures.json') ?? '')).toEqual({
     schemaVersion: 1,
     files: {
-      'history/agent/gh.acme.helper.json': '2026-11-23',
-      'history/plugin/gh.acme.tool.json': '2026-11-23',
-      'history/skill/gh.acme.skills.dropped.json': '2026-11-23',
-      'popularity/gh.acme.helper.json': '2026-11-23',
-      'popularity/gh.acme.tool.json': '2026-11-23',
+      'history/agent/gh.acme.helper.json': { since: '2026-11-23', ids: ['gh.acme.helper'] },
+      'history/plugin/gh.acme.tool.json': { since: '2026-11-23', ids: ['gh.acme.tool'] },
+      'history/skill/gh.acme.skills.dropped.json': { since: '2026-11-23', ids: ['gh.acme.skills'] },
+      'popularity/gh.acme.helper.json': { since: '2026-11-23', ids: ['gh.acme.helper'] },
+      'popularity/gh.acme.tool.json': { since: '2026-11-23', ids: ['gh.acme.tool'] },
     },
   });
 });
+
+/** Publishes a run without the item of `files`, then a week later a run that excludes `excludedId`. */
+function excludeAfterDeparture(files: [string, string][], excludedId: string): string[] {
+  const left = publication(candidate, new Map(files), report, { excluded: new Set(), license });
+  const departed = new Map([...files.filter(([path]) => !path.startsWith('records/')), ...left.files]);
+  return publication(
+    candidate,
+    departed,
+    { ...report, runAt: '2026-11-30T06:00:00Z' },
+    {
+      excluded: new Set([excludedId]),
+      license,
+    },
+  ).removed;
+}
+
+it('removes the history an item kept after it left the index once its container is excluded', () => {
+  const files = itemFiles('skill', 'gh.acme.tools.lint.skills.check', 'gh.acme.tools', 'gh.acme.tools.lint');
+  expect(excludeAfterDeparture(files, 'gh.acme.tools.lint')).toEqual([
+    'history/skill/gh.acme.tools.lint.skills.check.json',
+  ]);
+});
+
+it('removes the history and popularity file an MCP server kept after it left the index once its repository is excluded', () =>
+  expect(
+    excludeAfterDeparture(
+      [...itemFiles('mcp-server', 'io.github.acme.weather', 'gh.acme.weather'), popularity('gh.acme.weather')],
+      'gh.acme.weather',
+    ),
+  ).toEqual(['history/mcp-server/io.github.acme.weather.json', 'popularity/gh.acme.weather.json']));
 
 it('removes the history and popularity file of an item 90 days after it left the index', () => {
   const files = new Map([
@@ -111,15 +143,15 @@ it('removes the history and popularity file of an item 90 days after it left the
     [
       'departures.json',
       departuresText({
-        'history/agent/gh.acme.old.json': '2026-08-25',
-        'popularity/gh.acme.old.json': '2026-08-25',
-        'history/agent/gh.acme.recent.json': '2026-08-26',
+        'history/agent/gh.acme.old.json': { since: '2026-08-25', ids: [] },
+        'popularity/gh.acme.old.json': { since: '2026-08-25', ids: [] },
+        'history/agent/gh.acme.recent.json': { since: '2026-08-26', ids: [] },
       }),
     ],
   ]);
   const { files: written, removed: expired } = publication(candidate, files, report, { excluded: new Set(), license });
   expect({ expired, departures: JSON.parse(written.get('departures.json') ?? '').files }).toEqual({
     expired: ['history/agent/gh.acme.old.json', 'popularity/gh.acme.old.json'],
-    departures: { 'history/agent/gh.acme.recent.json': '2026-08-26' },
+    departures: { 'history/agent/gh.acme.recent.json': { since: '2026-08-26', ids: [] } },
   });
 });

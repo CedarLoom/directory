@@ -29,8 +29,17 @@ export async function readDataFolder(folder: string): Promise<Map<string, string
 }
 
 /** Removes each file, by relative path with `/` separators, from the folder. */
-export async function removeDataFiles(folder: string, paths: readonly string[]): Promise<void> {
+async function removeDataFiles(folder: string, paths: readonly string[]): Promise<void> {
   await Promise.all(paths.map((path) => rm(join(folder, ...path.split('/')))));
+}
+
+/**
+ * Removes the files a publish drops, then writes its files: a stop in between leaves the earlier `departures.json`, so
+ * no file still on disk loses its date.
+ */
+export async function updateDataFolder(folder: string, files: DataFiles, removed: readonly string[]): Promise<void> {
+  await removeDataFiles(folder, removed);
+  await writeDataFolder(folder, files);
 }
 
 /** Writes each file into the folder; a file not given stays as it is. */

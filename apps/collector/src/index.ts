@@ -6,8 +6,8 @@ import { ZodError } from 'zod';
 import { systemClock } from './clock.ts';
 import { collect, summaryLine } from './collect.ts';
 import { commitDataFolder } from './data-commit.ts';
-import { readDataFile, readDataFolder, removeDataFiles, writeDataFolder } from './data-folder.ts';
-import { exclusionsKeyVariable, parseExclusions } from './exclusions.ts';
+import { readDataFile, readDataFolder, updateDataFolder, writeDataFolder } from './data-folder.ts';
+import { ExclusionsKeyError, exclusionsKeyVariable, parseExclusions } from './exclusions.ts';
 import { gitHubHeaders } from './github-contents.ts';
 import { createHttpClient, RequestError } from './http-client.ts';
 import { registryHeaders } from './mcp-registry-adapter.ts';
@@ -32,6 +32,7 @@ const registryRequestCap = 2000;
 /** sysexits codes: usage 64, bad data 65, missing input 66, internal error 70; 1 when a source stopped the run. */
 function exitCode(error: unknown): number {
   if (error instanceof CommanderError) return error.exitCode === 0 ? 0 : 64;
+  if (error instanceof ExclusionsKeyError) return 64;
   if (error instanceof ZodError || error instanceof SyntaxError) return 65;
   if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return 66;
   return error instanceof RequestError ? 1 : 70;
@@ -170,8 +171,7 @@ program
     ]);
     if (!candidateFiles.has('index.json')) program.error(`publish: ${candidate} holds no index.json`);
     const { files, removed } = publication(candidateFiles, published, report, { excluded, license });
-    await writeDataFolder(data, files);
-    await removeDataFiles(data, removed);
+    await updateDataFolder(data, files, removed);
     // Also commits what an earlier publish wrote but failed to commit.
     const committed = await commitDataFolder(data, `chore(data): refresh of ${report.runAt}`);
     log(
@@ -183,6 +183,7 @@ try {
   await program.parseAsync();
 } catch (error) {
   process.exitCode = exitCode(error);
-  // Commander has printed its own message.
-  if (!(error instanceof CommanderError)) console.error(error);
+  // Commander has printed its own message; a key error is a setup mistake, so its message is enough.
+  if (error instanceof ExclusionsKeyError) console.error(error.message);
+  else if (!(error instanceof CommanderError)) console.error(error);
 }

@@ -1016,7 +1016,7 @@ msgstr "This page does not exist."
 #. js-lingui-explicit-id
 #: src/method/MethodPage.tsx:155
 msgid "method.takedown"
-msgstr "To correct an entry or to have your item removed, open an issue. A removed item stays out of later runs."
+msgstr "To correct an entry or to have your item removed, open an issue with the correction or removal form. No reason is needed for a removal, and every request is answered within one month. A removed item stays out of later runs."
 
 #. js-lingui-explicit-id
 #: src/method/RubricTable.tsx:13

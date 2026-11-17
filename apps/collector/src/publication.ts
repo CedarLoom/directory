@@ -68,8 +68,11 @@ function excludedHistory(path: string, excludedHistories: ReadonlySet<string>, e
   return excludedHistories.has(path) || excluded.has(id) || excluded.has(repository);
 }
 
+/** The files kept for items that left the index, as `departures.json` lists them. */
+type Departures = ReadonlyMap<string, { since: string; ids: string[] }>;
+
 /** Published files the run drops: every record it lacks, and the history and popularity file of an excluded item. */
-function removals(candidate: DataFiles, published: DataFiles, excluded: Exclusions): string[] {
+function removals(candidate: DataFiles, published: DataFiles, excluded: Exclusions, departed: Departures): string[] {
   const excludedHistories = new Set<string>();
   const [excludedRefs, keptRefs] = [new Set<string>(), new Set<string>()];
   // The run's copy of a record replaces the published one; a record the run lacks still keeps its popularity file.
@@ -81,6 +84,12 @@ function removals(candidate: DataFiles, published: DataFiles, excluded: Exclusio
     const gone = isExcluded(record, excluded) || refs.some((ref) => excluded.has(ref));
     if (gone) excludedHistories.add(`history/${path.slice('records/'.length)}`);
     for (const ref of refs) (gone ? excludedRefs : keptRefs).add(ref);
+  }
+  // A file whose records an earlier run removed is also matched by the ids `departures.json` keeps from them.
+  for (const [path, { ids }] of departed) {
+    if (!ids.some((id) => excluded.has(id))) continue;
+    if (path.startsWith('history/')) excludedHistories.add(path);
+    else excludedRefs.add(fileId(path));
   }
   return [...published.keys()].filter((path) => {
     if (candidate.has(path) || path === 'index.json' || path === 'meta.json') return false;
@@ -117,18 +126,44 @@ function keptFiles(candidate: DataFiles, published: DataFiles, removed: Readonly
 }
 
 /**
- * The history and popularity files kept for items that left the index, each with the date of the first run without its
- * item, and the kept files whose retention period ended by the run date.
+ * The ids that exclude each history and popularity file of an item the run drops from the index, read from its published
+ * record: for its history its container and repository, for a popularity file it points to the item and its container.
  */
-function departures(candidate: DataFiles, published: DataFiles, removed: ReadonlySet<string>, runDate: string) {
-  const before = published.get('departures.json');
-  const since = new Map(Object.entries(before === undefined ? {} : departuresFile.parse(JSON.parse(before)).files));
-  const kept = new Map<string, string>();
+function leavingIds(candidate: DataFiles, published: DataFiles): Map<string, string[]> {
+  const ids = new Map<string, Set<string>>();
+  const add = (path: string, values: readonly string[]) => {
+    const set = ids.get(path) ?? new Set<string>();
+    for (const value of values) set.add(value);
+    ids.set(path, set);
+  };
+  for (const [path, text] of published) {
+    if (!path.startsWith('records/') || candidate.has(path)) continue;
+    const record = recordLinks.parse(JSON.parse(text));
+    const containers = record.container === undefined ? [] : [record.container];
+    const refs = popularityRefs(record);
+    add(`history/${path.slice('records/'.length)}`, [...containers, ...refs]);
+    for (const ref of refs) add(`popularity/${ref}.json`, [record.id, ...containers]);
+  }
+  return new Map([...ids].map(([path, set]) => [path, [...set].toSorted(byCodeUnits)]));
+}
+
+/**
+ * The history and popularity files kept for items that left the index, each with the date of the first run without its
+ * item and the ids that exclude it, and the kept files whose retention period ended by the run date.
+ */
+function departures(
+  candidate: DataFiles,
+  published: DataFiles,
+  { removed, departed, runDate }: { removed: ReadonlySet<string>; departed: Departures; runDate: string },
+) {
+  const leaving = leavingIds(candidate, published);
+  const kept = new Map<string, { since: string; ids: string[] }>();
   const expired: string[] = [];
   for (const path of keptFiles(candidate, published, removed)) {
-    const left = since.get(path) ?? runDate;
-    if (Date.parse(runDate) - Date.parse(left) >= retentionDays * dayMs) expired.push(path);
-    else kept.set(path, left);
+    // A file kept with no record to read, such as a popularity file no record points to any more, has no ids.
+    const entry = departed.get(path) ?? { since: runDate, ids: leaving.get(path) ?? [] };
+    if (Date.parse(runDate) - Date.parse(entry.since) >= retentionDays * dayMs) expired.push(path);
+    else kept.set(path, entry);
   }
   const file = departuresFile.parse({ schemaVersion: 1, files: Object.fromEntries(kept) });
   return { text: jsonFile(file), expired };
@@ -152,12 +187,18 @@ export function publication(
   report: RunReport,
   { excluded, license }: { excluded: Exclusions; license: string },
 ): Publication {
-  const dropped = removals(candidate, published, excluded);
-  const { text: departed, expired } = departures(candidate, published, new Set(dropped), report.runAt.slice(0, 10));
+  const before = published.get('departures.json');
+  const departed = new Map(Object.entries(before === undefined ? {} : departuresFile.parse(JSON.parse(before)).files));
+  const dropped = removals(candidate, published, excluded, departed);
+  const { text: departuresText, expired } = departures(candidate, published, {
+    removed: new Set(dropped),
+    departed,
+    runDate: report.runAt.slice(0, 10),
+  });
   const files = [
     ...candidate,
     ['meta.json', metaText(report, candidate)] as const,
-    ['departures.json', departed] as const,
+    ['departures.json', departuresText] as const,
     ['LICENSE', license] as const,
   ];
   return {

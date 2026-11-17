@@ -6,7 +6,8 @@ body:
     attributes:
       value: >-
         A removed item stays out of every later run, and its record, score history and popularity data are removed from
-        the published data. Every request is answered within one month. This issue is public.
+        the current published data; earlier commits of the published data may still hold them. Every request is answered
+        within one month. This issue is public.
   - type: input
     id: item
     attributes:

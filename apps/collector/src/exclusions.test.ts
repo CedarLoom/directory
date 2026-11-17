@@ -2,9 +2,9 @@ import { expect, it } from 'vitest';
 import type { Candidate } from './candidate.ts';
 import { applyExclusions, parseExclusions } from './exclusions.ts';
 
-const key = 'test-key';
+const key = 'test-key-for-the-exclusion-hashes-only';
 // The keyed hash of the text `exclusions`.
-const keyCheck = '0912b4b95623ce82c1cfc7a8b3f5ad7637cf63050510e775d39f46eaf7db94e7';
+const keyCheck = '6dff3e273c8ce957d236e4400efe3ce0cc9cd9b4fe5ee08f2c9c59c950407f63';
 const exclusionsText = (...hashes: string[]) => JSON.stringify({ schemaVersion: 2, keyCheck, hashes });
 
 function candidate(kind: Candidate['kind'], id: string, container?: string): Candidate {
@@ -30,8 +30,8 @@ it('leaves out an excluded item and the items it contains', () => {
   // The keyed hashes of gh.example-org.lint and gh.example-org.format.skills.fix.
   const excluded = parseExclusions(
     exclusionsText(
-      'b0c07dfcc4a6d50513f8c7c25aac3c9eac019ac6f00cc0e1a6ccbe34f4de87b7',
-      'c949fb0c8bc851f65eaf7d37ee6ac5fb640a607fe522c4c08b19bcfb017c6e0c',
+      '4fb16c1b2387b692ab7bebd3a47d064be2650b071892da87ebd36b423bbf6537',
+      '8055e76a70b4de542a0752875bd3b34c4025d32464841b400327c85f0350a668',
     ),
     key,
   );
@@ -49,7 +49,7 @@ it('leaves out every item in an excluded repository', () => {
   ];
   // The keyed hash of gh.acme.market.
   const excluded = parseExclusions(
-    exclusionsText('14a15768010a45bdc53e0d4c520b14c095bca121d98a7543e6c7ae3e4fddb129'),
+    exclusionsText('46659e715f4762d840a82ccbd601b7f7abf95818cdb3c0d27bd6b9d5dad974c3'),
     key,
   );
   expect(applyExclusions(candidates, excluded).map(({ id }) => id)).toEqual(['gh.acme.tools']);
@@ -60,13 +60,29 @@ it('refuses an exclusions file that names an id instead of its hash', () =>
 
 it('refuses exclusions without a key', () =>
   expect(() =>
-    parseExclusions(exclusionsText('14a15768010a45bdc53e0d4c520b14c095bca121d98a7543e6c7ae3e4fddb129'), ''),
+    parseExclusions(exclusionsText('46659e715f4762d840a82ccbd601b7f7abf95818cdb3c0d27bd6b9d5dad974c3'), ''),
   ).toThrow(/EXCLUSIONS_KEY/));
 
 it('refuses exclusions under another key', () =>
   expect(() =>
-    parseExclusions(exclusionsText('14a15768010a45bdc53e0d4c520b14c095bca121d98a7543e6c7ae3e4fddb129'), 'other-key'),
+    parseExclusions(
+      exclusionsText('46659e715f4762d840a82ccbd601b7f7abf95818cdb3c0d27bd6b9d5dad974c3'),
+      'another-key-of-more-than-thirty-two-bytes',
+    ),
   ).toThrow(/does not match/));
+
+it('refuses a key shorter than 32 bytes', () =>
+  expect(() =>
+    parseExclusions(exclusionsText('46659e715f4762d840a82ccbd601b7f7abf95818cdb3c0d27bd6b9d5dad974c3'), 'short-key'),
+  ).toThrow(/at least 32 bytes/));
+
+it('refuses exclusions without a keyCheck', () => {
+  const text = JSON.stringify({
+    schemaVersion: 2,
+    hashes: ['46659e715f4762d840a82ccbd601b7f7abf95818cdb3c0d27bd6b9d5dad974c3'],
+  });
+  expect(() => parseExclusions(text, key)).toThrow(/no keyCheck/);
+});
 
 it('reads an exclusions file without entries without a key', () =>
   expect(parseExclusions(exclusionsText(), '').has('gh.acme.market')).toBe(false));
