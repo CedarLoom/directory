@@ -8,7 +8,7 @@
     "build": "vite build && node scripts/post-build.ts",
     "weight": "node scripts/weight.ts",
     "tokens": "node scripts/tokens.ts",
-    "messages": "lingui extract --clean && node scripts/message-ids.ts",
+    "messages": "lingui extract --clean --overwrite && node scripts/message-ids.ts",
     "storybook": "storybook dev --port 6006",
     "build-storybook": "storybook build --quiet --output-dir storybook-static",
     "e2e": "playwright test --project=chromium --project=chromium-phone --project=webkit-phone --project=webkit --project=firefox",
