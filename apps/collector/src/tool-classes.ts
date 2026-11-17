@@ -34,3 +34,12 @@ export function toolClasses(value: string | string[] | undefined): ToolClass[] {
     found.add(name.startsWith('mcp__') ? 'mcp' : (classes.get(name) ?? 'other'));
   return order.filter((toolClass) => found.has(toolClass));
 }
+
+// A bare or quoted `Bash`, `Bash()`, `Bash(*)` or `Bash(*:*)` allows every command; `Bash(git diff:*)` limits it.
+// The brackets delimit a flow list over several lines, which reads as one text.
+const anyBash = /(?:^|[\s,[])(["']?)Bash(?:\((?:\*(?::\*)?)?\))?\1(?=[\s,\]]|$)/;
+
+/** The `allowed-tools` or `tools` field allows Bash without a rule. */
+export function unrestrictedBash(value: string | string[] | undefined): boolean {
+  return anyBash.test(Array.isArray(value) ? value.join(',') : (value ?? ''));
+}

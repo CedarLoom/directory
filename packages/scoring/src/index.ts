@@ -1,1 +1,3 @@
-// Package entry point; it re-exports each module as the module is added.
+export { nextHistory } from './history.ts';
+export { currentRubric, lockedRubrics } from './rubrics.ts';
+export { type Scorable, type Score, score } from './score.ts';

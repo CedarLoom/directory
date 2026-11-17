@@ -38,10 +38,15 @@
     }
   ],
   "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 64,
+    "toolsDeclared": true,
     "bodyLines": 120,
-    "hasLicenseField": true
+    "metadataTokens": 60,
+    "bodyTokens": 900
   },
-  "flags": [],
+  "flags": ["allowed-tools-unrestricted-bash"],
   "tags": ["review"],
   "cedarloomFit": {
     "label": "overlaps",
@@ -52,17 +57,62 @@
       "kind": "agent",
       "version": "1.0.0"
     },
-    "total": 74.5,
+    "total": 80,
     "parts": [
       {
         "signal": "lastPush",
-        "points": 15,
-        "max": 15
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
       },
       {
         "signal": "license",
         "points": 10,
         "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "toolsDeclared",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 25
       }
     ]
   },

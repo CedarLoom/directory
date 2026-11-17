@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "kind": "hook",
+  "version": "1.0.0",
+  "signals": [
+    {
+      "id": "lastPush",
+      "group": "maintenance",
+      "max": 10,
+      "scale": {
+        "type": "push-age",
+        "steps": [
+          { "days": 90, "share": 1 },
+          { "days": 180, "share": 0.75 },
+          { "days": 365, "share": 0.5 },
+          { "days": 730, "share": 0.25 }
+        ]
+      }
+    },
+    {
+      "id": "recentCommits",
+      "group": "maintenance",
+      "max": 5,
+      "scale": { "type": "recent-commits", "levels": { "none": 0, "1-4": 0.5, "5+": 1 } }
+    },
+    { "id": "release", "group": "maintenance", "max": 5, "scale": { "type": "present" } },
+    {
+      "id": "license",
+      "group": "license",
+      "max": 10,
+      "scale": {
+        "type": "license",
+        "levels": { "permissive": 1, "copyleft": 1, "source-available": 0.5, "custom": 0.5, "none": 0 }
+      }
+    },
+    { "id": "matchersSpecific", "group": "quality", "max": 20, "scale": { "type": "present" } },
+    { "id": "safety", "group": "safety", "max": 50, "scale": { "type": "flags" } }
+  ],
+  "flagPenalties": [
+    { "flag": "hook-shell-command", "points": 15 },
+    { "flag": "hook-session-start", "points": 10 },
+    { "flag": "hook-match-all", "points": 10 },
+    { "flag": "hook-http", "points": 10 },
+    { "flag": "network-indicator", "points": 10 }
+  ]
+}

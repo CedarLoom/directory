@@ -23,6 +23,7 @@
       "pattern": "^(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)$"
     },
     "signals": {
+      "minItems": 1,
       "type": "array",
       "items": {
         "type": "object",
@@ -46,12 +47,221 @@
           "max": {
             "type": "number",
             "exclusiveMinimum": 0
+          },
+          "scale": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "push-age"
+                  },
+                  "steps": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "days": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "share": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "required": [
+                        "days",
+                        "share"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "steps"
+                ],
+                "additionalProperties": false,
+                "description": "Days from `maintenance.pushedAt` to the run date; the share of the first step whose `days` is not exceeded, 0 past the last."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "recent-commits"
+                  },
+                  "levels": {
+                    "type": "object",
+                    "properties": {
+                      "none": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "1-4": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "5+": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "none",
+                      "1-4",
+                      "5+"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "levels"
+                ],
+                "additionalProperties": false,
+                "description": "`maintenance.recentCommits`; no maintenance facts give 0."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "license"
+                  },
+                  "levels": {
+                    "type": "object",
+                    "properties": {
+                      "permissive": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "copyleft": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "source-available": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "custom": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "none": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    },
+                    "required": [
+                      "permissive",
+                      "copyleft",
+                      "source-available",
+                      "custom",
+                      "none"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "levels"
+                ],
+                "additionalProperties": false,
+                "description": "`license.class`; `custom` is class `none` with a license the item states but no SPDX id names."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "flags"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false,
+                "description": "The maximum minus the `flagPenalties` of the record's flags, between 0 and the maximum."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "present"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false,
+                "description": "A boolean in `signals`: true gives the maximum."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "linear"
+                  },
+                  "full": {
+                    "type": "number"
+                  },
+                  "zero": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "type",
+                  "full",
+                  "zero"
+                ],
+                "additionalProperties": false,
+                "description": "A number in `signals`: the maximum at `full`, 0 at `zero`, linear between them."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "within"
+                  },
+                  "min": {
+                    "type": "number"
+                  },
+                  "max": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "type",
+                  "min"
+                ],
+                "additionalProperties": false,
+                "description": "A number in `signals`: the maximum between `min` and `max`, both included, else 0."
+              }
+            ]
           }
         },
         "required": [
           "id",
           "group",
-          "max"
+          "max",
+          "scale"
         ],
         "additionalProperties": false
       }

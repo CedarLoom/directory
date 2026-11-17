@@ -3,13 +3,34 @@
   "kind": "hook",
   "version": "1.0.0",
   "signals": [
-    { "id": "lastPush", "group": "maintenance", "max": 10 },
-    { "id": "recentCommits", "group": "maintenance", "max": 5 },
-    { "id": "release", "group": "maintenance", "max": 5 },
-    { "id": "license", "group": "license", "max": 10 },
-    { "id": "hooksFileValid", "group": "quality", "max": 15 },
-    { "id": "safety", "group": "safety", "max": 50 },
-    { "id": "testsShipped", "group": "evals", "max": 5 }
+    {
+      "id": "lastPush",
+      "group": "maintenance",
+      "max": 10,
+      "scale": {
+        "type": "push-age",
+        "steps": [{ "days": 90, "share": 1 }, { "days": 365, "share": 0.5 }]
+      }
+    },
+    {
+      "id": "recentCommits",
+      "group": "maintenance",
+      "max": 5,
+      "scale": { "type": "recent-commits", "levels": { "none": 0, "1-4": 0.5, "5+": 1 } }
+    },
+    {
+      "id": "license",
+      "group": "license",
+      "max": 10,
+      "scale": {
+        "type": "license",
+        "levels": { "permissive": 1, "copyleft": 1, "source-available": 0.5, "custom": 0.5, "none": 0 }
+      }
+    },
+    { "id": "release", "group": "maintenance", "max": 5, "scale": { "type": "present" } },
+    { "id": "events", "group": "quality", "max": 10, "scale": { "type": "within", "min": 1, "max": 5 } },
+    { "id": "tokens", "group": "token-cost", "max": 10, "scale": { "type": "linear", "full": 100, "zero": 400 } },
+    { "id": "safety", "group": "safety", "max": 50, "scale": { "type": "flags" } }
   ],
   "flagPenalties": [
     { "flag": "hook-shell-command", "points": 10 },

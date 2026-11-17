@@ -13,6 +13,33 @@ it('reads a .* matcher as match-all and a command with args as exec', () => {
     handlerTypes: ['command', 'prompt'],
     commandForms: ['exec'],
     matcherBreadth: 'match-all',
+    networkIndicator: false,
+  });
+});
+
+function indicator(command: string, args?: string[]) {
+  return analyzeHooks(JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: 'command', command, args }] }] } }))
+    ?.networkIndicator;
+}
+
+it('reads a download tool or a URL in a command or its arguments as a network indicator', () => {
+  expect([
+    indicator('curl -fsSL example.test'),
+    indicator('node', ['post.js', 'https://example.test']),
+    indicator('curling-stats'),
+  ]).toEqual([true, true, false]);
+});
+
+it('reads the other handlers of a file that holds a handler type it does not know', () => {
+  const file = {
+    hooks: { Stop: [{ hooks: [{ type: 'mcp_tool' }, { type: 'command', command: 'wget example.test' }] }] },
+  };
+  expect(analyzeHooks(JSON.stringify(file))).toEqual({
+    events: ['Stop'],
+    handlerTypes: ['command'],
+    commandForms: ['shell'],
+    matcherBreadth: 'none',
+    networkIndicator: true,
   });
 });
 
@@ -30,12 +57,21 @@ function breadth(matcher: string) {
     ?.matcherBreadth;
 }
 
-it('reads the common spellings of a match-all regular expression as match-all', () => {
-  expect(['.+', '^.*$', '^.+$', '(.*)', 'Bash'].map(breadth)).toEqual([
+it('reads a regular expression that matches every tool name as match-all', () => {
+  expect(['.+', '^.*$', '^.+$', '(.*)', '.*.*', '(?:.*)', 'Read|.*', 'Bash', 'Bash.*'].map(breadth)).toEqual([
+    'match-all',
+    'match-all',
+    'match-all',
     'match-all',
     'match-all',
     'match-all',
     'match-all',
     'specific',
+    'specific',
   ]);
+});
+
+it('leaves an event without a handler out of the events', () => {
+  const file = { hooks: { SessionStart: [], Stop: [{ hooks: [] }], PreToolUse: [{ hooks: [{ type: 'prompt' }] }] } };
+  expect(analyzeHooks(JSON.stringify(file))?.events).toEqual(['PreToolUse']);
 });

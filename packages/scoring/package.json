@@ -7,6 +7,10 @@
   "scripts": {
     "typecheck": "tsc"
   },
+  "dependencies": {
+    "@directory/contracts": "workspace:*",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "typescript": "catalog:"
   }

@@ -225,7 +225,7 @@ function skillInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
     const [facts, file] = [factsOf(candidate), selection.skillFiles[index]];
     const text = textOf(file);
     return facts !== undefined && file !== undefined && text !== undefined
-      ? [{ kind: 'skill', candidate, facts, text, folders: file.folders }]
+      ? [{ kind: 'skill', candidate, facts, text, folders: file.folders, tests: file.tests }]
       : [];
   });
 }

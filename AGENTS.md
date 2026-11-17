@@ -6,7 +6,8 @@ Node.js 26, pnpm 12 and uv. Install with `pnpm install --frozen-lockfile --ignor
 
 - `pnpm run check`: every gate ([scripts/check.sh](scripts/check.sh)), the one to run before a push.
 - Single gates, each as `pnpm run <name>`: `typecheck`, `lint`, `format:check` (`format` writes), `test`, `knip`, `jscpd`, `licenses`. Keep `run`: `pnpm licenses` alone is pnpm's built-in command.
-- `pnpm --filter @directory/collector collect --dry-run` reads the sources, the MCP Registry and GitHub and prints the run report as JSON, the summary on stderr; `--out <folder>` instead writes the records, popularity files and `index.json` that changed into the data folder. `GITHUB_TOKEN` is required, as the GitHub GraphQL API refuses anonymous requests; behind a proxy, set `NODE_USE_ENV_PROXY=1`.
+- `pnpm --filter @directory/collector collect --dry-run` reads the sources, the MCP Registry and GitHub and prints the run report as JSON, the summary on stderr; `--out <folder>` instead writes the records, score histories, popularity files and `index.json` that changed into the data folder. `GITHUB_TOKEN` is required, as the GitHub GraphQL API refuses anonymous requests; behind a proxy, set `NODE_USE_ENV_PROXY=1`.
+- A released rubric in `rubrics/<kind>/<version>.json` never changes: a new weight, threshold or measurement is a new version file with its content hash added to `rubrics/lock.json`. The scoring tests fail on a released file that differs from its hash.
 - `pnpm run test -u` rewrites the generated JSON Schemas in `packages/contracts/schemas/v1` after a schema change; commit them with it. The golden test fails on any difference.
 - The Python-packaged gate tools (typos, reuse, actionlint, zizmor) run through `uvx` with the versions of [tools/requirements.txt](tools/requirements.txt). In CI, `pnpm run check` runs reuse only; the reusable gates workflow runs typos, actionlint and zizmor.
 

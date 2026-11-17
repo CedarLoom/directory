@@ -81,6 +81,8 @@ it('reads the official marketplace and refuses an entry with an invalid name', a
             { kind: 'path', pin: 'marketplace-commit' },
             { kind: 'github', pin: 'sha' },
           ],
+          described: 0,
+          duplicateNames: false,
         },
       },
       {

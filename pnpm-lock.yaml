@@ -92,6 +92,9 @@ importers:
       '@directory/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@directory/scoring':
+        specifier: workspace:*
+        version: link:../../packages/scoring
       commander:
         specifier: 'catalog:'
         version: 15.1.0
@@ -129,6 +132,13 @@ importers:
         version: 7.0.2
 
   packages/scoring:
+    dependencies:
+      '@directory/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       typescript:
         specifier: 'catalog:'

@@ -15,10 +15,14 @@
   },
   "popularity": [],
   "signals": {
-    "bodyLines": 120,
-    "hasLicenseField": true
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": false,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
   },
-  "flags": ["mcp-stdio-unpinned-package"],
+  "flags": ["mcp-stdio-unpinned-package", "mcp-secrets-required"],
   "tags": ["review"],
   "cedarloomFit": {
     "label": "overlaps",
@@ -29,17 +33,57 @@
       "kind": "mcp-server",
       "version": "1.0.0"
     },
-    "total": 74.5,
+    "total": 50,
     "parts": [
       {
         "signal": "lastPush",
-        "points": 15,
-        "max": 15
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
       },
       {
         "signal": "license",
         "points": 10,
         "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
       }
     ]
   },

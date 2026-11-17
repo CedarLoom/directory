@@ -26,7 +26,11 @@ export interface SkillFolders {
 export interface ItemFile {
   file: FileRead;
   folders: SkillFolders;
+  /** The location holds an evals, tests or test folder. */
+  tests: boolean;
 }
+
+const testFolders: ReadonlySet<string> = new Set(['evals', 'tests', 'test']);
 
 function folders(directory: z.infer<typeof subdirectory> | null | undefined): SkillFolders {
   const count = (name: string) =>
@@ -38,7 +42,7 @@ function folders(directory: z.infer<typeof subdirectory> | null | undefined): Sk
 
 /**
  * Reads one file of each location, such as a skill's SKILL.md or an agent's own file, 25 to a query.
- * With `folders` it also counts the files in the location's scripts, references and assets folders.
+ * With `folders` it also counts the files in the location's scripts, references and assets folders and looks for tests.
  */
 export async function readItemFiles(
   client: HttpClient,
@@ -65,6 +69,7 @@ export async function readItemFiles(
   });
   return answers.map((raw) => {
     const read = answer.parse(raw);
-    return { file: fileRead(read?.file), folders: folders(read?.directory) };
+    const tests = read?.directory?.entries?.some(({ name, type }) => type === 'tree' && testFolders.has(name)) ?? false;
+    return { file: fileRead(read?.file), folders: folders(read?.directory), tests };
   });
 }

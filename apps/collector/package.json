@@ -10,6 +10,7 @@
   "dependencies": {
     "@commander-js/extra-typings": "catalog:",
     "@directory/contracts": "workspace:*",
+    "@directory/scoring": "workspace:*",
     "commander": "catalog:",
     "zod": "catalog:"
   },

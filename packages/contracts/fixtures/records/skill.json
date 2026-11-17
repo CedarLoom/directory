@@ -39,10 +39,16 @@
     }
   ],
   "signals": {
-    "bodyLines": 120,
-    "hasLicenseField": true
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 180,
+    "bodyLines": 210,
+    "licenseField": true,
+    "metadataTokens": 160,
+    "bodyTokens": 6200,
+    "testsShipped": false
   },
-  "flags": [],
+  "flags": ["scripts-present"],
   "tags": ["review"],
   "cedarloomFit": {
     "label": "overlaps",
@@ -53,17 +59,67 @@
       "kind": "skill",
       "version": "1.0.0"
     },
-    "total": 74.5,
+    "total": 88.2,
     "parts": [
       {
         "signal": "lastPush",
-        "points": 15,
-        "max": 15
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
       },
       {
         "signal": "license",
         "points": 10,
         "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 8,
+        "max": 8
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 7,
+        "max": 7
+      },
+      {
+        "signal": "licenseField",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 4,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 9.2,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 20
+      },
+      {
+        "signal": "testsShipped",
+        "points": 0,
+        "max": 5
       }
     ]
   },
@@ -72,8 +128,8 @@
   "frontmatterFields": ["name", "description", "license", "allowed-tools"],
   "bodyLines": 210,
   "tokens": {
-    "metadata": 95,
-    "body": 2400
+    "metadata": 160,
+    "body": 6200
   },
   "allowedTools": ["read", "bash"],
   "files": {

@@ -34,6 +34,8 @@ it('links a plugin only to the repository its id names', async () => {
             { kind: 'git-subdir', pin: 'ref' },
             { kind: 'github', pin: 'none' },
           ],
+          described: 0,
+          duplicateNames: false,
         },
       },
       {
@@ -52,7 +54,12 @@ it('links a plugin only to the repository its id names', async () => {
 it('reads an entry of every source kind, an unknown kind included', async () => {
   const result = await read([
     { name: 'local', source: './local' },
-    { name: 'gh', source: { source: 'github', repo: 'acme/gh', sha: 'b'.repeat(40) } },
+    {
+      name: 'gh',
+      source: { source: 'github', repo: 'acme/gh', sha: 'b'.repeat(40) },
+      category: 'development',
+      homepage: 'https://example.test/gh',
+    },
     { name: 'git', source: { source: 'url', url: 'https://gitlab.example/acme/git.git', ref: 'main' } },
     { name: 'sub', source: { source: 'git-subdir', url: 'acme/mono', path: 'sub' } },
     { name: 'pkg', source: { source: 'npm', package: 'pkg', version: '2.0.0' } },
@@ -74,6 +81,8 @@ it('reads an entry of every source kind, an unknown kind included', async () => 
         { kind: 'command', pin: 'none' },
         { kind: 'other', pin: 'none' },
       ],
+      described: 1,
+      duplicateNames: false,
     },
   });
 });

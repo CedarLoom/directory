@@ -38,8 +38,8 @@
     }
   ],
   "signals": {
-    "bodyLines": 120,
-    "hasLicenseField": true
+    "release": true,
+    "matchersSpecific": true
   },
   "flags": ["hook-shell-command"],
   "tags": ["review"],
@@ -52,17 +52,37 @@
       "kind": "hook",
       "version": "1.0.0"
     },
-    "total": 74.5,
+    "total": 85,
     "parts": [
       {
         "signal": "lastPush",
-        "points": 15,
-        "max": 15
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
       },
       {
         "signal": "license",
         "points": 10,
         "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 50
       }
     ]
   },
