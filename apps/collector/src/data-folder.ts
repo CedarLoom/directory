@@ -14,16 +14,19 @@ export async function readDataFile(folder: string, path: string): Promise<string
   }
 }
 
-/** The JSON files and the `LICENSE` of the data folder by relative path with `/` separators; a folder not yet created holds none. */
-export async function readDataFolder(folder: string): Promise<Map<string, string>> {
-  let paths: string[];
+/** Every path under the folder, relative to it; a folder not yet created holds none. */
+async function listFolder(folder: string): Promise<string[]> {
   try {
-    paths = await readdir(folder, { recursive: true });
+    return await readdir(folder, { recursive: true });
   } catch (error) {
-    if (missing(error)) return new Map();
+    if (missing(error)) return [];
     throw error;
   }
-  const files = paths.filter((path) => path.endsWith('.json') || path === 'LICENSE');
+}
+
+/** The JSON files and the `LICENSE` of the data folder by relative path with `/` separators; a folder not yet created holds none. */
+export async function readDataFolder(folder: string): Promise<Map<string, string>> {
+  const files = (await listFolder(folder)).filter((path) => path.endsWith('.json') || path === 'LICENSE');
   const texts = await Promise.all(files.map((path) => readFile(join(folder, path), 'utf8')));
   return new Map(files.map((path, index) => [path.split(sep).join('/'), texts[index] ?? '']));
 }
@@ -33,12 +36,20 @@ async function removeDataFiles(folder: string, paths: readonly string[]): Promis
   await Promise.all(paths.map((path) => rm(join(folder, ...path.split('/')))));
 }
 
+/** The temporary files an earlier stopped write left, which no later step may stage; git's own folder is not touched. */
+async function staleTemporaries(folder: string): Promise<string[]> {
+  const paths = await listFolder(folder);
+  return paths
+    .filter((path) => path.endsWith('.tmp') && !path.startsWith(`.git${sep}`))
+    .map((path) => path.split(sep).join('/'));
+}
+
 /**
- * Removes the files a publish drops, then writes its files: a stop in between leaves the earlier `departures.json`, so
- * no file still on disk loses its date.
+ * Removes the files a publish drops and the temporary files of an earlier stopped write, then writes its files: a stop
+ * in between leaves the earlier `departures.json`, so no file still on disk loses its date.
  */
 export async function updateDataFolder(folder: string, files: DataFiles, removed: readonly string[]): Promise<void> {
-  await removeDataFiles(folder, removed);
+  await removeDataFiles(folder, [...removed, ...(await staleTemporaries(folder))]);
   await writeDataFolder(folder, files);
 }
 
@@ -58,7 +69,8 @@ export async function writeDataFolder(
         await write(temporary, text);
         await rename(temporary, target);
       } catch (error) {
-        await rm(temporary, { force: true });
+        // A failed cleanup must not replace the write error, the one to report.
+        await rm(temporary, { force: true }).catch(() => undefined);
         throw error;
       }
     }),

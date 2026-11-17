@@ -20,9 +20,13 @@ export function lockEdits(baseJson: unknown, currentJson: unknown): string[] {
 const run = promisify(execFile);
 const git = async (...args: string[]) => (await run('git', args)).stdout.trim();
 
-/** Where HEAD left origin/main; on main itself, and in a CI checkout of a pull request's merge commit, its first parent. */
+/**
+ * Where HEAD left origin/main; on main itself, and in a CI checkout of a pull request's merge commit, its first parent.
+ * That compares one commit: the pull request run covers the whole range, a push or merge queue run only its last commit.
+ */
 async function baseCommit(): Promise<string> {
-  const [head = '', firstParent = ''] = (await git('log', '-1', '--format=%H %P', 'HEAD')).split(' ');
+  // `rev-list` prints no signature line under `log.showSignature`, unlike `log`.
+  const [head = '', firstParent = ''] = (await git('rev-list', '--parents', '-1', 'HEAD')).split(' ');
   const main = await git('for-each-ref', '--format=%(objectname)', 'refs/remotes/origin/main');
   const forkPoint = main === '' ? head : await git('merge-base', 'HEAD', main);
   if (forkPoint !== head) return forkPoint;
