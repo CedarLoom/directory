@@ -84,7 +84,10 @@ program
     'the id of the item, container or repository to exclude, exactly as its record holds it',
     exclusionId,
   )
-  .action((id) => {
+  .option('--exclusions <file>', 'the exclusions file whose keyCheck the key must match', defaultExclusions)
+  .action(async (id, { exclusions }) => {
+    // The key checks of collect and publish: under another key the hash would match nothing.
+    await readExclusions(exclusions);
     const entry = exclusionEntry(id, exclusionsKey());
     process.stdout.write(`${JSON.stringify(entry, null, 2)}\n`);
   });

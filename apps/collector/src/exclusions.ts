@@ -45,7 +45,7 @@ export function parseExclusions(text: string, key: string): Exclusions {
   const hash = keyedHash(key);
   if (file.keyCheck === undefined) {
     throw new ExclusionsKeyError(
-      `exclusions: the file holds entries but no keyCheck; add the hash of the text \`${keyCheckText}\` under ${exclusionsKeyVariable}`,
+      `exclusions: the file holds entries but no keyCheck; add the keyCheck that the hash-exclusion command printed with the hashes under ${exclusionsKeyVariable}`,
     );
   }
   if (file.keyCheck !== hash(keyCheckText)) {
