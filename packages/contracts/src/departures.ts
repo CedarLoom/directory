@@ -1,14 +1,14 @@
 import { z } from 'zod';
 import { date, itemId } from './fields.ts';
 
-/** `departures.json`: the history and popularity files kept for items that left the index, written by publish. */
+/** `departures.json`: the history and popularity files kept while no item in the index uses them, written by publish. */
 export const departuresFile = z.strictObject({
   schemaVersion: z.literal(1),
   files: z
     .record(
       z.string(),
       z.strictObject({
-        since: date.describe('The date of the first run without the item.'),
+        since: date.describe('The date of the first published run in which no item in the index used the file.'),
         ids: z
           .array(itemId)
           .describe(

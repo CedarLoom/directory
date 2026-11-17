@@ -2,6 +2,6 @@
   "schemaVersion": 1,
   "files": {
     "history/agent/gh.old-tools.refactor-agent.json": { "since": "2026-10-12", "ids": ["gh.old-tools.refactor-agent"] },
-    "popularity/gh.old-tools.refactor-agent.json": { "since": "2026-10-12", "ids": ["gh.old-tools.refactor-agent"] }
+    "popularity/gh.old-tools.refactor-agent.json": { "since": "2026-10-12", "ids": [] }
   }
 }
