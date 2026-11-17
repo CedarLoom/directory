@@ -1,11 +1,22 @@
 import templates from './license-templates.json' with { type: 'json' };
 
-// The SPDX License List's standard license templates (license-list-data v3.29.0, json/details) of the class table's
-// licenses, an identical template once under its first id. A template marks optional text and variable parts.
+// SPDX license-list-data v3.29.0 standard templates of the class table's licenses, an identical one once.
 const templateTexts: Readonly<Record<string, string>> = templates;
 
-// SPDX matching guidelines B.10 and B.11: a copyright notice line is ignored, whatever its holder and year.
 const copyrightNotice = /^(?:copyright ?(?:©|\(c\))|(?:copyright|©|\(c\)) ?(?:\d{4}|[[<{]))/i;
+// A sentence break, but not after an initial such as the "A." of "A. Person".
+const sentenceBreak = /(?<=\p{L}{2}|\d|\))[.!?;] +(?=\p{L})/u;
+
+// SPDX matching guidelines B.10 and B.11: a line of copyright notices is ignored, but not one that adds other terms.
+function isNotice(line: string): boolean {
+  return line
+    .split(sentenceBreak)
+    .every((part) => copyrightNotice.test(part) || /^all rights reserved\.?$/i.test(part));
+}
+
+// B.12: a title is ignored; a title line is short, names a license and is no sentence.
+const isTitle = (line: string) =>
+  line.length <= 120 && /\b(?:un)?licen[cs]e\b/i.test(line) && !sentenceBreak.test(line) && !/[.!?;:]$/.test(line);
 // B.7 and B.8: comment marks, rules and boxes around the text are ignored.
 const commentMark = /^(?:#{1,6} |\/\/|\/\*|\*\/|\*(?= |$)) ?| ?(?:\*\/|(?<= |^)\*)$/g;
 const rule = /^[-=*_#~]{3,}$/;
@@ -23,7 +34,7 @@ function cleanLine(raw: string, template: boolean): string {
   const marks = template ? (leadingOptionalMarks.exec(line)?.[0] ?? '') : '';
   const cleaned = marks + line.slice(marks.length).replace(commentMark, '').trim();
   const bare = template ? cleaned.replace(optionalMark, '') : cleaned;
-  if (!rule.test(bare) && !copyrightNotice.test(bare)) return cleaned;
+  if (!rule.test(bare) && !isNotice(bare)) return cleaned;
   // A template keeps the optional marks of a dropped line, so that its optional parts stay balanced.
   return template ? (cleaned.match(optionalMark) ?? []).join('') : '';
 }
@@ -100,8 +111,8 @@ function variable(original: string, match: string): Step[] {
     atEnd: false,
     beforeVar: false,
   };
-  // A variable part that stands for a copyright notice is optional, as the notice line of a text is ignored.
-  return copyrightNotice.test(original.trim()) ? [{ kind: 'open', close: -1 }, step, { kind: 'close' }] : [step];
+  // A text's notice lines are dropped, so whatever stands where a template's notice does is a term the license lacks.
+  return copyrightNotice.test(original.trim()) ? [] : [step];
 }
 
 function parse(template: string): Step[] {
@@ -250,14 +261,14 @@ function compiledTemplates(): ReadonlyMap<string, Template> {
   return compiled;
 }
 
-// B.12: the title is ignored; a text may open with up to three short title lines the template words differently.
+// A text may open with up to three title lines that the template words differently.
 function readings(text: string): Compact[] {
   const lines = textLines(text, false);
   const found = [compact(normalize(lines.join('\n')))];
   let skipped = 0;
   for (let title = 0; title < 3; title += 1) {
     while (lines[skipped] === '') skipped += 1;
-    if ((lines[skipped] ?? '').length > 120) break;
+    if (!isTitle(lines[skipped] ?? '')) break;
     skipped += 1;
     found.push(compact(normalize(lines.slice(skipped).join('\n'))));
   }

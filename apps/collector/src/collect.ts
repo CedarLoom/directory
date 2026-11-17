@@ -201,17 +201,21 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
   return { inspections, found };
 }
 
-/**
- * The text of each item's license file when its own folder holds exactly one: GitHub names a license at the repository
- * root, and several license files may grant several licenses.
- */
+// A folder license applies when GitHub names none or a container may withhold its own (see licenseOf).
+const folderLicenseMayApply = ({ candidate, facts }: Ranked) =>
+  candidate.location.path !== '' && (facts.license === undefined || candidate.container !== undefined);
+
+/** The text of each item's license file where it may apply and the item's folder holds exactly one. */
 async function readFolderLicenses(
   client: HttpClient,
-  items: readonly { location: GitHubLocation; names: readonly string[] }[],
+  items: readonly (Ranked & { names: readonly string[] })[],
 ): Promise<(string | undefined)[]> {
-  const targets = items.flatMap(({ location, names: [name, ...others] }, index) =>
-    location.path === '' || name === undefined || others.length > 0 ? [] : [{ index, location, file: name }],
-  );
+  const targets = items.flatMap((item, index) => {
+    const [name, ...others] = item.names;
+    return !folderLicenseMayApply(item) || name === undefined || others.length > 0
+      ? []
+      : [{ index, location: item.candidate.location, file: name }];
+  });
   const reads = await readItemFiles(client, targets, false);
   const texts: (string | undefined)[] = items.map(() => undefined);
   for (const [at, { index }] of targets.entries()) {
@@ -238,7 +242,7 @@ function pluginReader({ client, refuse, build, containers }: Reading, found: Can
     found.push(...inspected.found);
     const licenses = await readFolderLicenses(
       client,
-      places.map(({ location }, index) => ({ location, names: rootLicenseFiles(inspected.inspections[index]) })),
+      batch.map((item, index) => ({ ...item, names: rootLicenseFiles(inspected.inspections[index]) })),
     );
     return batch.map(({ candidate, facts }, index): Read => {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
@@ -320,7 +324,7 @@ function fileReader(reading: Reading, kind: FileKind) {
     ]);
     const licenses = await readFolderLicenses(
       reading.client,
-      batch.map(({ candidate: { location } }, index) => ({ location, names: files[index]?.licenseFiles ?? [] })),
+      batch.map((item, index) => ({ ...item, names: files[index]?.licenseFiles ?? [] })),
     );
     return batch.map((item, index) => {
       const file = files[index];

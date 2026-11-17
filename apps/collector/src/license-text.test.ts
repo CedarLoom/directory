@@ -46,7 +46,7 @@ it.each(Object.entries(templates))('names %s from its license text', (id, templa
 
 it('names a license whatever its copyright lines say, and without them', () => {
   expect([
-    licenseTextId(mit('Copyright (c) 2024 Jane Doe')),
+    licenseTextId(mit('Copyright (c) 2024 Jane Doe. All rights reserved.')),
     licenseTextId(mit('Copyright © 2019-2025 Example Org and contributors\nCopyright 2018 A. Person')),
     licenseTextId(mit('')),
     licenseTextId(`${mit('')}\nCopyright (c) 2025 Example Org\n`),
@@ -61,4 +61,12 @@ it('names no license for a text that changes, adds or leaves out a term', () => 
     licenseTextId(`${text}\nThe Software shall be used for Good, not Evil.\n`),
     licenseTextId(text.replace(/^The above copyright notice[^]*?Software\.\n/m, '')),
   ]).toEqual([undefined, undefined, undefined, undefined]);
+});
+
+it('names no license for a text that adds terms before it or on its copyright line', () => {
+  expect([
+    licenseTextId(`Non-commercial use only. Commercial use is prohibited.\n\n${mit('Copyright (c) 2024 Jane Doe')}`),
+    licenseTextId(mit('Copyright (c) 2024 Jane Doe. Not for commercial use.')),
+    licenseTextId(`No military use.\n${mit('')}`),
+  ]).toEqual([undefined, undefined, undefined]);
 });
