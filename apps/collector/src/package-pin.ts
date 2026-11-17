@@ -39,7 +39,7 @@ const npm: Runner = {
   options: roles(
     ['-p', '--package'],
     [],
-    ['-c', '--call', '--registry', '--cache', '--prefix', '--userconfig', '-w', '--workspace'],
+    ['-c', '--call', '--registry', '--cache', '--prefix', '--userconfig', '-w', '--workspace', '--cwd'],
     [
       '-y',
       '--yes',
@@ -55,6 +55,12 @@ const npm: Runner = {
     ],
   ),
   pinned: (reference: string) => npmExact.test(reference),
+};
+
+// In pnpm, `-c` is the shell mode flag, where npx reads a command string after it.
+const pnpm: Runner = {
+  ...npm,
+  options: new Map([...npm.options, ['-c', 'flag'], ['--shell-mode', 'flag']]),
 };
 
 const uv: Runner = {
@@ -115,8 +121,11 @@ const container: Runner = {
 const commands: readonly (readonly [string, readonly string[], Runner])[] = [
   ['npx', [], npm],
   ['bunx', [], npm],
+  ['bun', ['x'], npm],
   ['npm', ['exec'], npm],
-  ['pnpm', ['dlx'], npm],
+  ['npm', ['x'], npm],
+  ['pnpx', [], pnpm],
+  ['pnpm', ['dlx'], pnpm],
   ['yarn', ['dlx'], npm],
   ['uvx', [], uv],
   ['uv', ['tool', 'run'], uv],
@@ -174,14 +183,50 @@ function fetched({ options }: Runner, args: readonly string[]): string[] {
 }
 
 /**
+ * The arguments without the subcommand words, each of which may follow options of the runner; undefined when the
+ * command names another subcommand. Behind an unknown option the words stay, and `fetched` then finds no package.
+ */
+function withoutWords(
+  { options }: Runner,
+  words: readonly string[],
+  args: readonly string[],
+): readonly string[] | undefined {
+  const rest = [...args];
+  let index = 0;
+  for (const word of words) {
+    while (isOption(rest[index])) {
+      const { role, next } = optionAt(options, rest, index);
+      if (role === undefined) return args;
+      index = next;
+    }
+    if (rest[index] !== word) return undefined;
+    rest.splice(index, 1);
+  }
+  return rest;
+}
+
+/** The program a command names; on Windows that is `npx.cmd` or `NPX.EXE`, behind a path with backslashes. */
+function program(command: string): string {
+  return command
+    .replace(/^.*[/\\]/, '')
+    .replace(/\.(?:cmd|exe)$/i, '')
+    .toLowerCase();
+}
+
+/**
  * Whether a stdio server's command fetches a package at start without naming its exact version.
  * An unknown command runs local code and fetches nothing; a runner whose package cannot be found counts as unpinned.
  */
 export function unpinnedPackage(command: string, args: readonly string[]): boolean {
-  const name = command.slice(command.lastIndexOf('/') + 1);
-  const match = commands.find(([known, words]) => known === name && words.every((word, index) => args[index] === word));
-  if (match === undefined) return false;
-  const [, words, runner] = match;
-  const packages = fetched(runner, args.slice(words.length));
-  return packages.length === 0 || !packages.every(runner.pinned);
+  // `cmd /c npx` starts the runner on Windows; a second `cmd` inside it is not followed.
+  const inner = program(command) === 'cmd' && args[0]?.toLowerCase() === '/c' ? args[1] : undefined;
+  const name = program(inner ?? command);
+  const own = inner === undefined ? args : args.slice(2);
+  for (const [known, words, runner] of commands) {
+    const rest = known === name ? withoutWords(runner, words, own) : undefined;
+    if (rest === undefined) continue;
+    const packages = fetched(runner, rest);
+    return packages.length === 0 || !packages.every(runner.pinned);
+  }
+  return false;
 }

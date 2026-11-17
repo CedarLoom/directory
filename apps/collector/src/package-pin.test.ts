@@ -75,6 +75,62 @@ it('reads the npx, uvx and docker runners under their other names', () => {
   ]);
 });
 
+it('reads a runner behind an option before its subcommand word, and as unpinned behind an unknown one', () => {
+  const cases: [string, string[]][] = [
+    ['npm', ['--yes', 'exec', 'evil-server']],
+    ['pnpm', ['--silent', 'dlx', 'evil-server']],
+    ['uv', ['--quiet', 'tool', 'run', 'evil-server']],
+    ['pipx', ['--verbose', 'run', 'evil-server']],
+    ['yarn', ['--cwd', 'x', 'dlx', 'evil-server']],
+    ['npm', ['--frobnicate', 'exec', 'docs-mcp@1.2.3']],
+    ['npm', ['--yes', 'exec', 'docs-mcp@1.2.3']],
+    ['npm', ['--prefix', 'app', 'start']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+  ]);
+});
+
+it('reads -c as a flag of pnpm and as an option with a value of npx', () => {
+  const cases: [string, string[]][] = [
+    ['pnpm', ['dlx', '-c', 'evil-server', 'decoy@1.0.0']],
+    ['npx', ['--package=docs-mcp@1.2.3', '-c', 'docs --stdio']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, false]);
+});
+
+it('reads the short, Windows and cmd spellings of a runner like the runner', () => {
+  const cases: [string, string[]][] = [
+    ['npm', ['x', 'evil-server']],
+    ['bun', ['x', 'evil-server']],
+    ['pnpx', ['evil-server']],
+    ['npx.cmd', ['evil-server']],
+    ['C:\\Program Files\\nodejs\\NPX.CMD', ['-y', 'evil-server']],
+    ['cmd', ['/c', 'npx', '-y', 'evil-server']],
+    ['cmd', ['/c', 'npx', '-y', 'docs-mcp@1.2.3']],
+    ['cmd', ['/c', 'node', 'server.js']],
+    ['bun', ['run', 'server.ts']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+    false,
+  ]);
+});
+
 it('reads a uv package named by a URL as unpinned', () => {
   const cases: [string, string[]][] = [
     ['uvx', ['--from', 'tool@git+https://github.com/acme/tool', 'tool']],

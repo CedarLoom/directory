@@ -5,6 +5,7 @@ import { jsonText } from './json-text.ts';
 import { unpinnedPackage } from './package-pin.ts';
 import type { Entry, Inspection } from './repository-tree.ts';
 
+const userConfig = z.record(z.string(), z.object({ sensitive: z.boolean().optional() })).optional();
 // Upstream files carry more keys than these; only the keys a fact needs are read, the rest is stripped.
 const manifest = z.object({
   name: z.unknown().optional(),
@@ -17,6 +18,8 @@ const manifest = z.object({
   hooks: z.unknown().optional(),
   mcpServers: z.unknown().optional(),
   lspServers: z.unknown().optional(),
+  userConfig,
+  channels: z.array(z.object({ userConfig })).optional(),
 });
 const strings = z.record(z.string(), z.string()).optional();
 const server = z.object({
@@ -35,8 +38,20 @@ const lspConfig = z.record(z.string(), z.unknown());
 // A Set, so a type such as `constructor` reads no inherited property.
 const transports: ReadonlySet<string> = new Set(['stdio', 'http', 'sse'] as const);
 const isTransport = (type: string): type is 'stdio' | 'http' | 'sse' => transports.has(type);
-// `${NAME}` without a default, or with an empty one, is a value the user must set; Claude Code fills the plugin's paths.
-const userVariable = /\$\{(?!CLAUDE_PLUGIN_)[A-Za-z_]\w*(?::-)?\}/;
+// A `${NAME}` without a default, or with an empty one, is set by the user; the path variables and HOME always hold a value.
+const userVariable = /\$\{(?!CLAUDE_PLUGIN_|CLAUDE_PROJECT_DIR\b|HOME\b)[A-Za-z_]\w*(?::-)?\}/;
+const configReference = /\$\{user_config\.\w+\}/g;
+
+/** The `${user_config.KEY}` references whose option, of the plugin or of a channel, stores its value as a secret. */
+function secretReferences({ userConfig: options = {}, channels = [] }: z.infer<typeof manifest>): Set<string> {
+  return new Set(
+    [options, ...channels.map((channel) => channel.userConfig ?? {})].flatMap((config) =>
+      Object.entries(config)
+        .filter(([, option]) => option.sensitive === true)
+        .map(([key]) => `\${user_config.${key}}`),
+    ),
+  );
+}
 
 /** A manifest value that is an object holds the configuration inline; a path or a list of paths is not followed. */
 function inline(value: unknown): unknown {
@@ -112,6 +127,7 @@ export function analyzePlugin({ directories, files }: Inspection) {
   ].filter((config) => config !== undefined);
   const serverList = mcpServers([parseFile(files.mcp), inline(plugin.mcpServers)]);
   const stdio = serverList.filter(({ type = 'stdio' }) => type === 'stdio');
+  const secrets = secretReferences(plugin);
   return {
     ...(version.success ? { version: version.data } : {}),
     components: {
@@ -133,7 +149,9 @@ export function analyzePlugin({ directories, files }: Inspection) {
     hooks: hookConfigs.map(hookFacts),
     mcpUnpinnedPackage: stdio.some(({ command, args = [] }) => command !== undefined && unpinnedPackage(command, args)),
     mcpSecretsRequired: serverList.some(({ args = [], url = '', env = {}, headers = {} }) =>
-      [...args, url, ...Object.values(env), ...Object.values(headers)].some((value) => userVariable.test(value)),
+      [...args, url, ...Object.values(env), ...Object.values(headers)].some(
+        (value) => userVariable.test(value) || (value.match(configReference) ?? []).some((name) => secrets.has(name)),
+      ),
     ),
   };
 }

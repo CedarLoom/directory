@@ -33,10 +33,10 @@ it('counts only manifest fields that hold a value', () => {
   ]).toEqual([0, 5]);
 });
 
-const facts = (servers: object) => {
+const facts = (servers: object, manifest: object = {}) => {
   const { mcpUnpinnedPackage, mcpSecretsRequired } = analyzePlugin({
     directories: {},
-    files: { mcp: JSON.stringify({ mcpServers: servers }) },
+    files: { mcp: JSON.stringify({ mcpServers: servers }), manifest: JSON.stringify(manifest) },
   });
   return [mcpUnpinnedPackage, mcpSecretsRequired];
 };
@@ -64,6 +64,39 @@ it('reads a user variable in arguments, a URL or with an empty default as a requ
     [false, true],
     [false, true],
   ]);
+});
+
+it('reads a user_config reference as a required secret only when its option is marked sensitive', () => {
+  const api = { type: 'http', url: 'https://x.test', headers: { Authorization: 'Bearer ${user_config.api_token}' } };
+  const option = { type: 'string', title: 'API token', description: 'Token of the API' };
+  const bot = { command: 'node', args: ['server.js'], env: { BOT_TOKEN: '${user_config.bot_token}' } };
+  expect([
+    facts({ api }, { userConfig: { api_token: { ...option, sensitive: true } } }),
+    facts({ api }, { userConfig: { api_token: { ...option, sensitive: false } } }),
+    facts({ api }, { userConfig: { api_token: option } }),
+    facts({ api }, { userConfig: { other_token: { ...option, sensitive: true } } }),
+    facts({ api }),
+    facts({ bot }, { channels: [{ server: 'bot', userConfig: { bot_token: { ...option, sensitive: true } } }] }),
+  ]).toEqual([
+    [false, true],
+    [false, false],
+    [false, false],
+    [false, false],
+    [false, false],
+    [false, true],
+  ]);
+});
+
+it('reads no secret in a variable that Claude Code or the system always sets', () => {
+  expect(
+    facts({
+      docs: {
+        command: 'node',
+        args: ['${CLAUDE_PLUGIN_ROOT}/server.js', '--project', '${CLAUDE_PROJECT_DIR}', '--cache', '${HOME}/.cache'],
+        env: { STATE: '${CLAUDE_PLUGIN_DATA}/state' },
+      },
+    }),
+  ).toEqual([false, false]);
 });
 
 it('refuses a wrapped MCP file with one malformed server instead of reading it as a flat map', () => {
