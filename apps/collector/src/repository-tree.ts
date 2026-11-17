@@ -14,6 +14,7 @@ export const directoryPaths = {
   claudeAgents: '.claude/agents',
   commands: 'commands',
   outputStyles: 'output-styles',
+  claudeOutputStyles: '.claude/output-styles',
   bin: 'bin',
 } as const;
 

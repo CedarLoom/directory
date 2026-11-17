@@ -15,6 +15,13 @@ export const itemId = z
 /** The item's own identifier; 64 characters as the Agent Skills spec limits `name`. */
 export const itemName = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,63}$/);
 
+/** An MCP server's `<namespace>/<name>` as the MCP Registry allows it. */
+export const registryName = z
+  .string()
+  .min(3)
+  .max(200)
+  .regex(/^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/);
+
 /** A field, event or signal name of an upstream format or a rubric. */
 export const keyword = z.string().regex(/^[A-Za-z][A-Za-z0-9_-]{0,63}$/);
 

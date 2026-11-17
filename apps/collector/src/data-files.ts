@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 import { indexFile, type PopularityFile, popularityFile } from '@directory/contracts';
 import { z } from 'zod';
+import { byCodeUnits } from './code-unit-order.ts';
 import { starsGained30d, withSnapshot } from './popularity-file.ts';
 import type { ItemRecord } from './records.ts';
 import type { RepositoryFacts } from './repository-facts.ts';
@@ -12,12 +13,6 @@ const officialMarketplace = 'gh.anthropics.claude-plugins-official';
 
 function jsonFile(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
-}
-
-// Code unit order, so the index does not depend on the machine's locale.
-function byCodeUnits(first: string, second: string): number {
-  if (first === second) return 0;
-  return first < second ? -1 : 1;
 }
 
 /** The previous text when only `changedAt` would differ, so a run without upstream changes rewrites no record. */

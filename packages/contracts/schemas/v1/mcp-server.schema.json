@@ -13,8 +13,10 @@
     },
     "name": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,63}$",
-      "description": "The identifier of the item, never a display name: the manifest or frontmatter `name` of a marketplace, plugin, skill or agent, the registry name of an MCP server, and the file stem of an output style (its frontmatter `name` is a display name) or of a hook."
+      "minLength": 3,
+      "maxLength": 200,
+      "pattern": "^[a-zA-Z0-9.-]+\\/[a-zA-Z0-9._-]+$",
+      "description": "The registry name of the MCP server, `<namespace>/<name>`."
     },
     "aliases": {
       "type": "array",
@@ -1124,6 +1126,11 @@
       "type": "string",
       "const": "mcp-server"
     },
+    "version": {
+      "description": "The registry version; absent when it is no version label.",
+      "type": "string",
+      "pattern": "^[0-9A-Za-z][0-9A-Za-z._+/-]{0,63}$"
+    },
     "registryStatus": {
       "type": "string",
       "enum": [
@@ -1151,12 +1158,14 @@
           "pypi",
           "oci",
           "nuget",
-          "mcpb"
+          "mcpb",
+          "cargo"
         ]
       }
     },
     "versionPinned": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Every package names an exact version; also true for a server without packages."
     },
     "requiredSecrets": {
       "type": "integer",

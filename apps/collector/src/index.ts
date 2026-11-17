@@ -8,14 +8,18 @@ import { readDataFolder, writeDataFolder } from './data-folder.ts';
 import { parseExclusions } from './exclusions.ts';
 import { gitHubHeaders } from './github-contents.ts';
 import { createHttpClient, RequestError } from './http-client.ts';
+import { registryHeaders } from './mcp-registry-adapter.ts';
 import { sourceAdapters } from './sources.ts';
 import { topics } from './topic-search.ts';
 
 const defaultExclusions = fileURLToPath(new URL('../../../curation/exclusions.json', import.meta.url));
-// A hard cap well under the 1,000 requests per hour of the workflow token; a run takes about 100.
+// A hard cap well under the 1,000 requests per hour of the workflow token; repository facts take one request per 50 registry servers.
 const requestCap = 600;
 // GitHub's secondary limit allows 900 REST points per minute; one request per second stays far below it.
 const requestIntervalMs = 1000;
+// A full crawl reads 100 servers a page, and 200 pages reached only names starting with `dev.`: 2,000 pages leave room
+// for the whole registry and its growth, at one request a second, and still stop a cursor that never ends.
+const registryRequestCap = 2000;
 
 /** sysexits codes: usage 64, bad data 65, missing input 66, internal error 70; 1 when a source stopped the run. */
 function exitCode(error: unknown): number {
@@ -30,7 +34,7 @@ const log = (line: string) => console.error(line);
 const program = new Command()
   .name('collect')
   .description(
-    'Reads the sources and GitHub, builds the marketplace, plugin, skill and agent records and prints the run report.',
+    'Reads the sources, the MCP Registry and GitHub, builds the records of every kind and prints the run report.',
   )
   .option('--dry-run', 'print the run report as JSON and write nothing')
   .option('--out <folder>', 'the data folder: reads the last run there and writes the changed files')
@@ -43,23 +47,24 @@ const program = new Command()
     if (token === '') program.error('collect: set GITHUB_TOKEN');
     const excluded = parseExclusions(await readFile(exclusions, 'utf8'));
     const previous = out === undefined ? new Map<string, string>() : await readDataFolder(out);
-    const client = createHttpClient({
+    const limits = {
       fetch,
       clock: systemClock,
-      headers: gitHubHeaders(token),
-      cap: requestCap,
       intervalMs: requestIntervalMs,
       maxRetries: 3,
       maxDelayMs: 5 * 60_000,
       log,
-    });
-    const runDate = new Date(systemClock.now()).toISOString().slice(0, 10);
+    };
+    const client = createHttpClient({ ...limits, headers: gitHubHeaders(token), cap: requestCap });
+    // The registry gets its own client, so the GitHub token never leaves for another host.
+    const registryClient = createHttpClient({ ...limits, headers: registryHeaders, cap: registryRequestCap });
     const { report, files } = await collect(client, {
       adapters: sourceAdapters,
+      registryClient,
       topics,
       excluded,
       previous,
-      runDate,
+      runAt: new Date(systemClock.now()).toISOString(),
       log,
     });
     if (out !== undefined) log(`collect: wrote ${await writeDataFolder(out, files, previous)} changed files to ${out}`);

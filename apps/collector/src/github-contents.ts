@@ -5,10 +5,12 @@ export interface Repository {
   repo: string;
 }
 
+export const userAgent = 'cedarloom-directory-collector';
+
 /** Headers of every GitHub API request. */
 export function gitHubHeaders(token: string): Record<string, string> {
   return {
-    'user-agent': 'cedarloom-directory-collector',
+    'user-agent': userAgent,
     'x-github-api-version': '2026-03-10',
     authorization: `Bearer ${token}`,
   };

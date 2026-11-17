@@ -30,6 +30,8 @@ export interface HttpClientOptions {
 interface TextRequest {
   accept: string;
   maxBytes: number;
+  /** Names the request in the log and in errors instead of its URL, for a URL that carries third-party text. */
+  label?: string;
 }
 
 export interface HttpClient {
@@ -42,11 +44,11 @@ export interface HttpClient {
 }
 
 /** Reads the body as strict UTF-8 and stops reading once it passes `maxBytes`. */
-async function readText(response: Response, url: string, maxBytes: number): Promise<string> {
+async function readText(response: Response, label: string, maxBytes: number): Promise<string> {
   const declared = Number(response.headers.get('content-length') ?? 0);
   if (declared > maxBytes) {
     await response.body?.cancel();
-    throw new RequestError(`${url}: the body has ${declared} bytes, more than the cap of ${maxBytes}`);
+    throw new RequestError(`${label}: the body has ${declared} bytes, more than the cap of ${maxBytes}`);
   }
   const decoder = new TextDecoder('utf-8', { fatal: true });
   let size = 0;
@@ -54,7 +56,7 @@ async function readText(response: Response, url: string, maxBytes: number): Prom
   // Leaving the loop by a throw cancels the stream.
   for await (const chunk of response.body ?? []) {
     size += chunk.byteLength;
-    if (size > maxBytes) throw new RequestError(`${url}: the body has more than the cap of ${maxBytes} bytes`);
+    if (size > maxBytes) throw new RequestError(`${label}: the body has more than the cap of ${maxBytes} bytes`);
     text += decoder.decode(chunk, { stream: true });
   }
   return text + decoder.decode();
@@ -63,7 +65,17 @@ async function readText(response: Response, url: string, maxBytes: number): Prom
 interface Call {
   method: 'GET' | 'POST';
   url: string;
+  label: string;
   body?: string;
+}
+
+function textCall(method: Call['method'], url: string, textRequest: TextRequest, body?: string): Call {
+  return { method, url, label: textRequest.label ?? url, ...(body === undefined ? {} : { body }) };
+}
+
+/** The request as the log and the errors name it. */
+function callLine(call: Call): string {
+  return `${call.method} ${call.label}`;
 }
 
 export function createHttpClient(options: HttpClientOptions): HttpClient {
@@ -77,7 +89,7 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
     if (stopped !== undefined) throw stopped;
     await limiter.waitTurn();
     if (stopped !== undefined) throw stopped;
-    if (requests >= cap) throw new RequestCapError(`request cap of ${cap} reached; refused ${call.method} ${call.url}`);
+    if (requests >= cap) throw new RequestCapError(`request cap of ${cap} reached; refused ${callLine(call)}`);
     requests += 1;
     const headers = {
       ...options.headers,
@@ -87,17 +99,17 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
     // A redirect is answered, not followed, so every request sent passes the cap and the limiter.
     const body = call.body === undefined ? {} : { body: call.body };
     const response = await options.fetch(call.url, { method: call.method, headers, ...body, redirect: 'manual' });
-    log(`${call.method} ${call.url} ${response.status}`);
+    log(`${callLine(call)} ${response.status}`);
     return response;
   }
 
   async function attempt(call: Call, textRequest: TextRequest, retry: number): Promise<string> {
     const response = await send(call, textRequest.accept);
-    if (response.ok) return readText(response, call.url, textRequest.maxBytes);
+    if (response.ok) return readText(response, call.label, textRequest.maxBytes);
     await response.body?.cancel();
     const delay = retry < options.maxRetries ? retryDelay(response, retry, clock.now()) : undefined;
     if (delay === undefined || delay > options.maxDelayMs)
-      throw new RequestError(`${call.method} ${call.url} answered ${response.status}`);
+      throw new RequestError(`${callLine(call)} answered ${response.status}`);
     limiter.hold(delay);
     await clock.sleep(delay);
     return attempt(call, textRequest, retry + 1);
@@ -109,15 +121,15 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
     } catch (error) {
       // A network error, a cut connection or invalid UTF-8 also stops the run as a failed request.
       const failure =
-        error instanceof RequestError ? error : new RequestError(`${call.method} ${call.url} failed`, { cause: error });
+        error instanceof RequestError ? error : new RequestError(`${callLine(call)} failed`, { cause: error });
       stopped ??= failure;
       throw failure;
     }
   }
 
   return {
-    getText: (url, textRequest) => request({ method: 'GET', url }, textRequest),
-    postText: (url, body, textRequest) => request({ method: 'POST', url, body }, textRequest),
+    getText: (url, textRequest) => request(textCall('GET', url, textRequest), textRequest),
+    postText: (url, body, textRequest) => request(textCall('POST', url, textRequest, body), textRequest),
     get requests() {
       return requests;
     },

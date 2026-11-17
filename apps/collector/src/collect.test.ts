@@ -1,3 +1,4 @@
+import { indexFile } from '@directory/contracts';
 import { expect, it } from 'vitest';
 import { z } from 'zod';
 import { collect } from './collect.ts';
@@ -34,8 +35,62 @@ function pluginRepository(index: number): FakeRepository {
       }),
       '.mcp.json': JSON.stringify({ mcpServers: { docs: { command: 'npx' }, api: { type: 'http', url: marker } } }),
       'evals/cases.json': marker,
+      // Five of the inspected plugins ship an output style; plugin-1 is excluded.
+      ...(index < 6 && {
+        'output-styles/terse.md': `---\nname: Terse\ndescription: ${marker}\nkeep-coding-instructions: true\n---\n${marker}\n`,
+      }),
     },
   };
+}
+
+/** A registry entry of a server whose source is the GitHub repository `example-org/mcp-<index>`. */
+function registryEntry(index: number, status = 'active') {
+  return {
+    server: {
+      name: `io.github.example-org/mcp-${index}`,
+      description: marker,
+      version: '1.0.0',
+      repository: { url: `https://github.com/example-org/mcp-${index}`, source: 'github' },
+      packages: [
+        {
+          registryType: 'npm',
+          identifier: `@example-org/mcp-${index}`,
+          version: '1.0.0',
+          transport: { type: 'stdio' },
+          environmentVariables: [{ name: 'TOKEN', description: marker, isRequired: true, isSecret: true }],
+        },
+      ],
+      remotes: [
+        {
+          type: 'streamable-http',
+          url: 'https://mcp.example.test/mcp',
+          headers: [
+            { name: 'Authorization', isRequired: true, isSecret: true },
+            { name: 'X-Team', isRequired: true, isSecret: true },
+          ],
+        },
+      ],
+    },
+    _meta: { 'io.modelcontextprotocol.registry/official': { status, publishedAt: '2026-11-01T10:00:00Z' } },
+  };
+}
+
+/** 25 servers with a GitHub repository, one of them deprecated, one deleted, and one hosted elsewhere. */
+const registryEntries = [
+  ...Array.from({ length: 25 }, (_, index) => registryEntry(index, index === 1 ? 'deprecated' : 'active')),
+  registryEntry(25, 'deleted'),
+  {
+    server: {
+      name: 'com.example/hosted',
+      version: '2.0.0',
+      remotes: [{ type: 'sse', url: 'https://example.test/sse' }],
+    },
+    _meta: { 'io.modelcontextprotocol.registry/official': { status: 'active', publishedAt: '2026-11-01T10:00:00Z' } },
+  },
+];
+
+function registryFetch(servers: readonly unknown[]) {
+  return async (): Promise<Response> => Response.json({ servers, metadata: { count: servers.length } });
 }
 
 function marketplaceRepository(index: number): FakeRepository {
@@ -51,7 +106,10 @@ function marketplaceRepository(index: number): FakeRepository {
   };
 }
 
-/** A GitHub of 1,000 listed plugin repositories, a listed plugin that moved away, two listing marketplaces and 25 topic marketplaces. */
+/**
+ * A GitHub of 1,000 listed plugin repositories, a listed plugin that moved away, two listing marketplaces, 25 topic
+ * marketplaces and the repositories of 26 registry servers.
+ */
 function fakeWorld() {
   const listed = Array.from({ length: 1000 }, (_, index) => ({
     name: `plugin-${index}`,
@@ -85,6 +143,10 @@ function fakeWorld() {
     ...Array.from({ length: 25 }, (_, index): [string, FakeRepository] => [
       `example-org/market-${index}`,
       marketplaceRepository(index),
+    ]),
+    ...Array.from({ length: 26 }, (_, index): [string, FakeRepository] => [
+      `example-org/mcp-${index}`,
+      { stars: 300 + index, files: {} },
     ]),
   ]);
   return repositories;
@@ -163,6 +225,7 @@ function fakeFetch(world: World, topicRepositories: readonly string[]) {
 
 interface RunOptions {
   topicRepositories?: readonly string[];
+  registry?: readonly unknown[];
   log?: (line: string) => void;
 }
 
@@ -170,7 +233,7 @@ async function run(
   world: World,
   runDate: string,
   previous: ReadonlyMap<string, string> = new Map(),
-  { topicRepositories = [], log = () => undefined }: RunOptions = {},
+  { topicRepositories = [], registry = registryEntries, log = () => undefined }: RunOptions = {},
 ) {
   const client = createHttpClient({
     fetch: fakeFetch(world, [
@@ -186,30 +249,82 @@ async function run(
     maxDelayMs: 0,
     log: () => undefined,
   });
+  const registryClient = createHttpClient({
+    fetch: registryFetch(registry),
+    clock: { now: () => 0, sleep: async () => undefined },
+    headers: {},
+    cap: 10,
+    intervalMs: 0,
+    maxRetries: 0,
+    maxDelayMs: 0,
+    log: () => undefined,
+  });
   return collect(client, {
     adapters: [
       marketplaceAdapter('official-marketplace', [{ owner: 'anthropics', repo: 'claude-plugins-official' }]),
       marketplaceAdapter('community-marketplace', [{ owner: 'example-org', repo: 'market' }]),
     ],
+    registryClient,
     topics: ['claude-code-marketplace'],
     excluded: new Set(['gh.example-org.plugin-1']),
     previous,
-    runDate,
+    runAt: `${runDate}T06:00:00Z`,
     log,
   });
 }
 
+const firstItems = {
+  marketplace: 27,
+  plugin: 59,
+  skill: 59,
+  agent: 59,
+  hook: 20,
+  'mcp-server': 25,
+  'output-style': 5,
+};
+
 it('builds a first batch of each kind in under 300 requests', async () => {
   const { report } = await run(fakeWorld(), '2026-11-16');
-  expect({ ...report, requests: report.requests < 300 }).toEqual({
+  const sources = report.sources.map(({ id, readAt, crawl, reason }) => ({ id, readAt, crawl, reason }));
+  expect({ ...report, requests: report.requests < 300, sources }).toEqual({
     format: 'directory-run-report',
-    schemaVersion: 2,
+    schemaVersion: 3,
     requests: true,
     refused: 1,
     excluded: 1,
-    discovered: { marketplace: 27, plugin: 1001, skill: 59, agent: 59 },
-    items: { marketplace: 27, plugin: 59, skill: 59, agent: 59 },
+    discovered: {
+      marketplace: 27,
+      plugin: 1001,
+      skill: 59,
+      agent: 59,
+      hook: 59,
+      'mcp-server': 26,
+      'output-style': 5,
+    },
+    items: firstItems,
+    sources: [{ id: 'mcp-registry', readAt: '2026-11-16T06:00:00Z', crawl: 'full', reason: 'no-checkpoint' }],
   });
+});
+
+it('finishes inside the GitHub request cap when the registry has more servers than the cap allows facts for', async () => {
+  const world = fakeWorld();
+  const registry = Array.from({ length: 30_000 }, (_, index) => {
+    world.set(`example-org/server-${index}`, { stars: index, files: {} });
+    return {
+      server: {
+        name: `io.github.example-org/server-${index}`,
+        version: '1.0.0',
+        repository: { url: `https://github.com/example-org/server-${index}`, source: 'github' },
+      },
+      _meta: { 'io.modelcontextprotocol.registry/official': { status: 'active', publishedAt: '2026-11-01T10:00:00Z' } },
+    };
+  });
+  const { report } = await run(world, '2026-11-16', new Map(), { registry });
+  expect({
+    requests: report.requests < 300,
+    discovered: report.discovered['mcp-server'],
+    items: report.items['mcp-server'],
+  }).toEqual({ requests: true, discovered: 30_000, items: 60 });
 });
 
 it('refuses a topic repository whose name is too long for an id and finishes the run', async () => {
@@ -224,8 +339,58 @@ it('refuses a topic repository whose name is too long for an id and finishes the
     lines: lines.filter((line) => line.startsWith('topic search')),
   }).toEqual({
     refused: 2,
-    items: { marketplace: 27, plugin: 59, skill: 59, agent: 59 },
+    items: firstItems,
     lines: ['topic search: refused: value too_big'],
+  });
+});
+
+it('refuses a registry server whose repository name is too long for an id and finishes the run', async () => {
+  const lines: string[] = [];
+  const long = registryEntry(26);
+  const { report } = await run(fakeWorld(), '2026-11-16', new Map(), {
+    registry: [
+      ...registryEntries,
+      {
+        ...long,
+        server: {
+          ...long.server,
+          name: 'io.github.example-org/long',
+          repository: { url: `https://github.com/example-org/${'_'.repeat(70)}`, source: 'github' },
+        },
+      },
+    ],
+    log: (line) => lines.push(line),
+  });
+  expect({
+    refused: report.refused,
+    items: report.items,
+    lines: lines.filter((line) => line.startsWith('mcp-registry: refused')),
+  }).toEqual({
+    refused: 2,
+    items: firstItems,
+    lines: ['mcp-registry: refused a server: value too_big'],
+  });
+});
+
+it('writes the record and the index row of a server whose registry name is longer than 64 characters', async () => {
+  const name = `io.github.example-org/${'long-name-'.repeat(7)}end`;
+  const world = fakeWorld();
+  world.set('example-org/long', { stars: 1, files: {} });
+  const long = registryEntry(26);
+  const { files } = await run(world, '2026-11-16', new Map(), {
+    registry: [
+      ...registryEntries,
+      { ...long, server: { ...long.server, name, repository: { url: 'https://github.com/example-org/long' } } },
+    ],
+  });
+  const id = name.replace('/', '.');
+  const index = indexFile.parse(JSON.parse(files.get('index.json') ?? '{}'));
+  expect({
+    name: ownFields(files, `records/mcp-server/${id}.json`)['name'],
+    row: index.items.find((item) => item.id === id)?.name,
+  }).toEqual({
+    name: 'io.github.example-org/long-name-long-name-long-name-long-name-long-name-long-name-long-name-end',
+    row: 'io.github.example-org/long-name-long-name-long-name-long-name-long-name-long-name-long-name-end',
   });
 });
 
@@ -255,10 +420,13 @@ it('writes records, popularity files and the index, and no third-party text', as
     records: paths.filter((path) => path.startsWith('records/')).length,
     popularity: paths.filter((path) => path.startsWith('popularity/')).length,
     others: paths.filter(
-      (path) => !/^(records\/(marketplace|plugin|skill|agent)|popularity)\/[a-z0-9._-]+\.json$/.test(path),
+      (path) =>
+        !/^(records\/(marketplace|plugin|skill|agent|hook|mcp-server|output-style)|popularity)\/[a-z0-9._-]+\.json$/.test(
+          path,
+        ),
     ),
     quoting: paths.filter((path) => files.get(path)?.includes('curl') === true),
-  }).toEqual({ records: 204, popularity: 86, others: ['index.json'], quoting: [] });
+  }).toEqual({ records: 254, popularity: 111, others: ['index.json'], quoting: [] });
 });
 
 it('leaves every file byte-identical on a later run with unchanged star counts', async () => {
@@ -345,7 +513,7 @@ const expectedFacts = [
       hooksByEvent: { PreToolUse: 1 },
       mcpServersByTransport: { stdio: 1, http: 1 },
       lspServers: 0,
-      outputStyles: 0,
+      outputStyles: 1,
       monitors: 0,
       binFiles: 0,
     },
@@ -383,6 +551,48 @@ const expectedFacts = [
     modelSet: true,
     tokens: { metadata: 34, body: 15 },
   },
+  {
+    id: 'gh.example-org.plugin-0.hooks',
+    name: 'plugin-0',
+    kind: 'hook',
+    container: 'gh.example-org.plugin-0',
+    listedIn: [],
+    license: github,
+    maintenance,
+    provenance: listed,
+    events: ['PreToolUse'],
+    handlerTypes: ['command'],
+    commandForms: ['shell'],
+    matcherBreadth: 'specific',
+  },
+  {
+    id: 'io.github.example-org.mcp-0',
+    name: 'io.github.example-org/mcp-0',
+    kind: 'mcp-server',
+    listedIn: [],
+    license: github,
+    maintenance,
+    provenance: ['github', 'mcp-registry'],
+    version: '1.0.0',
+    registryStatus: 'active',
+    transports: ['stdio', 'streamable-http'],
+    packageRegistryTypes: ['npm'],
+    versionPinned: true,
+    requiredSecrets: 2,
+    remoteHosts: 1,
+  },
+  {
+    id: 'gh.example-org.plugin-0.output-styles.terse',
+    name: 'terse',
+    kind: 'output-style',
+    container: 'gh.example-org.plugin-0',
+    listedIn: [],
+    license: github,
+    maintenance,
+    provenance: listed,
+    tokens: 46,
+    frontmatterFields: ['name', 'description', 'keep-coding-instructions'],
+  },
 ];
 
 it('records the facts read for each kind', async () => {
@@ -392,5 +602,17 @@ it('records the facts read for each kind', async () => {
     ownFields(files, 'records/plugin/gh.example-org.plugin-0.json'),
     ownFields(files, 'records/skill/gh.example-org.plugin-0.skills.skill-0.json'),
     ownFields(files, 'records/agent/gh.example-org.plugin-0.agents.agent-0.json'),
+    ownFields(files, 'records/hook/gh.example-org.plugin-0.hooks.json'),
+    ownFields(files, 'records/mcp-server/io.github.example-org.mcp-0.json'),
+    ownFields(files, 'records/output-style/gh.example-org.plugin-0.output-styles.terse.json'),
   ]).toEqual(expectedFacts);
+});
+
+it('keeps a deprecated server and leaves out a deleted one and one without a GitHub repository', async () => {
+  const { files } = await run(fakeWorld(), '2026-11-16');
+  expect({
+    deprecated: ownFields(files, 'records/mcp-server/io.github.example-org.mcp-1.json')['registryStatus'],
+    deleted: files.has('records/mcp-server/io.github.example-org.mcp-25.json'),
+    hosted: files.has('records/mcp-server/com.example.hosted.json'),
+  }).toEqual({ deprecated: 'deprecated', deleted: false, hosted: false });
 });

@@ -45,6 +45,7 @@
   },
   "provenance": ["mcp-registry"],
   "changedAt": "2026-11-02",
+  "version": "1.0.2",
   "registryStatus": "active",
   "transports": ["stdio"],
   "packageRegistryTypes": ["npm"],

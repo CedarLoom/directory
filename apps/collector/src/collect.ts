@@ -9,16 +9,18 @@ import { type InspectedPlace, inspectionCandidates } from './inspection-candidat
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
 import { UnknownLicenseError } from './license-class.ts';
+import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
 import { type Inspection, inspectLocations } from './repository-tree.ts';
-import type { SourceAdapter } from './source-adapter.ts';
+import type { SourceAdapter, SourceRead } from './source-adapter.ts';
 import { searchTopics } from './topic-search.ts';
 
 /** The run report the `collect` command prints as JSON. */
 export interface RunReport {
   format: 'directory-run-report';
-  schemaVersion: 2;
+  schemaVersion: 3;
+  /** Requests to GitHub and the MCP Registry, retries included. */
   requests: number;
   refused: number;
   excluded: number;
@@ -26,22 +28,40 @@ export interface RunReport {
   discovered: Record<ItemKind, number>;
   /** Records built. */
   items: Record<ItemKind, number>;
+  /** How each source with a checkpoint was read; the publishing step keeps `readAt` in `meta.json`. */
+  sources: SourceRead[];
 }
 
 export interface CollectOptions {
+  /** The adapters that read GitHub through the run's client. */
   adapters: readonly SourceAdapter[];
+  /** The MCP Registry's own client, which sends no GitHub token. */
+  registryClient: HttpClient;
   topics: readonly string[];
   excluded: ReadonlySet<string>;
   /** The data files of the last run, so unchanged files keep their bytes. */
   previous: DataFiles;
-  runDate: string;
+  /** The run's start as an ISO date-time; its date is the run date. */
+  runAt: string;
   log: (line: string) => void;
 }
 
-// Records per kind and run, most starred repositories first; it keeps a run near 100 requests.
+// Records per kind and run, most starred repositories first; it keeps a run well below the request cap.
 const perKind = 60;
+// Hooks and output styles are fewer; v1 keeps up to 20 of each.
+const perSmallKind = 20;
 const perTopic = 30;
-const kinds: readonly ItemKind[] = ['marketplace', 'plugin', 'skill', 'agent'];
+// The MCP Registry lists tens of thousands of servers; 500 repositories keep their facts at 10 GitHub requests.
+const serverRepositories = 500;
+const kinds = [
+  'marketplace',
+  'plugin',
+  'skill',
+  'agent',
+  'hook',
+  'mcp-server',
+  'output-style',
+] as const satisfies readonly ItemKind[];
 
 function isLocated(candidate: Candidate): candidate is Located {
   return candidate.location !== undefined;
@@ -66,8 +86,17 @@ function top(
 }
 
 function countByKind(items: readonly { kind: ItemKind }[]): Record<ItemKind, number> {
-  const count = (kind: ItemKind) => items.filter((item) => item.kind === kind).length;
-  return { marketplace: count('marketplace'), plugin: count('plugin'), skill: count('skill'), agent: count('agent') };
+  const counts: Record<ItemKind, number> = {
+    marketplace: 0,
+    plugin: 0,
+    skill: 0,
+    agent: 0,
+    hook: 0,
+    'mcp-server': 0,
+    'output-style': 0,
+  };
+  for (const { kind } of items) counts[kind] += 1;
+  return counts;
 }
 
 type Refuse = (id: string, error: Error) => void;
@@ -128,7 +157,8 @@ function textOf(item: ItemFile | undefined): string | undefined {
   return item === undefined || item.file === 'too-large' ? undefined : item.file.text;
 }
 
-async function readFiles(client: HttpClient, skills: readonly Located[], agents: readonly Located[]) {
+/** Reads each skill's SKILL.md and folders, and each agent's and output style's own file. */
+async function readFiles(client: HttpClient, skills: readonly Located[], files: readonly Located[]) {
   return Promise.all([
     readItemFiles(
       client,
@@ -137,7 +167,7 @@ async function readFiles(client: HttpClient, skills: readonly Located[], agents:
     ),
     readItemFiles(
       client,
-      agents.map(({ location }) => ({ location, file: '' })),
+      files.map(({ location }) => ({ location, file: '' })),
       false,
     ),
   ]);
@@ -164,6 +194,10 @@ interface Selection {
   skillFiles: readonly ItemFile[];
   agents: readonly Located[];
   agentFiles: readonly ItemFile[];
+  hooks: readonly Located[];
+  mcpServers: readonly Located[];
+  outputStyles: readonly Located[];
+  outputStyleFiles: readonly ItemFile[];
 }
 
 type FactsOf = (candidate: Located) => RepositoryFacts | undefined;
@@ -196,10 +230,29 @@ function skillInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
   });
 }
 
-function agentInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
-  return selection.agents.flatMap((candidate, index): RecordInput[] => {
-    const [facts, text] = [factsOf(candidate), textOf(selection.agentFiles[index])];
-    return facts !== undefined && text !== undefined ? [{ kind: 'agent', candidate, facts, text }] : [];
+function fileInputs(
+  kind: 'agent' | 'output-style',
+  candidates: readonly Located[],
+  files: readonly ItemFile[],
+  factsOf: FactsOf,
+): RecordInput[] {
+  return candidates.flatMap((candidate, index): RecordInput[] => {
+    const [facts, text] = [factsOf(candidate), textOf(files[index])];
+    return facts !== undefined && text !== undefined ? [{ kind, candidate, facts, text }] : [];
+  });
+}
+
+function hookInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
+  return selection.hooks.flatMap((candidate): RecordInput[] => {
+    const [facts, hooks] = [factsOf(candidate), candidate.hooks];
+    return facts !== undefined && hooks !== undefined ? [{ kind: 'hook', candidate, facts, hooks }] : [];
+  });
+}
+
+function mcpServerInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
+  return selection.mcpServers.flatMap((candidate): RecordInput[] => {
+    const [facts, mcpServer] = [factsOf(candidate), candidate.mcpServer];
+    return facts !== undefined && mcpServer !== undefined ? [{ kind: 'mcp-server', candidate, facts, mcpServer }] : [];
   });
 }
 
@@ -210,8 +263,28 @@ function recordInputs(selection: Selection): RecordInput[] {
     ...marketplaceInputs(selection.candidates, factsOf),
     ...pluginInputs(selection, factsOf),
     ...skillInputs(selection, factsOf),
-    ...agentInputs(selection, factsOf),
+    ...fileInputs('agent', selection.agents, selection.agentFiles, factsOf),
+    ...hookInputs(selection, factsOf),
+    ...mcpServerInputs(selection, factsOf),
+    ...fileInputs('output-style', selection.outputStyles, selection.outputStyleFiles, factsOf),
   ];
+}
+
+/**
+ * The repositories to read facts of: each listed and topic repository, and the MCP server repositories up to the budget
+ * in the registry adapter's name order; a server past the budget gets no facts, so no record.
+ */
+function factsRepositories(
+  listed: readonly Located[],
+  topicRepositories: readonly Repository[],
+  log: (line: string) => void,
+) {
+  const locations = (servers: boolean) =>
+    listed.filter(({ kind }) => (kind === 'mcp-server') === servers).map(({ location }) => location);
+  const servers = uniqueRepositories(locations(true));
+  if (servers.length > serverRepositories)
+    log(`mcp-registry: facts of the first ${serverRepositories} of ${servers.length} server repositories`);
+  return uniqueRepositories([...locations(false), ...topicRepositories, ...servers.slice(0, serverRepositories)]);
 }
 
 /** The listed plugins to inspect, with the skills and agents they contain, and each topic repository GitHub found. */
@@ -233,15 +306,51 @@ function placesToInspect(
   ];
 }
 
+/** The most starred items of each kind, with the files read for the skills, agents and output styles among them. */
+async function select(
+  client: HttpClient,
+  found: Pick<Selection, 'candidates' | 'facts' | 'plugins' | 'inspected'>,
+  refuse: Refuse,
+): Promise<Selection> {
+  const { candidates, facts } = found;
+  const [skills, agents] = [top(candidates, 'skill', facts, perKind), top(candidates, 'agent', facts, perKind)];
+  const outputStyles = top(candidates, 'output-style', facts, perSmallKind);
+  const [skillFiles, files] = await readFiles(client, skills, [...agents, ...outputStyles]);
+  const [agentFiles, outputStyleFiles] = [files.slice(0, agents.length), files.slice(agents.length)];
+  refuseTooLarge(skills, skillFiles, refuse);
+  refuseTooLarge(agents, agentFiles, refuse);
+  refuseTooLarge(outputStyles, outputStyleFiles, refuse);
+  return {
+    ...found,
+    skills,
+    skillFiles,
+    agents,
+    agentFiles,
+    hooks: top(candidates, 'hook', facts, perSmallKind),
+    mcpServers: top(candidates, 'mcp-server', facts, perKind),
+    outputStyles,
+    outputStyleFiles,
+  };
+}
+
 /** Reads every source, inspects the selected items on GitHub and returns the run report and the data files. */
 export async function collect(
   client: HttpClient,
   options: CollectOptions,
 ): Promise<{ report: RunReport; files: Map<string, string> }> {
-  const { log, runDate, excluded } = options;
+  const { log, runAt, excluded } = options;
+  const runDate = runAt.slice(0, 10);
   const counter = { refused: 0 };
   const refuse = refusalLogger(log, counter);
-  const results = await Promise.all(options.adapters.map((adapter) => adapter.collect(client, log)));
+  // A failed source fails the run, so the registry crawl stops reading pages nobody will use.
+  const failed = new AbortController();
+  const results = await Promise.all([
+    ...options.adapters.map((adapter) => adapter.collect(client, log)),
+    mcpRegistryAdapter(options.previous, runAt, failed.signal).collect(options.registryClient, log),
+  ]).catch((error: unknown) => {
+    failed.abort();
+    throw error;
+  });
   counter.refused += results.reduce((sum, result) => sum + result.refused, 0);
   const listed = applyExclusions(mergeCandidates(results.flatMap((result) => result.candidates)), excluded).filter(
     isLocated,
@@ -250,27 +359,22 @@ export async function collect(
   const topicRepositories = identified(await searchTopics(client, options.topics, perTopic), refuse).filter(
     (repository) => !excluded.has(repositoryId(repository)),
   );
-  const repositories = uniqueRepositories([...listed.map(({ location }) => location), ...topicRepositories]);
-  const facts = await readFacts(client, repositories, runDate);
+  const facts = await readFacts(client, factsRepositories(listed, topicRepositories, log), runDate);
   const plugins = top(listed, 'plugin', facts, perKind);
   const { inspected, found } = await inspectPlaces(client, placesToInspect(plugins, topicRepositories, facts), refuse);
   const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found]);
   const kept = applyExclusions(all, excluded);
-  const candidates = kept.filter(isLocated);
-  const [skills, agents] = [top(candidates, 'skill', facts, perKind), top(candidates, 'agent', facts, perKind)];
-  const [skillFiles, agentFiles] = await readFiles(client, skills, agents);
-  refuseTooLarge(skills, skillFiles, refuse);
-  refuseTooLarge(agents, agentFiles, refuse);
-  const selection = { candidates, facts, plugins, inspected, skills, skillFiles, agents, agentFiles };
+  const selection = await select(client, { candidates: kept.filter(isLocated), facts, plugins, inspected }, refuse);
   const records = buildAll(recordInputs(selection), runDate, refuse);
   const report: RunReport = {
     format: 'directory-run-report',
-    schemaVersion: 2,
-    requests: client.requests,
+    schemaVersion: 3,
+    requests: client.requests + options.registryClient.requests,
     refused: counter.refused,
     excluded: all.length - kept.length,
     discovered: countByKind(kept),
     items: countByKind(records),
+    sources: results.flatMap(({ read }) => (read === undefined ? [] : [read])),
   };
   return { report, files: dataFiles(records, facts, options.previous, runDate) };
 }
