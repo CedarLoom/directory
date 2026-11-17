@@ -47,7 +47,7 @@ const { removed } = publication(candidate, published, report, {
   license,
 });
 
-it('removes the record, history and popularity file of an excluded item', () =>
+it('removes the record, history and popularity file of an excluded item whose id is its repository', () =>
   expect(removed.filter((path) => path.includes('gh.acme.tool'))).toEqual([
     'records/plugin/gh.acme.tool.json',
     'history/plugin/gh.acme.tool.json',
@@ -99,8 +99,8 @@ it('dates the files kept for an item that left the index and forgets an item tha
       'history/agent/gh.acme.helper.json': { since: '2026-11-23', ids: ['gh.acme.helper'] },
       'history/plugin/gh.acme.tool.json': { since: '2026-11-23', ids: ['gh.acme.tool'] },
       'history/skill/gh.acme.skills.dropped.json': { since: '2026-11-23', ids: ['gh.acme.skills'] },
-      'popularity/gh.acme.helper.json': { since: '2026-11-23', ids: ['gh.acme.helper'] },
-      'popularity/gh.acme.tool.json': { since: '2026-11-23', ids: ['gh.acme.tool'] },
+      'popularity/gh.acme.helper.json': { since: '2026-11-23', ids: [] },
+      'popularity/gh.acme.tool.json': { since: '2026-11-23', ids: [] },
     },
   });
 });
@@ -134,6 +134,35 @@ it('removes the history and popularity file an MCP server kept after it left the
       'gh.acme.weather',
     ),
   ).toEqual(['history/mcp-server/io.github.acme.weather.json', 'popularity/gh.acme.weather.json']));
+
+// Two skills of one repository: the first leaves the index, the second is excluded by its id.
+const [leaving, excludedSkill] = [
+  itemFiles('skill', 'gh.acme.kit.a', 'gh.acme.kit'),
+  itemFiles('skill', 'gh.acme.kit.b', 'gh.acme.kit'),
+];
+const kit = new Map([...leaving, ...excludedSkill, popularity('gh.acme.kit')]);
+const excludeSkill = { excluded: new Set(['gh.acme.kit.b']), license };
+
+it('keeps the popularity file when one item of its repository leaves the index and another is excluded, in one run or in two', () => {
+  const oneRun = publication(candidate, kit, report, excludeSkill).removed;
+  const withSkill = new Map([...candidate, ...excludedSkill, popularity('gh.acme.kit')]);
+  const left = publication(withSkill, kit, report, { excluded: new Set(), license });
+  const afterLeft = new Map([...withSkill, ...leaving.filter(([path]) => path.startsWith('history/')), ...left.files]);
+  const twoRuns = publication(candidate, afterLeft, { ...report, runAt: '2026-11-30T06:00:00Z' }, excludeSkill).removed;
+  expect({ oneRun, twoRuns }).toEqual({
+    oneRun: [
+      'records/skill/gh.acme.kit.a.json',
+      'records/skill/gh.acme.kit.b.json',
+      'history/skill/gh.acme.kit.b.json',
+    ],
+    twoRuns: ['records/skill/gh.acme.kit.b.json', 'history/skill/gh.acme.kit.b.json'],
+  });
+});
+
+it('keeps the popularity file of an item excluded by its id, the only item of its repository', () =>
+  expect(
+    publication(candidate, new Map([...excludedSkill, popularity('gh.acme.kit')]), report, excludeSkill).removed,
+  ).toEqual(['records/skill/gh.acme.kit.b.json', 'history/skill/gh.acme.kit.b.json']));
 
 it('removes the history and popularity file of an item 90 days after it left the index', () => {
   const files = new Map([

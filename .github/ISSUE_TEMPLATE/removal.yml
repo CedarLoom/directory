@@ -5,9 +5,10 @@ body:
   - type: markdown
     attributes:
       value: >-
-        A removed item stays out of every later run, and its record, score history and popularity data are removed from
-        the current published data; earlier commits of the published data may still hold them. Every request is answered
-        within one month. This issue is public.
+        A removed item stays out of every later run, and its record and score history are removed from the current
+        published data; earlier commits of the published data may still hold them. The star counts of its repository,
+        which every item in the repository shares, are removed with the whole repository, or 90 days after no listed item
+        of the repository uses them. Every request is answered within one month. This issue is public.
   - type: input
     id: item
     attributes:

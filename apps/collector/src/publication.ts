@@ -71,37 +71,32 @@ function excludedHistory(path: string, excludedHistories: ReadonlySet<string>, e
 /** The files kept for items that left the index, as `departures.json` lists them. */
 type Departures = ReadonlyMap<string, { since: string; ids: string[] }>;
 
-/** Published files the run drops: every record it lacks, and the history and popularity file of an excluded item. */
+/** Published files the run drops: every record it lacks, the history of an excluded item and the popularity file of an excluded repository. */
 function removals(candidate: DataFiles, published: DataFiles, excluded: Exclusions, departed: Departures): string[] {
   const excludedHistories = new Set<string>();
-  const [excludedRefs, keptRefs] = [new Set<string>(), new Set<string>()];
-  // The run's copy of a record replaces the published one; a record the run lacks still keeps its popularity file.
+  // The run's copy of a record replaces the published one.
   for (const [path, text] of new Map([...published, ...candidate])) {
     if (!path.startsWith('records/')) continue;
     const record = recordLinks.parse(JSON.parse(text));
-    const refs = popularityRefs(record);
     // An excluded repository takes out the items in it, as collect does.
-    const gone = isExcluded(record, excluded) || refs.some((ref) => excluded.has(ref));
-    if (gone) excludedHistories.add(`history/${path.slice('records/'.length)}`);
-    for (const ref of refs) (gone ? excludedRefs : keptRefs).add(ref);
+    if (isExcluded(record, excluded) || popularityRefs(record).some((ref) => excluded.has(ref))) {
+      excludedHistories.add(`history/${path.slice('records/'.length)}`);
+    }
   }
-  // A file whose records an earlier run removed is also matched by the ids `departures.json` keeps from them.
+  // A history whose record an earlier run removed is also matched by the ids `departures.json` keeps from it.
   for (const [path, { ids }] of departed) {
-    if (!ids.some((id) => excluded.has(id))) continue;
-    if (path.startsWith('history/')) excludedHistories.add(path);
-    else excludedRefs.add(fileId(path));
+    if (path.startsWith('history/') && ids.some((id) => excluded.has(id))) excludedHistories.add(path);
   }
   return [...published.keys()].filter((path) => {
     if (candidate.has(path) || path === 'index.json' || path === 'meta.json') return false;
     if (path.startsWith('records/')) return true;
     if (path.startsWith('history/')) return excludedHistory(path, excludedHistories, excluded);
-    // A popularity file whose records an earlier run removed is matched by its own id.
-    const id = fileId(path);
-    return path.startsWith('popularity/') && (excludedRefs.has(id) || excluded.has(id)) && !keptRefs.has(id);
+    // A popularity file holds the star counts of the repository its file name names, which every item in it shares.
+    return path.startsWith('popularity/') && excluded.has(fileId(path));
   });
 }
 
-/** Days a history or popularity file stays after its item left the index; a return within them continues it. */
+/** Days a history or popularity file stays once no item in the index uses it; a return within them continues it. */
 const retentionDays = 90;
 
 /** The popularity files the run's records point to, including one the run lacks as it read no star count for it. */
@@ -125,31 +120,22 @@ function keptFiles(candidate: DataFiles, published: DataFiles, removed: Readonly
     .toSorted(byCodeUnits);
 }
 
-/**
- * The ids that exclude each history and popularity file of an item the run drops from the index, read from its published
- * record: for its history its container and repository, for a popularity file it points to the item and its container.
- */
+/** The container and repository, read from its published record, of each item the run drops from the index, by its history file. */
 function leavingIds(candidate: DataFiles, published: DataFiles): Map<string, string[]> {
-  const ids = new Map<string, Set<string>>();
-  const add = (path: string, values: readonly string[]) => {
-    const set = ids.get(path) ?? new Set<string>();
-    for (const value of values) set.add(value);
-    ids.set(path, set);
-  };
+  const ids = new Map<string, string[]>();
   for (const [path, text] of published) {
     if (!path.startsWith('records/') || candidate.has(path)) continue;
     const record = recordLinks.parse(JSON.parse(text));
     const containers = record.container === undefined ? [] : [record.container];
-    const refs = popularityRefs(record);
-    add(`history/${path.slice('records/'.length)}`, [...containers, ...refs]);
-    for (const ref of refs) add(`popularity/${ref}.json`, [record.id, ...containers]);
+    const values = new Set([...containers, ...popularityRefs(record)]);
+    ids.set(`history/${path.slice('records/'.length)}`, [...values].toSorted(byCodeUnits));
   }
-  return new Map([...ids].map(([path, set]) => [path, [...set].toSorted(byCodeUnits)]));
+  return ids;
 }
 
 /**
- * The history and popularity files kept for items that left the index, each with the date of the first run without its
- * item and the ids that exclude it, and the kept files whose retention period ended by the run date.
+ * The history and popularity files that no item in the index uses, each with the date of the first run in which none
+ * used it and the ids that exclude it, and the kept files whose retention period ended by the run date.
  */
 function departures(
   candidate: DataFiles,
@@ -160,7 +146,7 @@ function departures(
   const kept = new Map<string, { since: string; ids: string[] }>();
   const expired: string[] = [];
   for (const path of keptFiles(candidate, published, removed)) {
-    // A file kept with no record to read, such as a popularity file no record points to any more, has no ids.
+    // A popularity file, which only its own id excludes, and a history kept with no record to read have no ids.
     const entry = departed.get(path) ?? { since: runDate, ids: leaving.get(path) ?? [] };
     if (Date.parse(runDate) - Date.parse(entry.since) >= retentionDays * dayMs) expired.push(path);
     else kept.set(path, entry);
