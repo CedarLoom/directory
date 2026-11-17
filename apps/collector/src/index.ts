@@ -1,13 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { Command, CommanderError, InvalidArgumentError } from '@commander-js/extra-typings';
-import { kind } from '@directory/contracts';
+import { itemId, kind } from '@directory/contracts';
 import { ZodError } from 'zod';
 import { systemClock } from './clock.ts';
 import { collect, summaryLine } from './collect.ts';
 import { commitDataFolder } from './data-commit.ts';
 import { readDataFile, readDataFolder, updateDataFolder, writeDataFolder } from './data-folder.ts';
-import { ExclusionsKeyError, exclusionsKeyVariable, parseExclusions } from './exclusions.ts';
+import { ExclusionsKeyError, exclusionEntry, exclusionsKeyVariable, parseExclusions } from './exclusions.ts';
 import { gitHubHeaders } from './github-contents.ts';
 import { createHttpClient, RequestError } from './http-client.ts';
 import { registryHeaders } from './mcp-registry-adapter.ts';
@@ -48,6 +48,12 @@ async function readReport(file: string) {
   return runReport.parse(JSON.parse(await readFile(file, 'utf8')));
 }
 
+/** An item id as given, untrimmed: a trailing newline or an address would hash to an entry that matches nothing. */
+function exclusionId(value: string): string {
+  if (!itemId.safeParse(value).success) throw new InvalidArgumentError('not an item id such as gh.<owner>.<repo>');
+  return value;
+}
+
 /** Adds the kinds of one `--allow-removals` value, a comma list, to those of the earlier ones. */
 function allowedKinds(value: string, previous: readonly string[]): string[] {
   return [
@@ -62,8 +68,19 @@ function allowedKinds(value: string, previous: readonly string[]): string[] {
 
 const program = new Command()
   .name('refresh')
-  .description('The steps of the scheduled refresh: collect, validate and publish.')
+  .description('The steps of the scheduled refresh: collect, validate and publish; and the hash of a new exclusion.')
   .exitOverride();
+
+program
+  .command('hash-exclusion')
+  .description(
+    `Prints the hash of an item id as curation/exclusions.json holds it and the keyCheck, both under ${exclusionsKeyVariable}.`,
+  )
+  .argument('<id>', 'the id of the item, container or repository to exclude, such as gh.<owner>.<repo>', exclusionId)
+  .action((id) => {
+    const entry = exclusionEntry(id, process.env[exclusionsKeyVariable] ?? '');
+    process.stdout.write(`${JSON.stringify(entry, null, 2)}\n`);
+  });
 
 program
   .command('collect')

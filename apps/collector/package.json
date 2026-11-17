@@ -5,6 +5,7 @@
   "license": "ISC",
   "scripts": {
     "collect": "node src/index.ts collect",
+    "hash-exclusion": "node src/index.ts hash-exclusion",
     "typecheck": "tsc"
   },
   "dependencies": {
