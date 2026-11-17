@@ -296,6 +296,54 @@ it('reads an unknown command a server or a prefix starts as local code that fetc
   expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([false, false, false, false, false]);
 });
 
+it('flags a line that stores a runner for another command or reopens its descriptors', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'X="npx -y evil-server"; $X']],
+    ['sh', ['-c', 'CMD="npx -y evil-server"; exec $CMD']],
+    ['sh', ['-c', 'export X="npx -y evil-server"; $X']],
+    ['sh', ['-c', "R='npx' && $R -y evil-server"]],
+    ['bash', ['-c', 'printf -v c "npx -y evil-server"; eval "$c"']],
+    ['sh', ['-c', 'alias r="npx -y evil-server"; r']],
+    ['sh', ['-c', 'alias echo=eval; echo npx -y evil-server']],
+    ['sh', ['-c', 'exec 3>r.sh; echo npx -y evil-server >&3; sh r.sh']],
+    ['sh', ['-c', 'exec >r.sh; echo npx -y evil-server; sh r.sh']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+  ]);
+});
+
+it('reads the only command of a wrapped line of plain words as the server command, and time as a prefix', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'node server.js --runtime docker']],
+    ['bash', ['-c', 'exec node dist/index.js --docker-path /usr/bin/docker']],
+    ['cmd', ['/c', 'node server.js --runtime docker']],
+    ['pwsh', ['-c', 'node server.js --runtime docker']],
+    ['sh', ['-c', 'time npx -y docs-mcp@1.2.3']],
+    ['sh', ['-c', 'time npx -y evil-server']],
+    ['sh', ['-c', 'timeout 30 npx -y evil-server']],
+    ['sh', ['-c', 'cd app && node server.js --runtime docker']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+  ]);
+});
+
 it('reads pwsh switches in order, with commandwithargs only as its full name or cwa', () => {
   const cases: [string, string[]][] = [
     // -wd takes -f as its value, so -c runs the line.
