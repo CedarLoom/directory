@@ -383,9 +383,9 @@ const pluginPath = /\$\{CLAUDE_PLUGIN_(?:ROOT|DATA)\}/g;
 // `>`, `2>&`, `&>` and `<`, followed by their target; a here-document (`<<`) matches no token.
 const redirection = /(?:\d*|&)(?:>|<(?!<))[>&|]?/y;
 
-function tokenKinds(separator: RegExp, part: RegExp): Dialect['tokens'] {
+function tokenKinds(separator: RegExp, part: RegExp, blank = /[ \t]+/y): Dialect['tokens'] {
   return [
-    ['blank', /[ \t]+/y],
+    ['blank', blank],
     ['redirection', redirection],
     ['separator', separator],
     ['part', part],
@@ -402,9 +402,16 @@ function expandingPart(text: string, unescape: (quoted: string) => string): stri
 const posixEscape = /\\([$`"\\\n])/g;
 const unescaped = (_escape: string, char: string): string => (char === '\n' ? '' : char);
 
-/** sh and the shells that share its syntax; a subshell, group, command substitution or comment matches no token. */
+/**
+ * sh and the shells that share its syntax; a subshell, group, command substitution, or a comment or `!` that starts a
+ * part, matches no token, and a line continuation between blanks is a blank.
+ */
 const posix: Dialect = {
-  tokens: tokenKinds(/[;&|\n]/y, /'[^']*'|"(?:[^"\\`]|\\[\s\S])*"|\\[\s\S]|(?:\$\{\w+\}|[^\s'"\\;&|<>(){}`!#])+/y),
+  tokens: tokenKinds(
+    /[;&|\n]/y,
+    /'[^']*'|"(?:[^"\\`]|\\[\s\S])*"|\\[\s\S]|(?:\$\{\w+\}|[^\s'"\\;&|<>(){}`!#])(?:\$\{\w+\}|[^\s'"\\;&|<>(){}`])*/y,
+    /(?:[ \t]|\\\n(?=[ \t\n]|$))+/y,
+  ),
   part: (text) =>
     text.startsWith('\\')
       ? unescaped(text, text.slice(1))
@@ -467,11 +474,12 @@ function wordParts(found: readonly Token[]): readonly (readonly string[])[] {
 
 /** The words of one command, without its redirections and leading assignments. */
 function commandOf(found: readonly Token[], dialect: Dialect): Command {
-  const parts = wordParts(found);
-  const words = parts.map((word) => word.map((part) => dialect.part(part) ?? part).join(''));
+  const parts = wordParts(found).map((word) => word.map((part) => [part, dialect.part(part)] as const));
+  const words = parts.map((word) => word.map(([part, value]) => value ?? part).join(''));
+  const start = dialect.assignments ? words.length - withoutAssignments(words, shellAssignment).length : 0;
   return {
-    words: dialect.assignments ? withoutAssignments(words, shellAssignment) : words,
-    readable: parts.every((word) => word.every((part) => dialect.part(part) !== undefined)),
+    words: words.slice(start),
+    readable: parts.slice(start).every((word) => word.every(([, value]) => value !== undefined)),
   };
 }
 
@@ -500,6 +508,8 @@ const envOptions: Parser = {
 };
 const execOptions: Parser = { options: roles([], [], ['-a'], ['-c', '-l']) };
 const commandOptions: Parser = { options: roles([], [], [], ['-p', '-v', '-V']) };
+// Commands that never run their arguments, so a runner named in them is text.
+const textOnly: ReadonlySet<string> = new Set(['cd', 'echo', 'printf']);
 // Deeper nesting reads as unreadable, so a crafted command line costs bounded work.
 const maxWrappers = 8;
 
@@ -532,13 +542,30 @@ function shellOptions(args: readonly string[]): { operand: number; command: bool
 function shellCommands(words: readonly string[]): readonly Command[] | undefined {
   const args = words.slice(1);
   const { operand, command } = shellOptions(args);
-  return command ? lineCommands(args[operand] ?? '', posix) : [];
+  if (!command) return [];
+  const line = lineCommands(args[operand] ?? '', posix);
+  // The operands after the command line fill `$0`, `$1` and `$@`, which the line may run.
+  return line && [...line, { words: args.slice(operand + 1), readable: false }];
 }
 
-/** `pwsh -Command` runs the rest of its arguments as one command line; without it, a local script. */
-function powershellCommands(words: readonly string[]): readonly Command[] | undefined {
-  const run = words.findIndex((word, index) => index > 0 && /^-(?:c|command)$/i.test(word));
-  return run === -1 ? [] : lineCommands(words.slice(run + 1).join(' '), powershell);
+/** What a PowerShell option starts, by any prefix of its name: a command line, a script file or an encoded command. */
+function powershellStart(word: string): 'line' | 'file' | 'encoded' | undefined {
+  const name = /^(?:--?|\/)([a-z]+)$/i.exec(word)?.[1]?.toLowerCase() ?? '-';
+  if ('command'.startsWith(name) || 'commandwithargs'.startsWith(name) || name === 'cwa') return 'line';
+  if ('file'.startsWith(name)) return 'file';
+  return 'encodedcommand'.startsWith(name) || name === 'ec' ? 'encoded' : undefined;
+}
+
+/**
+ * PowerShell runs the rest of its arguments as one command line after `-Command`, a local script after `-File`;
+ * without either it runs its first operand as the positional default holds.
+ */
+function powershellCommands(words: readonly string[], positional: readonly Command[] | undefined) {
+  const at = words.findIndex((word, index) => index > 0 && powershellStart(word) !== undefined);
+  const start = powershellStart(words[at] ?? '');
+  if (start === 'line') return lineCommands(words.slice(at + 1).join(' '), powershell);
+  if (start === 'file') return [];
+  return start === 'encoded' ? undefined : positional;
 }
 
 /** The words a prefix command runs after its options; undefined when an option is unknown. */
@@ -579,8 +606,9 @@ const wrappers: ReadonlyMap<string, (words: readonly string[]) => readonly Comma
   ['dash', shellCommands],
   ['ksh', shellCommands],
   ['zsh', shellCommands],
-  ['pwsh', powershellCommands],
-  ['powershell', powershellCommands],
+  // pwsh runs a positional operand as a script file, Windows PowerShell as a command line, which reads as unreadable.
+  ['pwsh', (words: readonly string[]) => powershellCommands(words, [])],
+  ['powershell', (words: readonly string[]) => powershellCommands(words, undefined)],
   ['env', envCommands],
   ['command', commandCommands],
   ['exec', (words: readonly string[]) => started(afterOptions(execOptions, words))],
@@ -612,8 +640,8 @@ function namesRunner(line: readonly string[]): boolean {
   });
 }
 
-/** Whether the command of a runner fetches a package without its exact version; another command runs local code. */
-function runnerUnpinned(words: readonly string[]): boolean {
+/** Whether the command of a runner fetches a package without its exact version; undefined for another command. */
+function runnerUnpinned(words: readonly string[]): boolean | undefined {
   const [inner = '', ...own] = words;
   const name = program(inner);
   for (const [known, subcommand, runner] of commands) {
@@ -623,14 +651,16 @@ function runnerUnpinned(words: readonly string[]): boolean {
     if (packages === undefined) return true;
     return packages.length === 0 ? runner.localFirst !== true : !packages.every(runner.pinned);
   }
-  return false;
+  return undefined;
 }
 
 /** Whether a command, or a command its wrappers start, fetches a package without its exact version. */
 function unpinnedCommand({ words, readable }: Command, depth: number): boolean {
-  const unwrap = wrappers.get(program(words[0] ?? ''));
+  const name = program(words[0] ?? '');
+  const unwrap = wrappers.get(name);
   if (!readable || (unwrap !== undefined && depth === maxWrappers)) return namesRunner(words);
-  if (unwrap === undefined) return runnerUnpinned(words);
+  // Another command, such as `eval`, `timeout` or a keyword like `then`, may run a runner it names.
+  if (unwrap === undefined) return runnerUnpinned(words) ?? (!textOnly.has(name) && namesRunner(words));
   const inner = unwrap(words);
   return inner === undefined ? namesRunner(words) : inner.some((command) => unpinnedCommand(command, depth + 1));
 }

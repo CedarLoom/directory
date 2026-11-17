@@ -261,6 +261,27 @@ it('reads the command that other shells and command prefixes start', () => {
   ]);
 });
 
+it('reads a runner that another command, the operands of a shell or the first operand of Windows PowerShell start', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'if true; then npx -y evil-server; fi']],
+    ['sh', ['-c', 'eval "npx -y evil-server"']],
+    ['sh', ['-c', 'exec "$0" "$@"', 'npx', '-y', 'evil-server']],
+    ['powershell', ['-NoProfile', 'npx', '-y', 'evil-server']],
+    ['pwsh', ['-Comm', 'npx -y evil-server']],
+    ['pwsh', ['-File', 'server.ps1', '-c', 'npx -y evil-server']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, true, true, true, true, false]);
+});
+
+it('reads a pinned runner after a line continuation, beside a word holding ! or after an assignment of a variable', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'npx \\\n  -y docs-mcp@1.2.3']],
+    ['sh', ['-c', 'npx -y docs-mcp@1.2.3 && echo ready!']],
+    ['sh', ['-c', 'PATH=$PATH:/opt/bin npx -y docs-mcp@1.2.3']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([false, false, false]);
+});
+
 it('reads uv run as local code unless it installs a package without an exact version or runs a script from a URL', () => {
   const cases: [string, string[]][] = [
     ['uv', ['run', '--with', 'requests', 'server.py']],
