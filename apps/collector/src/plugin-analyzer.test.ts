@@ -89,6 +89,25 @@ it('reads hooks, MCP servers and LSP servers inline in a manifest list', () => {
   ]).toEqual([{ PostToolUse: 1 }, [[['shell'], true]], { stdio: 1 }, true, 1]);
 });
 
+it('counts hooks per event only for keyword events with a handler, also one named like an object property', () => {
+  const handler = [{ hooks: [{ type: 'command', command: 'make lint' }] }];
+  expect(
+    analyzeManifest({
+      hooks: { constructor: handler, Stop: [], PreToolUse: [{ hooks: [] }], 'not a keyword': handler },
+    }).components.hooksByEvent,
+  ).toEqual({ constructor: 1 });
+});
+
+it('leaves events without a handler out of the cap on hooks per event', () => {
+  const handler = [{ hooks: [{ type: 'command', command: 'make lint' }] }];
+  const hooks = Object.fromEntries([
+    ...Array.from({ length: 64 }, (_, index) => [`Event${index}`, handler]),
+    ['Empty', []],
+    ['NoHandler', [{ hooks: [] }]],
+  ]);
+  expect(Object.keys(analyzeManifest({ hooks }).components.hooksByEvent)).toHaveLength(64);
+});
+
 it.each([
   [{}, {}, false],
   [{ experimental: true }, {}, false],

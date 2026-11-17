@@ -75,6 +75,13 @@ export function inlineHookEvents(value: unknown): HookEvents {
   return inlineHooks.parse(value).hooks;
 }
 
+/** The keyword events that hold a handler, with their groups; an event without a handler runs nothing. */
+export function handledEvents(hooks: HookEvents): [string, Group[]][] {
+  return Object.entries(hooks).filter(
+    ([event, list]) => keyword.safeParse(event).success && list.some((entry) => entry.hooks.length > 0),
+  );
+}
+
 const recordEvents = hookRecord.pick({ events: true });
 
 /** The facts of a hooks file; more events than the record holds throw a ZodError. */
@@ -93,10 +100,7 @@ export function hookFacts(hooks: HookEvents): HookFacts {
   const forms = new Set(commands.map(({ args }) => (Array.isArray(args) ? 'exec' : 'shell')));
   const types = new Set(handlers.map(({ type }) => type));
   return {
-    // An event without a handler runs nothing.
-    events: Object.entries(hooks)
-      .filter(([event, list]) => keyword.safeParse(event).success && list.some((entry) => entry.hooks.length > 0))
-      .map(([event]) => event),
+    events: handledEvents(hooks).map(([event]) => event),
     handlerTypes: handlerTypes.filter((type) => types.has(type)),
     commandForms: (['shell', 'exec'] as const).filter((form) => forms.has(form)),
     matcherBreadth: matcherBreadth(groups),
