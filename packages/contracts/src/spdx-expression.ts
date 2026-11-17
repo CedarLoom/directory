@@ -2,10 +2,7 @@ import { z } from 'zod';
 import { spdxId } from './fields.ts';
 import { spdxExceptionIds } from './spdx-exception-ids.ts';
 
-/**
- * A parsed SPDX license expression: one license with the + for "or later" and the exception it may carry, or the parts
- * an AND or an OR joins. Ids are in the case the SPDX License List gives them.
- */
+/** A parsed SPDX license expression: one license, its + and its exception, or the parts an AND or an OR joins. */
 export type SpdxExpression =
   | { license: string; plus?: true; exception?: string }
   | { operator: 'AND' | 'OR'; parts: SpdxExpression[] };
@@ -16,6 +13,8 @@ const byLowerCase = (ids: readonly string[]): ReadonlyMap<string, string> =>
 const licenseIds = byLowerCase(spdxId.options);
 const exceptionIds = byLowerCase(spdxExceptionIds);
 const licenseRef = /^LicenseRef-[A-Za-z0-9.-]+$/i;
+// GPL-2.0-only+ or GPL-2.0-or-later+ contradicts itself.
+const versionScoped = /-(?:only|or-later)$/;
 
 /** The listed SPDX license id that `value` names in any case; else undefined. */
 export function listedLicenseId(value: string): string | undefined {
@@ -27,6 +26,7 @@ function term(token: string): Extract<SpdxExpression, { license: string }> | und
   const id = listedLicenseId(plus ? token.slice(0, -1) : token);
   if (id === undefined) return !plus && licenseRef.test(token) ? { license: token } : undefined;
   if (!plus) return { license: id };
+  if (versionScoped.test(id)) return undefined;
   // A plus id such as GPL-2.0+ is the -or-later id the list has for it.
   const orLater = listedLicenseId(`${id}-or-later`);
   return orLater === undefined ? { license: id, plus: true } : { license: orLater };
@@ -68,10 +68,7 @@ function parse(tokens: readonly string[]): SpdxExpression | undefined {
   return position === tokens.length ? expression : undefined;
 }
 
-/**
- * Parses an SPDX license expression of listed license ids, listed exception ids and LicenseRefs (SPDX 2.3, Annex D);
- * else undefined.
- */
+/** Parses an SPDX license expression of listed ids and LicenseRefs (SPDX 2.3, Annex D); else undefined. */
 export function parseSpdxExpression(value: string): SpdxExpression | undefined {
   if (value.length > 200 || !/^[A-Za-z0-9.+() -]*$/.test(value)) return undefined;
   return parse(value.match(/[()]|[^ ()]+/g) ?? []);
@@ -93,18 +90,18 @@ export function spdxText(expression: SpdxExpression): string {
 }
 
 // A LicenseRef is text the item's author chooses, so a record names listed ids only; plus ids are written in the list.
-const listed = (ids: Iterable<string>) =>
-  [...ids]
-    .filter((id) => !id.endsWith('+'))
-    .map((id) => id.replaceAll('.', '\\.'))
-    .join('|');
-const listedTerm = `(?:${listed(licenseIds.values())})\\+?(?: WITH (?:${listed(exceptionIds.values())}))?`;
+const listed = (ids: readonly string[]) => ids.map((id) => id.replaceAll('.', '\\.')).join('|');
+const plusIds = [...licenseIds.values()].filter((id) => !id.endsWith('+'));
+// A plus follows only an id that has no -or-later id of its own and is not one.
+const takesPlus = (id: string) => !versionScoped.test(id) && listedLicenseId(`${id}-or-later`) === undefined;
+const listedTerm = `(?:(?:${listed(plusIds.filter(takesPlus))})\\+?|${listed(plusIds.filter((id) => !takesPlus(id)))})(?: WITH (?:${listed(spdxExceptionIds)}))?`;
+const listedOperand = `\\(*${listedTerm}\\)*`;
 
 /** An SPDX license expression such as `MIT OR Apache-2.0`; a single license id is one too. */
 export const spdxExpression = z
   .string()
   .max(200)
-  .regex(new RegExp(`^(?:\\(*${listedTerm}\\)*(?: (?:AND|OR) |$))+$`))
+  .regex(new RegExp(`^${listedOperand}(?: (?:AND|OR) ${listedOperand})*$`))
   .refine((value) => {
     const expression = parseSpdxExpression(value);
     return expression !== undefined && spdxText(expression) === value;

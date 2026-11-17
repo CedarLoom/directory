@@ -109,6 +109,7 @@ describe.each(records)('%s record', (_kind, schema, fixture) => {
         'GPL-2.0+',
         'MIT AND (ISC AND 0BSD)',
         '(MIT AND ISC) OR 0BSD',
+        'GPL-2.0-only+',
       ].filter((spdx) => schema.safeParse({ ...fixture, license: { ...fixture.license, spdx } }).success),
     ).toEqual([]));
 });
@@ -169,6 +170,15 @@ describe.each(objects)('%s', (_name, schema, fixture, paths) => {
 });
 
 describe('license', () => {
+  it('refuses a withheld license with an SPDX id or a class', () =>
+    expect(
+      [
+        { spdx: 'MIT', source: 'manifest', class: 'none', withheld: true },
+        { source: 'manifest', class: 'permissive', withheld: true },
+        { source: 'manifest', class: 'none', withheld: true },
+      ].map((license) => pluginRecord.safeParse({ ...plugin, license }).success),
+    ).toEqual([false, false, true]));
+
   it.each(['GPL-2.0', 'GPL-3.0', 'AGPL-3.0', 'LGPL-2.1'])('accepts %s, a deprecated id GitHub detects', (spdx) =>
     expect(
       pluginRecord.safeParse({ ...plugin, license: { spdx, source: 'github-detected', class: 'copyleft' } }).error,

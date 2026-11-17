@@ -262,11 +262,18 @@ export function grantsLicense(value: string): boolean {
   return !withholdsLicense.test(value) && !assertsNothing.test(value);
 }
 
+// The field that decides over GitHub's detection: any frontmatter value, or a manifest value that grants no license.
+function ownField(
+  declared: string | undefined,
+  manifest: string | undefined,
+): { value: string; source: 'manifest' | 'frontmatter' } | undefined {
+  if (given(declared)) return { value: declared, source: 'frontmatter' };
+  return given(manifest) && !grantsLicense(manifest) ? { value: manifest, source: 'manifest' } : undefined;
+}
+
 /**
- * The item's license: a frontmatter value first, else a plugin manifest value that withholds the license, else GitHub's
- * detected one, else a manifest value that grants one, else a license file in the item's folder.
- * A NOASSERTION field states no license, so a license file in the item's folder decides, not the repository's.
- * A license file in the item's folder is not named, as GitHub detects licenses at the repository root only.
+ * The item's license: a frontmatter value first, else a manifest value that grants none, else GitHub's detected one,
+ * else a manifest value, else a license file in the item's folder, which GitHub does not name, as it reads the root only.
  */
 export function licenseOf(
   detected: string | undefined,
@@ -277,12 +284,13 @@ export function licenseOf(
   }: { declared?: string | undefined; manifest?: string | undefined; folderLicenseFile?: boolean } = {},
 ): License {
   const inFolder: License = folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
-  const own = (value: string, source: 'manifest' | 'frontmatter'): License => {
-    if (withholdsLicense.test(value)) return { source, class: 'none', withheld: true };
-    return assertsNothing.test(value) ? inFolder : stated(value, source);
-  };
-  if (given(declared)) return own(declared, 'frontmatter');
-  if (given(manifest) && !grantsLicense(manifest)) return own(manifest, 'manifest');
+  const own = ownField(declared, manifest);
+  if (own !== undefined) {
+    const { value, source } = own;
+    if (grantsLicense(value)) return stated(value, source);
+    // A NOASSERTION field states no license, so the item's folder decides, not the repository root.
+    return withholdsLicense.test(value) ? { source, class: 'none', withheld: true } : inFolder;
+  }
   if (detected === undefined) return given(manifest) ? stated(manifest, 'manifest') : inFolder;
   // NOASSERTION: GitHub found a license file it could not name.
   if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };

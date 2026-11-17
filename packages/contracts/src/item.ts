@@ -51,17 +51,22 @@ const common = {
   links,
   container: itemId.optional(),
   listedIn: z.array(itemId),
-  license: z.strictObject({
-    spdx: spdxExpression.optional(),
-    source: z.enum(['github-detected', 'manifest', 'frontmatter', 'license-file']).optional(),
-    class: licenseClass,
-    withheld: z
-      .literal(true)
-      .optional()
-      .describe(
-        'The value at `source` withholds the license, such as UNLICENSED, NONE or proprietary; the class is then `none`.',
-      ),
-  }),
+  license: z
+    .strictObject({
+      spdx: spdxExpression.optional(),
+      source: z.enum(['github-detected', 'manifest', 'frontmatter', 'license-file']).optional(),
+      class: licenseClass,
+      withheld: z
+        .literal(true)
+        .optional()
+        .describe(
+          'The value at `source` withholds the license, such as UNLICENSED, NONE or proprietary; the class is then `none`, without `spdx`.',
+        ),
+    })
+    .refine(
+      (license) => license.withheld === undefined || (license.spdx === undefined && license.class === 'none'),
+      'a withheld license has class none and no spdx',
+    ),
   maintenance: maintenance.optional(),
   popularity: z.array(
     z.discriminatedUnion('signal', [

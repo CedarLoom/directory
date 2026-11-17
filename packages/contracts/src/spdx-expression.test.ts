@@ -13,6 +13,9 @@ it('refuses a WITH operand that is no listed exception id', () =>
     ['MIT WITH MIT', 'MIT WITH No-commercial-use', 'GPL-2.0-only WITH LicenseRef-Extra'].map(parseSpdxExpression),
   ).toEqual([undefined, undefined, undefined]));
 
+it('refuses a plus on an -only or -or-later id', () =>
+  expect(['GPL-2.0-only+', 'gpl-3.0-or-later+'].map(parseSpdxExpression)).toEqual([undefined, undefined]));
+
 it('writes the listed ids into the JSON Schema pattern', () => {
   const pattern = new RegExp(z.toJSONSchema(spdxExpression).pattern ?? '');
   expect(
@@ -23,6 +26,9 @@ it('writes the listed ids into the JSON Schema pattern', () => {
       'hello world',
       'LicenseRef-Call-555-0100',
       'MIT WITH No-commercial-use',
+      'MIT OR ',
+      'GPL-2.0-only+',
+      'Apache-1.0+',
     ].map((value) => pattern.test(value)),
-  ).toEqual([true, true, false, false, false, false]);
+  ).toEqual([true, true, false, false, false, false, false, false, true]);
 });
