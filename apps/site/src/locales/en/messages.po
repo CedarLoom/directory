@@ -9,7 +9,7 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #. placeholder {0}: entry.rubric
-#: src/item/ScoreHistory.tsx:38
+#: src/item/ScoreHistory.tsx:35
 msgid "item.rubricChanged"
 msgstr "{0} (new rubric)"
 
@@ -33,7 +33,7 @@ msgid "list.count"
 msgstr "{0} of {1} items"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:37
+#: src/method/RubricTable.tsx:38
 msgid "method.rubricHeading"
 msgstr "{kind}, rubric {version}"
 
@@ -43,7 +43,7 @@ msgid "method.sourceRead"
 msgstr "{name}, read {readAt}"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:37
+#: src/item/ScoreBreakdown.tsx:38
 msgid "item.pointsOf"
 msgstr "{points} of {max}"
 
@@ -98,7 +98,7 @@ msgid "signal.alwaysOnComponents"
 msgstr "Always-on components"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:94
+#: src/list/ListFilters.tsx:92
 msgid "filter.anyTag"
 msgstr "Any tag"
 
@@ -123,7 +123,7 @@ msgid "signal.bodyTokens"
 msgstr "Body tokens (estimate)"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:92
+#: src/list/ListFilters.tsx:90
 msgid "filter.tag"
 msgstr "Category tag"
 
@@ -143,7 +143,7 @@ msgid "column.fit"
 msgstr "CedarLoom fit"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:126
+#: src/list/ListFilters.tsx:132
 msgid "filter.fit"
 msgstr "CedarLoom fit"
 
@@ -208,7 +208,7 @@ msgid "footer.run"
 msgstr "Data collected on {runDate}."
 
 #. js-lingui-explicit-id
-#: src/item/ScoreHistory.tsx:22
+#: src/item/ScoreHistory.tsx:20
 msgid "item.historyDate"
 msgstr "Date"
 
@@ -233,7 +233,7 @@ msgid "signal.descriptionLength"
 msgstr "Description length"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:14
+#: src/method/RubricTable.tsx:15
 msgid "group.evals"
 msgstr "Evals"
 
@@ -258,7 +258,7 @@ msgid "source.github"
 msgstr "GitHub: repository facts, stars and a search by topic"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:49
+#: src/method/RubricTable.tsx:47
 msgid "method.group"
 msgstr "Group"
 
@@ -333,7 +333,7 @@ msgid "column.kind"
 msgstr "Kind"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:111
+#: src/list/ListFilters.tsx:117
 msgid "filter.kinds"
 msgstr "Kind"
 
@@ -378,12 +378,12 @@ msgid "column.licenseClass"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:10
+#: src/method/RubricTable.tsx:11
 msgid "group.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:119
+#: src/list/ListFilters.tsx:125
 msgid "filter.license"
 msgstr "License"
 
@@ -418,12 +418,12 @@ msgid "nav.label"
 msgstr "Main"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:9
+#: src/method/RubricTable.tsx:10
 msgid "group.maintenance"
 msgstr "Maintenance"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:133
+#: src/list/ListFilters.tsx:139
 msgid "filter.maintenance"
 msgstr "Maintenance"
 
@@ -463,7 +463,7 @@ msgid "kinds.mcp-server"
 msgstr "MCP servers"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:65
+#: src/item/ScoreBreakdown.tsx:63
 msgid "item.measured"
 msgstr "Measured"
 
@@ -503,7 +503,7 @@ msgid "list.nextPage"
 msgstr "Next page"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:17
+#: src/item/ScoreBreakdown.tsx:18
 msgid "item.no"
 msgstr "no"
 
@@ -518,7 +518,7 @@ msgid "signal.noDuplicateNames"
 msgstr "No duplicate names"
 
 #. js-lingui-explicit-id
-#: src/list/ListTable.tsx:93
+#: src/list/ListTable.tsx:49
 msgid "list.empty"
 msgstr "No item matches these filters."
 
@@ -569,7 +569,7 @@ msgstr "not measured"
 
 #. js-lingui-explicit-id
 #: src/item/ItemFacts.tsx:43
-#: src/item/ScoreBreakdown.tsx:21
+#: src/item/ScoreBreakdown.tsx:22
 msgid "item.notMeasured"
 msgstr "not measured"
 
@@ -579,12 +579,12 @@ msgid "column.listedOfficial"
 msgstr "Official listing"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:103
+#: src/list/ListFilters.tsx:101
 msgid "filter.official"
 msgstr "Only items listed in the official marketplace"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:98
+#: src/list/ListFilters.tsx:96
 msgid "filter.noFlags"
 msgstr "Only items without safety flags"
 
@@ -629,12 +629,12 @@ msgid "kinds.plugin"
 msgstr "Plugins"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:52
+#: src/method/RubricTable.tsx:50
 msgid "method.maxPoints"
 msgstr "Points"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:68
+#: src/item/ScoreBreakdown.tsx:66
 msgid "item.points"
 msgstr "Points"
 
@@ -654,7 +654,7 @@ msgid "list.previousPage"
 msgstr "Previous page"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:15
+#: src/method/RubricTable.tsx:16
 msgid "group.provenance"
 msgstr "Provenance"
 
@@ -664,7 +664,7 @@ msgid "maintenance.active"
 msgstr "Pushed in the last 90 days"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:11
+#: src/method/RubricTable.tsx:12
 msgid "group.quality"
 msgstr "Quality"
 
@@ -674,7 +674,7 @@ msgid "item.report"
 msgstr "Report a problem with this entry"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreHistory.tsx:25
+#: src/item/ScoreHistory.tsx:23
 msgid "item.historyRubric"
 msgstr "Rubric"
 
@@ -699,7 +699,7 @@ msgid "flag.hook-shell-command"
 msgstr "Runs shell commands from hooks."
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:13
+#: src/method/RubricTable.tsx:14
 msgid "group.safety"
 msgstr "Safety"
 
@@ -719,7 +719,7 @@ msgid "item.flagsHeading"
 msgstr "Safety flags"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:23
+#: src/method/RubricTable.tsx:24
 msgid "method.penalties"
 msgstr "Safety points lost per flag:"
 
@@ -729,12 +729,12 @@ msgid "column.score"
 msgstr "Score"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreHistory.tsx:28
+#: src/item/ScoreHistory.tsx:26
 msgid "item.historyTotal"
 msgstr "Score"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:53
+#: src/item/ScoreBreakdown.tsx:54
 msgid "item.scoreHeading"
 msgstr "Score {total} of 100, rubric {version}"
 
@@ -744,7 +744,7 @@ msgid "filter.scoreMin"
 msgstr "Score from"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreHistory.tsx:15
+#: src/item/ScoreHistory.tsx:16
 msgid "item.historyHeading"
 msgstr "Score history"
 
@@ -754,7 +754,7 @@ msgid "filter.scoreMax"
 msgstr "Score to"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:87
+#: src/list/ListFilters.tsx:85
 msgid "filter.q"
 msgstr "Search names, owners and tags"
 
@@ -799,12 +799,12 @@ msgid "signal.testsShipped"
 msgstr "Ships tests"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:46
+#: src/method/RubricTable.tsx:44
 msgid "method.signal"
 msgstr "Signal"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:62
+#: src/item/ScoreBreakdown.tsx:60
 msgid "item.signal"
 msgstr "Signal"
 
@@ -924,7 +924,7 @@ msgid "method.takedown"
 msgstr "To correct an entry or to have your item removed, open an issue. A removed item stays out of later runs."
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:12
+#: src/method/RubricTable.tsx:13
 msgid "group.token-cost"
 msgstr "Token cost"
 
@@ -955,6 +955,6 @@ msgstr "Whether an item works or does what it describes: nothing is installed or
 
 #. js-lingui-explicit-id
 #: src/item/ItemFacts.tsx:32
-#: src/item/ScoreBreakdown.tsx:17
+#: src/item/ScoreBreakdown.tsx:18
 msgid "item.yes"
 msgstr "yes"

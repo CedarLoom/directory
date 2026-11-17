@@ -68,6 +68,8 @@ const pages = [
 export default defineConfig({
   // scripts/weight.ts reads the chunk graph from the client manifest.
   environments: { client: { build: { manifest: true } } },
+  // The prerender fetches pages from the preview server; `localhost` can resolve to an address it does not listen on.
+  preview: { host: '127.0.0.1' },
   plugins: [
     tanstackStart({
       // The shell needs a path of its own: the prerender skips a second page at `/`.
