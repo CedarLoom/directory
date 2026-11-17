@@ -57,3 +57,12 @@ it('keeps the popularity file of an excluded item while an item that stays point
     'records/skill/gh.acme.skills.dropped.json',
     'history/skill/gh.acme.skills.dropped.json',
   ]));
+
+it('removes the history and popularity file of an item in an excluded repository', () => {
+  const files = new Map([...itemFiles('skill', 'gh.acme.tool.lint', 'gh.acme.tool'), popularity('gh.acme.tool')]);
+  expect(publication(candidate, files, report, new Set(['gh.acme.tool'])).removed).toEqual([
+    'records/skill/gh.acme.tool.lint.json',
+    'history/skill/gh.acme.tool.lint.json',
+    'popularity/gh.acme.tool.json',
+  ]);
+});

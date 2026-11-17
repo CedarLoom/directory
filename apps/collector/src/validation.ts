@@ -91,10 +91,7 @@ function reportRefusals(items: readonly IndexRow[], reported: RunReport['items']
   });
 }
 
-/**
- * Refuses a run that lost more than the vanished share of the published items of a kind, and so of all of them: collect
- * refuses items one by one, so a source that changed its format can empty a kind well under the share of all items.
- */
+/** Refuses a run that lost more than the vanished share of a kind, which a source that changed its format can empty. */
 function vanishedRefusals(items: readonly IndexRow[], publishedIndex: string | undefined): string[] {
   if (publishedIndex === undefined) return [];
   const after = new Set(items.map(itemKey));

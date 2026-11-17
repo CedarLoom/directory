@@ -12,15 +12,13 @@ function readJson(path: string): unknown {
   return JSON.parse(readFileSync(join(dataFolder, path), 'utf8'));
 }
 
-/**
- * Parses the index and the data files of its items with their contracts at build time, so the bundle ships only valid
- * data and no schema code. The history and popularity files of an item that left the index stay unread.
- */
+/** Parses the index and its items' data files at build time, so the pages show only valid data and ship no schema code. */
 function validatedData() {
   const paths = readdirSync(dataFolder, { recursive: true, encoding: 'utf8' })
     .filter((path) => path.endsWith('.json'))
     .map((path) => path.split(sep).join('/'));
   const index = indexFile.parse(readJson('index.json'));
+  // An item that left the index keeps its history and popularity file, which no page loads and the build leaves unread.
   const used = new Set<string>();
   for (const { kind, id } of index.items) {
     const record = recordContracts[kind].parse(readJson(`records/${kind}/${id}.json`));
