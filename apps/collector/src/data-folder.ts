@@ -1,4 +1,5 @@
-import { mkdir, readdir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
+import type { Dirent } from 'node:fs';
+import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, sep } from 'node:path';
 import type { DataFiles } from './data-files.ts';
 
@@ -14,14 +15,25 @@ export async function readDataFile(folder: string, path: string): Promise<string
   }
 }
 
-/** Every path under the folder, relative to it; a folder not yet created holds none. */
-async function listFolder(folder: string): Promise<string[]> {
+/**
+ * Every path under the folder, relative to it; a folder not yet created holds none. A symbolic link is listed but never
+ * entered, so no path leads outside the folder or names a file twice.
+ */
+async function listFolder(folder: string, under = ''): Promise<string[]> {
+  let entries: Dirent[];
   try {
-    return await readdir(folder, { recursive: true });
+    entries = await readdir(join(folder, under), { withFileTypes: true });
   } catch (error) {
-    if (missing(error)) return [];
+    if (under === '' && missing(error)) return [];
     throw error;
   }
+  const paths = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(under, entry.name);
+      return entry.isDirectory() ? [path].concat(await listFolder(folder, path)) : [path];
+    }),
+  );
+  return paths.flat();
 }
 
 /** The JSON files and the `LICENSE` of the data folder by relative path with `/` separators; a folder not yet created holds none. */
@@ -36,21 +48,12 @@ async function removeDataFiles(folder: string, paths: readonly string[]): Promis
   await Promise.all(paths.map((path) => rm(join(folder, ...path.split('/')))));
 }
 
-/**
- * The temporary files an earlier stopped write left, which no later step may stage; git's own folder is not touched, nor
- * a file the listing reached through a symbolic link to a folder outside the data folder.
- */
+/** The temporary files an earlier stopped write left, which no later step may stage; git's own folder is not touched. */
 async function staleTemporaries(folder: string): Promise<string[]> {
-  const paths = (await listFolder(folder)).filter((path) => path.endsWith('.tmp') && !path.startsWith(`.git${sep}`));
-  if (paths.length === 0) return [];
-  const root = await realpath(folder);
-  const inside = await Promise.all(
-    paths.map(async (path) => {
-      const parent = await realpath(dirname(join(folder, path)));
-      return parent === root || parent.startsWith(`${root}${sep}`);
-    }),
-  );
-  return paths.filter((_, index) => inside[index]).map((path) => path.split(sep).join('/'));
+  const paths = await listFolder(folder);
+  return paths
+    .filter((path) => path.endsWith('.tmp') && !path.startsWith(`.git${sep}`))
+    .map((path) => path.split(sep).join('/'));
 }
 
 /**
