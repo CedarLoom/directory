@@ -199,10 +199,10 @@ it('classes an SPDX expression by its most permissive OR part and its least perm
     licenseOf(undefined, { declared: 'GPL-2.0-only WITH Classpath-exception-2.0' }),
   ]).toEqual([
     { spdx: 'MIT OR Apache-2.0', source: 'manifest', class: 'permissive' },
-    { spdx: 'GPL-3.0-only OR LicenseRef-Commercial', source: 'manifest', class: 'copyleft' },
+    { source: 'manifest', class: 'copyleft' },
     { spdx: 'MIT AND (GPL-2.0+ OR BUSL-1.1)', source: 'frontmatter', class: 'copyleft' },
-    { spdx: 'MIT AND LicenseRef-Custom', source: 'frontmatter', class: 'none' },
-    { spdx: 'GPL-2.0-only WITH Classpath-exception-2.0', source: 'frontmatter', class: 'copyleft' },
+    { source: 'frontmatter', class: 'none' },
+    { source: 'frontmatter', class: 'copyleft' },
   ]);
 });
 

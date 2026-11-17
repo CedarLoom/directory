@@ -61,12 +61,19 @@ export function parseSpdxExpression(value: string): SpdxExpression | undefined {
   return parse(value.match(/[()]|[^ ()]+/g) ?? []);
 }
 
+// A LicenseRef or an exception id is text the item's author chooses, so a record holds only listed license ids.
+const namesListedIdsOnly = (value: string) =>
+  (value.match(/[()]|[^ ()]+/g) ?? []).every(
+    (token) =>
+      token === '(' || token === ')' || token === 'AND' || token === 'OR' || licenseIds.has(token.replace(/\+$/, '')),
+  ) && parseSpdxExpression(value) !== undefined;
+
 /** An SPDX license expression such as `MIT OR Apache-2.0`; a single license id is one too. */
 export const spdxExpression = z
   .string()
   .max(200)
   .regex(/^[A-Za-z0-9.+()-](?:[A-Za-z0-9.+() -]*[A-Za-z0-9.+()-])?$/)
-  .refine((value) => parseSpdxExpression(value) !== undefined, 'an SPDX license expression of listed license ids')
+  .refine(namesListedIdsOnly, 'an SPDX license expression of listed license ids')
   .describe(
-    'An SPDX license expression (SPDX 2.3, Annex D) of SPDX License List ids and LicenseRefs, as the item states it.',
+    'An SPDX license expression (SPDX 2.3, Annex D) of SPDX License List ids joined by AND and OR, as the item states it.',
   );

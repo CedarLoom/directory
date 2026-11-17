@@ -82,16 +82,22 @@ describe.each(records)('%s record', (_kind, schema, fixture) => {
 
   it('accepts an SPDX expression of listed ids', () =>
     expect(
-      ['MIT OR Apache-2.0', '(GPL-2.0+ AND MIT) OR LicenseRef-Own', 'GPL-2.0-only WITH Classpath-exception-2.0'].filter(
+      ['MIT OR Apache-2.0', '(GPL-2.0+ AND MIT) OR ISC'].filter(
         (spdx) => !schema.safeParse({ ...fixture, license: { ...fixture.license, spdx } }).success,
       ),
     ).toEqual([]));
 
-  it('refuses a malformed SPDX expression', () =>
+  it('refuses a malformed SPDX expression and one with a LicenseRef or an exception', () =>
     expect(
-      ['MIT OR', 'MIT or Apache-2.0', '(MIT', 'LicenseRef-Own+', 'MIT WITH OR', ' MIT', 'MIT\nOR ISC'].filter(
-        (spdx) => schema.safeParse({ ...fixture, license: { ...fixture.license, spdx } }).success,
-      ),
+      [
+        'MIT OR',
+        'MIT or Apache-2.0',
+        '(MIT',
+        ' MIT',
+        'MIT\nOR ISC',
+        'MIT OR LicenseRef-Call-555-0100',
+        'GPL-2.0-only WITH Visit-example.com',
+      ].filter((spdx) => schema.safeParse({ ...fixture, license: { ...fixture.license, spdx } }).success),
     ).toEqual([]));
 });
 

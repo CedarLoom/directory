@@ -1,4 +1,4 @@
-import { parseSpdxExpression, type SpdxExpression, spdxId } from '@directory/contracts';
+import { parseSpdxExpression, type SpdxExpression, spdxExpression, spdxId } from '@directory/contracts';
 
 type LicenseClass = 'permissive' | 'copyleft' | 'source-available' | 'none';
 
@@ -232,7 +232,11 @@ function stated(value: string, source: 'manifest' | 'frontmatter'): License {
   // A deprecated plus id such as GPL-2.0+ is stored as its -or-later id.
   const orLater = /^([^ ()]+)\+$/.exec(written)?.[1]?.concat('-or-later');
   const spdx = orLater !== undefined && spdxId.safeParse(orLater).success ? orLater : written;
-  return { spdx, source, class: expressionClass(expression) };
+  const licenseClass = expressionClass(expression);
+  // A LicenseRef or an exception id is the author's own text, which a record does not copy.
+  return spdxExpression.safeParse(spdx).success
+    ? { spdx, source, class: licenseClass }
+    : { source, class: licenseClass };
 }
 
 // Blank, npm's UNLICENSED, SPDX's NONE or NOASSERTION, or proprietary grants no license.

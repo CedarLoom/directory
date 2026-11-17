@@ -75,7 +75,7 @@
           "type": "string",
           "maxLength": 200,
           "pattern": "^[A-Za-z0-9.+()-](?:[A-Za-z0-9.+() -]*[A-Za-z0-9.+()-])?$",
-          "description": "An SPDX license expression (SPDX 2.3, Annex D) of SPDX License List ids and LicenseRefs, as the item states it."
+          "description": "An SPDX license expression (SPDX 2.3, Annex D) of SPDX License List ids joined by AND and OR, as the item states it."
         },
         "source": {
           "type": "string",
