@@ -38,7 +38,7 @@ msgid "method.rubricHeading"
 msgstr "{kind}, rubric {version}"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:44
+#: src/method/MethodPage.tsx:43
 msgid "method.sourceRead"
 msgstr "{name}, read {readAt}"
 
@@ -63,12 +63,12 @@ msgid "commits.5-or-more"
 msgstr "5 or more"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:120
+#: src/method/MethodPage.tsx:119
 msgid "method.intro"
 msgstr "A collector reads public sources once a week, records published facts about each item and scores it with the open rubric of its kind. The last run was on {runDate}. The CedarLoom Directory is not affiliated with or endorsed by Anthropic."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:27
+#: src/method/MethodPage.tsx:26
 msgid "source.seeds"
 msgstr "A curated list of repositories"
 
@@ -113,7 +113,7 @@ msgid "signal.alwaysOnComponents"
 msgstr "Always-on components"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:98
+#: src/list/ListFilters.tsx:99
 msgid "filter.anyTag"
 msgstr "Any tag"
 
@@ -158,7 +158,7 @@ msgid "column.fit"
 msgstr "CedarLoom fit"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:138
+#: src/list/ListFilters.tsx:142
 msgid "filter.fit"
 msgstr "CedarLoom fit"
 
@@ -213,7 +213,7 @@ msgid "license.copyleft"
 msgstr "Copyleft"
 
 #. js-lingui-explicit-id
-#: src/item/ItemPage.tsx:78
+#: src/item/ItemPage.tsx:77
 msgid "item.dataAsOf"
 msgstr "Data as of {changedAt}; last collector run {runDate}."
 
@@ -268,7 +268,7 @@ msgid "list.firstPage"
 msgstr "First page"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:25
+#: src/method/MethodPage.tsx:24
 msgid "source.github"
 msgstr "GitHub: repository facts, stars and a search by topic"
 
@@ -323,7 +323,7 @@ msgid "kinds.hook"
 msgstr "Hooks"
 
 #. js-lingui-explicit-id
-#: src/item/ItemPage.tsx:23
+#: src/item/ItemPage.tsx:22
 msgid "item.install"
 msgstr "Install instructions"
 
@@ -348,7 +348,7 @@ msgid "column.kind"
 msgstr "Kind"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:123
+#: src/list/ListFilters.tsx:127
 msgid "filter.kinds"
 msgstr "Kind"
 
@@ -398,7 +398,7 @@ msgid "group.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:131
+#: src/list/ListFilters.tsx:135
 msgid "filter.license"
 msgstr "License"
 
@@ -408,7 +408,7 @@ msgid "item.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:90
+#: src/method/MethodPage.tsx:89
 msgid "method.policiesHeading"
 msgstr "License, corrections and removal"
 
@@ -438,7 +438,7 @@ msgid "group.maintenance"
 msgstr "Maintenance"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:145
+#: src/list/ListFilters.tsx:149
 msgid "filter.maintenance"
 msgstr "Maintenance"
 
@@ -463,7 +463,7 @@ msgid "fit.may-conflict"
 msgstr "May conflict with CedarLoom"
 
 #. js-lingui-explicit-id
-#: src/item/ItemPage.tsx:28
+#: src/item/ItemPage.tsx:27
 msgid "item.registry"
 msgstr "MCP Registry entry"
 
@@ -483,7 +483,7 @@ msgid "item.measured"
 msgstr "Measured"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:117
+#: src/method/MethodPage.tsx:116
 msgid "method.heading"
 msgstr "Method"
 
@@ -533,7 +533,7 @@ msgid "signal.noDuplicateNames"
 msgstr "No duplicate names"
 
 #. js-lingui-explicit-id
-#: src/list/ListTable.tsx:49
+#: src/list/ListTable.tsx:52
 msgid "list.empty"
 msgstr "No item matches these filters."
 
@@ -548,7 +548,7 @@ msgid "maintenance.inactive"
 msgstr "No push in 90 days"
 
 #. js-lingui-explicit-id
-#: src/item/ItemPage.tsx:70
+#: src/item/ItemPage.tsx:69
 msgid "item.notScored"
 msgstr "No rubric has scored this item yet."
 
@@ -604,17 +604,17 @@ msgid "column.listedOfficial"
 msgstr "Official listing"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:107
+#: src/list/ListFilters.tsx:111
 msgid "filter.official"
 msgstr "Only items listed in the official marketplace"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:102
+#: src/list/ListFilters.tsx:106
 msgid "filter.noFlags"
 msgstr "Only items without safety flags"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:103
+#: src/method/MethodPage.tsx:102
 msgid "method.openIssue"
 msgstr "Open an issue"
 
@@ -669,7 +669,7 @@ msgid "item.popularity"
 msgstr "Popularity"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:74
+#: src/method/MethodPage.tsx:73
 msgid "method.notMeasured.stars"
 msgstr "Popularity: stars count for the whole repository, not for one item in it, and do not change the score."
 
@@ -694,7 +694,7 @@ msgid "group.quality"
 msgstr "Quality"
 
 #. js-lingui-explicit-id
-#: src/item/ItemPage.tsx:82
+#: src/item/ItemPage.tsx:81
 msgid "item.report"
 msgstr "Report a problem with this entry"
 
@@ -704,7 +704,7 @@ msgid "item.historyRubric"
 msgstr "Rubric"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:129
+#: src/method/MethodPage.tsx:128
 msgid "method.rubricsHeading"
 msgstr "Rubrics"
 
@@ -739,7 +739,7 @@ msgid "column.flagCount"
 msgstr "Safety flags"
 
 #. js-lingui-explicit-id
-#: src/item/ItemPage.tsx:40
+#: src/item/ItemPage.tsx:39
 msgid "item.flagsHeading"
 msgstr "Safety flags"
 
@@ -764,7 +764,7 @@ msgid "item.scoreHeading"
 msgstr "Score {total} of 100, rubric {version}"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:46
+#: src/list/ListFilters.tsx:47
 msgid "filter.scoreMin"
 msgstr "Score from"
 
@@ -774,7 +774,7 @@ msgid "item.historyHeading"
 msgstr "Score history"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:54
+#: src/list/ListFilters.tsx:55
 msgid "filter.scoreMax"
 msgstr "Score to"
 
@@ -784,7 +784,7 @@ msgid "filter.q"
 msgstr "Search names, owners and tags"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:68
+#: src/method/MethodPage.tsx:67
 msgid "method.notMeasured.audit"
 msgstr "Security: safety flags point at patterns that need care; they are no audit, and an item without flags is not proven safe."
 
@@ -849,7 +849,7 @@ msgid "nav.skip"
 msgstr "Skip to content"
 
 #. js-lingui-explicit-id
-#: src/item/ItemPage.tsx:18
+#: src/item/ItemPage.tsx:17
 msgid "item.source"
 msgstr "Source"
 
@@ -859,7 +859,7 @@ msgid "license.source-available"
 msgstr "Source available"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:35
+#: src/method/MethodPage.tsx:34
 msgid "method.sourcesHeading"
 msgstr "Sources"
 
@@ -879,17 +879,17 @@ msgid "column.starsGained30d"
 msgstr "Stars +30d (repository)"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:64
+#: src/list/ListFilters.tsx:65
 msgid "filter.starsMin"
 msgstr "Stars from"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:77
+#: src/list/ListFilters.tsx:78
 msgid "filter.gainMin"
 msgstr "Stars gained in 30 days, at least"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:70
+#: src/list/ListFilters.tsx:71
 msgid "filter.starsMax"
 msgstr "Stars to"
 
@@ -909,32 +909,32 @@ msgid "footer.affiliation"
 msgstr "The CedarLoom Directory is not affiliated with or endorsed by Anthropic."
 
 #. js-lingui-explicit-id
-#: src/item/ItemPage.tsx:44
+#: src/item/ItemPage.tsx:43
 msgid "item.noFlags"
 msgstr "The collector raised no safety flag."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:17
+#: src/method/MethodPage.tsx:16
 msgid "source.community-marketplace"
 msgstr "The community plugin marketplace (anthropics/claude-plugins-community)"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:93
+#: src/method/MethodPage.tsx:92
 msgid "method.license"
 msgstr "The Directory's own data is released under CC0 1.0. Names and descriptions of listed items belong to their authors; the Directory links to them and copies no description."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:21
+#: src/method/MethodPage.tsx:20
 msgid "source.anthropic-marketplaces"
 msgstr "The marketplaces in anthropics/skills and anthropics/knowledge-work-plugins"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:26
+#: src/method/MethodPage.tsx:25
 msgid "source.mcp-registry"
 msgstr "The MCP Registry"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:13
+#: src/method/MethodPage.tsx:12
 msgid "source.official-marketplace"
 msgstr "The official Claude Code plugin marketplace (anthropics/claude-plugins-official)"
 
@@ -944,7 +944,7 @@ msgid "notFound.body"
 msgstr "This page does not exist."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:99
+#: src/method/MethodPage.tsx:98
 msgid "method.takedown"
 msgstr "To correct an entry or to have your item removed, open an issue. A removed item stays out of later runs."
 
@@ -954,7 +954,7 @@ msgid "group.token-cost"
 msgstr "Token cost"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:79
+#: src/method/MethodPage.tsx:78
 msgid "method.notMeasured.tokens"
 msgstr "Token counts are estimates: characters divided by four."
 
@@ -969,12 +969,12 @@ msgid "signal.nameValid"
 msgstr "Valid name"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:59
+#: src/method/MethodPage.tsx:58
 msgid "method.notMeasuredHeading"
 msgstr "What the score does not measure"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:63
+#: src/method/MethodPage.tsx:62
 msgid "method.notMeasured.works"
 msgstr "Whether an item works or does what it describes: nothing is installed or run."
 
