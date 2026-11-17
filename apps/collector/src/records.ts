@@ -1,6 +1,7 @@
 import {
   agentRecord,
   hookRecord,
+  type ItemRecord as RecordValue,
   marketplaceRecord,
   mcpServerRecord,
   outputStyleRecord,
@@ -37,15 +38,6 @@ import type { Inspection } from './repository-tree.ts';
 import { analyzeSkill } from './skill-analyzer.ts';
 
 export type ItemKind = Candidate['kind'];
-
-type RecordValue =
-  | z.infer<typeof marketplaceRecord>
-  | z.infer<typeof pluginRecord>
-  | z.infer<typeof skillRecord>
-  | z.infer<typeof agentRecord>
-  | z.infer<typeof hookRecord>
-  | z.infer<typeof mcpServerRecord>
-  | z.infer<typeof outputStyleRecord>;
 
 /** A record that passed its contract, the repository whose popularity file it points to and that repository's owner. */
 export interface ItemRecord {

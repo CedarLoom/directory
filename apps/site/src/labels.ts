@@ -1,6 +1,6 @@
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import type { Flag, FitLabel, Kind, LicenseClass, Maintenance } from './data-types.ts';
+import type { Flag, FitLabel, ItemRecord, Kind, LicenseClass, Maintenance, RecentCommits } from './data-types.ts';
 import type { ColumnId } from './list-search.ts';
 
 export const kindLabels = {
@@ -29,6 +29,19 @@ export const licenseClassLabels = {
   'source-available': msg({ id: 'license.source-available', message: 'Source available' }),
   none: msg({ id: 'license.none', message: 'No license' }),
 } satisfies Record<LicenseClass, MessageDescriptor>;
+
+/** A license with no SPDX id: the item states a license of its own, or its class. */
+export function licenseWithoutId({ class: licenseClass, source }: ItemRecord['license']): MessageDescriptor {
+  return licenseClass === 'none' && source !== undefined
+    ? msg({ id: 'license.custom', message: 'A license no SPDX id names' })
+    : licenseClassLabels[licenseClass];
+}
+
+export const recentCommitsLabels = {
+  none: msg({ id: 'commits.none', message: 'None' }),
+  '1-4': msg({ id: 'commits.1-4', message: '1 to 4' }),
+  '5+': msg({ id: 'commits.5-or-more', message: '5 or more' }),
+} satisfies Record<RecentCommits, MessageDescriptor>;
 
 export const fitLabels = {
   complements: msg({ id: 'fit.complements', message: 'Complements CedarLoom' }),

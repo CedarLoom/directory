@@ -1,6 +1,11 @@
 import type { FitLabel, Kind, LicenseClass, Maintenance } from './data-types.ts';
 
-export const kinds = [
+/** Returns the list as given; it does not compile when the list misses a value of `T`. */
+function everyValueOf<T extends string>() {
+  return <const L extends readonly T[]>(list: L & ([T] extends [L[number]] ? unknown : never)): L => list;
+}
+
+export const kinds = everyValueOf<Kind>()([
   'marketplace',
   'plugin',
   'skill',
@@ -8,7 +13,7 @@ export const kinds = [
   'hook',
   'mcp-server',
   'output-style',
-] as const satisfies Kind[];
-export const licenseClasses = ['permissive', 'copyleft', 'source-available', 'none'] as const satisfies LicenseClass[];
-export const fitLabels = ['complements', 'overlaps', 'may-conflict', 'not-assessed'] as const satisfies FitLabel[];
-export const maintenanceStates = ['active', 'inactive', 'archived', 'unknown'] as const satisfies Maintenance[];
+]);
+export const licenseClasses = everyValueOf<LicenseClass>()(['permissive', 'copyleft', 'source-available', 'none']);
+export const fitLabels = everyValueOf<FitLabel>()(['complements', 'overlaps', 'may-conflict', 'not-assessed']);
+export const maintenanceStates = everyValueOf<Maintenance>()(['active', 'inactive', 'archived', 'unknown']);

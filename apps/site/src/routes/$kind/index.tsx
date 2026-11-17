@@ -42,13 +42,15 @@ function KindItems() {
   const search = useShownSearch(Route.useSearch(), kindDefaults);
   const navigate = Route.useNavigate();
   const kindRows = useMemo(() => rows.filter((row) => row.kind === kind), [kind]);
+  // The list page filters again whenever this object changes.
+  const shownSearch = useMemo(() => ({ ...search, kinds: [] }), [search]);
   return (
     <ListPage
       title={active._(kindPluralLabels[kind])}
       rows={kindRows}
       showKinds={false}
       runAt={runMeta.runAt}
-      search={{ ...search, kinds: [] }}
+      search={shownSearch}
       onSearchChange={(patch, replace) => navigate({ search: (previous) => ({ ...previous, ...patch }), replace })}
     />
   );

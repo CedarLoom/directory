@@ -45,12 +45,16 @@ function Bounds({ filters, onChange }: Pick<Props, 'filters' | 'onChange'>) {
         <BoundInput
           label={<Trans id="filter.scoreMin">Score from</Trans>}
           integer={false}
+          min={0}
+          max={100}
           value={filters.scoreMin}
           onChange={(scoreMin) => onChange({ scoreMin })}
         />
         <BoundInput
           label={<Trans id="filter.scoreMax">Score to</Trans>}
           integer={false}
+          min={0}
+          max={100}
           value={filters.scoreMax}
           onChange={(scoreMax) => onChange({ scoreMax })}
         />
@@ -58,11 +62,13 @@ function Bounds({ filters, onChange }: Pick<Props, 'filters' | 'onChange'>) {
       <Group grow align="end">
         <BoundInput
           label={<Trans id="filter.starsMin">Stars from</Trans>}
+          min={0}
           value={filters.starsMin}
           onChange={(starsMin) => onChange({ starsMin })}
         />
         <BoundInput
           label={<Trans id="filter.starsMax">Stars to</Trans>}
+          min={0}
           value={filters.starsMax}
           onChange={(starsMax) => onChange({ starsMax })}
         />

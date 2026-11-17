@@ -28,7 +28,7 @@ export function withPolicy(html: string): string {
 }
 
 if (import.meta.main) {
-  const client = new URL('../dist/client/', import.meta.url).pathname;
+  const client = join(import.meta.dirname, '../dist/client/');
   const pages = readdirSync(client, { recursive: true, encoding: 'utf8' }).filter((path) => path.endsWith('.html'));
   if (pages.length === 0) throw new Error(`No pages in ${client}`);
   for (const page of pages) {

@@ -2,7 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Table } from '@mantine/core';
 import type { ReactNode } from 'react';
 import type { ItemRecord, PopularityFile } from '../data-types.ts';
-import { fitLabels, kindLabels, licenseClassLabels } from '../labels.ts';
+import { fitLabels, kindLabels, licenseClassLabels, licenseWithoutId, recentCommitsLabels } from '../labels.ts';
 
 function Fact({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
@@ -22,10 +22,14 @@ function MaintenanceFacts({ maintenance }: { maintenance: NonNullable<ItemRecord
         {i18n.date(maintenance.pushedAt, { dateStyle: 'medium', timeZone: 'UTC' })}
       </Fact>
       <Fact label={<Trans id="item.recentCommits">Commits in the last 90 days</Trans>}>
-        {maintenance.recentCommits}
+        {i18n._(recentCommitsLabels[maintenance.recentCommits])}
       </Fact>
       <Fact label={<Trans id="item.release">Latest release</Trans>}>
-        {release === undefined ? <Trans id="item.noRelease">none</Trans> : `${release.tag} (${release.date})`}
+        {release === undefined ? (
+          <Trans id="item.noRelease">none</Trans>
+        ) : (
+          `${release.tag} (${i18n.date(release.date, { dateStyle: 'medium', timeZone: 'UTC' })})`
+        )}
       </Fact>
       {maintenance.archived && (
         <Fact label={<Trans id="item.archived">Archived</Trans>}>
@@ -53,13 +57,15 @@ function Stars({ popularity }: { popularity: PopularityFile | undefined }) {
 /** Kind, license, fit, popularity and maintenance of one item. */
 export function ItemFacts({ record, popularity }: { record: ItemRecord; popularity: PopularityFile | undefined }) {
   const { i18n } = useLingui();
-  const license = i18n._(licenseClassLabels[record.license.class]);
+  const { spdx } = record.license;
   return (
     <Table>
       <Table.Tbody>
         <Fact label={<Trans id="item.kind">Kind</Trans>}>{i18n._(kindLabels[record.kind])}</Fact>
         <Fact label={<Trans id="item.license">License</Trans>}>
-          {record.license.spdx === undefined ? license : `${record.license.spdx} (${license})`}
+          {spdx === undefined
+            ? i18n._(licenseWithoutId(record.license))
+            : `${spdx} (${i18n._(licenseClassLabels[record.license.class])})`}
         </Fact>
         <Fact label={<Trans id="item.fit">CedarLoom fit</Trans>}>{i18n._(fitLabels[record.cedarloomFit.label])}</Fact>
         <Fact label={<Trans id="item.popularity">Popularity</Trans>}>

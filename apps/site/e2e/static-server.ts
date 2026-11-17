@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
 
 // Serves the built site the way a static host does: a folder answers with its index.html, a missing path with 404.html.
-const root = new URL('../dist/client/', import.meta.url).pathname;
+const root = join(import.meta.dirname, '../dist/client/');
 const types: Readonly<Record<string, string>> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript',

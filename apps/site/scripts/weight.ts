@@ -15,7 +15,7 @@ interface Budget {
   readonly artifactGzipMb: number;
 }
 
-const site = new URL('../', import.meta.url).pathname;
+const site = join(import.meta.dirname, '../');
 const client = join(site, 'dist/client');
 const manifest: Record<string, Chunk> = JSON.parse(readFileSync(join(client, '.vite/manifest.json'), 'utf8'));
 const budget: Budget = JSON.parse(readFileSync(join(site, 'weight-budget.json'), 'utf8'));

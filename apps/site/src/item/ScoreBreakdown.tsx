@@ -1,7 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Table, Title } from '@mantine/core';
 import type { ItemRecord } from '../data-types.ts';
-import { signalLabels } from '../labels.ts';
+import { flagLabels, signalLabels } from '../labels.ts';
 import { type Measured, measuredValue } from './measured-value.ts';
 import { ScrollTable } from '../layout/ScrollTable.tsx';
 
@@ -18,6 +18,14 @@ function MeasuredCell({ measured }: { measured: Measured }) {
       return measured.value ? <Trans id="item.yes">yes</Trans> : <Trans id="item.no">no</Trans>;
     case 'text':
       return measured.value;
+    case 'message':
+      return i18n._(measured.value);
+    case 'flags':
+      return measured.value.length === 0 ? (
+        <Trans id="item.flagsNone">none</Trans>
+      ) : (
+        measured.value.map((flag) => i18n._(flagLabels[flag])).join(' ')
+      );
     default:
       return <Trans id="item.notMeasured">not measured</Trans>;
   }
