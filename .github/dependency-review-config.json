@@ -4,6 +4,7 @@
   "allow-licenses": [
     "0BSD",
     "Apache-2.0",
+    "BlueOak-1.0.0",
     "BSD-2-Clause",
     "BSD-3-Clause",
     "CC0-1.0",
@@ -15,5 +16,5 @@
     "LGPL-3.0-or-later",
     "Unlicense"
   ],
-  "allow-dependencies-licenses": ["pkg:npm/argparse"]
+  "allow-dependencies-licenses": ["pkg:npm/argparse", "pkg:npm/%40fontsource-variable/inter", "pkg:npm/caniuse-lite"]
 }
