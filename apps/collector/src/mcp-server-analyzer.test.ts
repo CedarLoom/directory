@@ -72,6 +72,28 @@ it('counts the required secret variables of a header and of a remote URL', () =>
   expect(facts.requiredSecrets).toBe(2);
 });
 
+it('counts the secret variables of a templated header, or the header when it has none', () => {
+  const secret = { isRequired: true, isSecret: true };
+  const facts = analyzeMcpServer(
+    {
+      name: 'io.github.example-org/alpha',
+      version: '1.0.0',
+      remotes: [
+        {
+          type: 'streamable-http',
+          url: 'https://example.test/mcp',
+          headers: [
+            { ...secret, variables: { token: secret } },
+            { ...secret, variables: { team: { isRequired: true } } },
+          ],
+        },
+      ],
+    },
+    'active',
+  );
+  expect(facts.requiredSecrets).toBe(2);
+});
+
 it('counts a remote host once however its URLs spell it', () => {
   const facts = analyzeMcpServer(
     {

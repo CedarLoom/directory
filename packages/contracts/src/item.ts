@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import {
+  authorKeys,
   count,
+  countPerAuthorKey,
   date,
   dateTime,
   fitLabel,
@@ -123,7 +125,7 @@ export const pluginRecord = z.strictObject({
     skills: count,
     agents: count,
     commands: count,
-    hooksByEvent: z.record(keyword, count),
+    hooksByEvent: countPerAuthorKey,
     mcpServersByTransport: z.partialRecord(z.enum(['stdio', 'http', 'sse']), count),
     lspServers: count,
     outputStyles: count,
@@ -139,7 +141,7 @@ export const pluginRecord = z.strictObject({
 export const skillRecord = z.strictObject({
   ...common,
   kind: z.literal('skill'),
-  frontmatterFields: z.array(keyword),
+  frontmatterFields: authorKeys,
   bodyLines: count,
   tokens,
   allowedTools: z.array(toolClass),
@@ -158,7 +160,7 @@ export const agentRecord = z.strictObject({
 export const hookRecord = z.strictObject({
   ...common,
   kind: z.literal('hook'),
-  events: z.array(keyword).max(64),
+  events: authorKeys,
   handlerTypes: z.array(z.enum(['command', 'http', 'prompt', 'agent'])),
   commandForms: z.array(z.enum(['shell', 'exec'])),
   matcherBreadth: z.enum(['match-all', 'specific', 'none']),
@@ -182,7 +184,7 @@ export const outputStyleRecord = z.strictObject({
   ...common,
   kind: z.literal('output-style'),
   tokens: count,
-  frontmatterFields: z.array(keyword).max(64),
+  frontmatterFields: authorKeys,
 });
 
 /** A record of any kind. */

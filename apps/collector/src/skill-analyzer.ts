@@ -1,5 +1,5 @@
-import { itemName, keyword } from '@directory/contracts';
-import { bodyLines, readFrontmatter, textField, tokenEstimate } from './frontmatter.ts';
+import { itemName } from '@directory/contracts';
+import { bodyLines, frontmatterFields, readFrontmatter, textField, tokenEstimate } from './frontmatter.ts';
 import { toolClasses, unrestrictedBash } from './tool-classes.ts';
 
 /** The facts of a SKILL.md; its name and license are read, its description and body are only counted. */
@@ -12,7 +12,7 @@ export function analyzeSkill(text: string) {
     declaredName,
     declaredLicense: textField(frontmatter, 'license'),
     descriptionLength: textField(frontmatter, 'description')?.length ?? 0,
-    frontmatterFields: [...frontmatter.fields.keys()].filter((key) => keyword.safeParse(key).success),
+    frontmatterFields: frontmatterFields(frontmatter),
     bodyLines: bodyLines(frontmatter),
     tokens: tokenEstimate(frontmatter),
     allowedTools: toolClasses(frontmatter.fields.get('allowed-tools')),

@@ -53,9 +53,16 @@ function pinned({ version, identifier }: z.infer<typeof registryPackage>): boole
   return imagePinned(identifier);
 }
 
-function secrets(inputs: readonly z.infer<typeof input>[] = []): number {
-  const values = inputs.flatMap((one) => [one, ...Object.values(one.variables ?? {})]);
+function requiredSecrets(values: readonly z.infer<typeof supplied>[]): number {
   return values.filter(({ isRequired, isSecret }) => isRequired === true && isSecret === true).length;
+}
+
+function secrets(inputs: readonly z.infer<typeof input>[] = []): number {
+  // A templated input is filled from its secret variables, so the user supplies those, not the input.
+  return inputs.reduce(
+    (sum, one) => sum + (requiredSecrets(Object.values(one.variables ?? {})) || requiredSecrets([one])),
+    0,
+  );
 }
 
 function present<T extends string>(order: readonly T[], found: readonly T[]): T[] {

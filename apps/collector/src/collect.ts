@@ -5,14 +5,14 @@ import { applyExclusions, type Exclusions } from './exclusions.ts';
 import type { Repository } from './github-contents.ts';
 import { repositoryId } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
-import { type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
+import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
 import { UnknownLicenseError } from './license-class.ts';
 import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
-import { type Inspection, inspectLocations } from './repository-tree.ts';
+import { inspectLocations } from './repository-tree.ts';
 import type { RunReport } from './run-report.ts';
 import type { SourceAdapter } from './source-adapter.ts';
 import { searchTopics } from './topic-search.ts';
@@ -56,18 +56,42 @@ function uniqueRepositories(repositories: readonly Repository[]): Repository[] {
   return [...new Map(repositories.map((repository) => [repositoryId(repository), repository])).values()];
 }
 
+/** A candidate with the facts of its repository. */
+interface Ranked {
+  candidate: Located;
+  facts: RepositoryFacts;
+}
+
 /** The candidates of one kind whose repository GitHub found, most stars first, then by id. */
-function top(
-  candidates: readonly Located[],
-  kind: ItemKind,
-  facts: ReadonlyMap<string, RepositoryFacts>,
-  limit: number,
-) {
-  const stars = (candidate: Located) => facts.get(repositoryId(candidate.location))?.stars ?? -1;
+function ranked(candidates: readonly Located[], kind: ItemKind, facts: ReadonlyMap<string, RepositoryFacts>): Ranked[] {
   return candidates
-    .filter((candidate) => candidate.kind === kind && stars(candidate) >= 0)
-    .toSorted((first, second) => stars(second) - stars(first) || (first.id < second.id ? -1 : 1))
-    .slice(0, limit);
+    .flatMap((candidate) => {
+      const found = facts.get(repositoryId(candidate.location));
+      return candidate.kind === kind && found !== undefined ? [{ candidate, facts: found }] : [];
+    })
+    .toSorted(
+      (first, second) => second.facts.stars - first.facts.stars || (first.candidate.id < second.candidate.id ? -1 : 1),
+    );
+}
+
+/** What was read for a selected item: its record, nothing (it keeps its place without a record) or a refusal. */
+type Read = ItemRecord | undefined | 'refused';
+
+// A refill reads as many items as the round before refused; the bound keeps a run of refusals within the request cap.
+const refills = 2;
+
+/** Reads the ranked items in batches until `limit` of them are not refused; a refused item frees its place for the next. */
+async function fill(
+  items: readonly Ranked[],
+  limit: number,
+  read: (batch: readonly Ranked[]) => Promise<Read[]>,
+  rounds = refills,
+): Promise<ItemRecord[]> {
+  const batch = items.slice(0, limit);
+  if (batch.length === 0) return [];
+  const kept = (await read(batch)).filter((one) => one !== 'refused');
+  const rest = rounds === 0 ? [] : await fill(items.slice(batch.length), limit - kept.length, read, rounds - 1);
+  return [...kept.filter((one) => one !== undefined), ...rest];
 }
 
 function countByKind(items: readonly { kind: ItemKind }[]): Record<ItemKind, number> {
@@ -95,6 +119,28 @@ function refusalLogger(log: (line: string) => void, counter: { refused: number }
   };
 }
 
+type Build = (input: RecordInput) => ItemRecord | 'refused';
+
+/** Builds a record, or logs a refusal when its facts do not fit the record or its license is unknown. */
+function recordBuilder(runDate: string, refuse: Refuse): Build {
+  return (input) => {
+    try {
+      return buildRecord(input, runDate);
+    } catch (error) {
+      if (!(error instanceof ZodError || error instanceof UnknownLicenseError)) throw error;
+      refuse(input.candidate.id, error);
+      return 'refused';
+    }
+  };
+}
+
+/** What every reader of selected items uses. */
+interface Reading {
+  client: HttpClient;
+  refuse: Refuse;
+  build: Build;
+}
+
 const tooLarge = 'a file is cut by GitHub or over the size cap';
 
 /** The topic repositories that have an id; a name too long for one is refused, so it cannot stop the run. */
@@ -111,158 +157,88 @@ function identified(repositories: readonly Repository[], refuse: Refuse): Reposi
   });
 }
 
-/** Inspects the most starred listed plugins and the topic repositories and adds the items they hold. */
+/** Inspects each place and returns the items they hold; a place with a file over its size cap is refused. */
 async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace[], refuse: Refuse) {
   const inspections = await inspectLocations(
     client,
     places.map((place) => place.location),
   );
-  const inspected = new Map<string, Inspection>();
   const found: Candidate[] = [];
   for (const [index, place] of places.entries()) {
     const inspection = inspections[index];
-    if (inspection === undefined) continue;
-    if (inspection === 'too-large') {
-      refuse(place.container ?? repositoryId(place.location), new Error(tooLarge));
-      continue;
-    }
-    if (place.container !== undefined) inspected.set(place.container, inspection);
-    found.push(...inspectionCandidates(place, inspection, refuse));
+    if (inspection === 'too-large') refuse(place.container ?? repositoryId(place.location), new Error(tooLarge));
+    else if (inspection !== undefined) found.push(...inspectionCandidates(place, inspection, refuse));
   }
-  return { inspected, found };
+  return { inspections, found };
 }
 
-/** Refuses each item whose file is too large; it gets no record. */
-function refuseTooLarge(items: readonly Located[], files: readonly ItemFile[], refuse: Refuse): void {
-  for (const [index, item] of items.entries())
-    if (files[index]?.file === 'too-large') refuse(item.id, new Error(tooLarge));
+/** Inspects a batch of plugins and adds the items they hold to `found`, also those of a plugin refused for its own facts. */
+function pluginReader({ client, refuse, build }: Reading, found: Candidate[]) {
+  return async (batch: readonly Ranked[]): Promise<Read[]> => {
+    const places = batch.map(
+      ({ candidate: { location, id, provenance } }): InspectedPlace => ({ location, container: id, provenance }),
+    );
+    const inspected = await inspectPlaces(client, places, refuse);
+    found.push(...inspected.found);
+    return batch.map(({ candidate, facts }, index): Read => {
+      const [inspection, source] = [inspected.inspections[index], candidate.source];
+      if (inspection === 'too-large') return 'refused';
+      if (inspection === undefined || source === undefined) return undefined;
+      return build({ kind: 'plugin', candidate, facts, inspection, source });
+    });
+  };
 }
 
-function textOf(item: ItemFile | undefined): string | undefined {
-  return item === undefined || item.file === 'too-large' ? undefined : item.file.text;
+function fileRecord(kind: FileKind, { candidate, facts }: Ranked, read: ItemFile | undefined, reading: Reading): Read {
+  if (read?.file === 'too-large') {
+    reading.refuse(candidate.id, new Error(tooLarge));
+    return 'refused';
+  }
+  const text = read?.file.text;
+  if (read === undefined || text === undefined) return undefined;
+  const { folders, tests, licenseFile } = read;
+  return reading.build(
+    kind === 'skill' ? { kind, candidate, facts, text, folders, tests, licenseFile } : { kind, candidate, facts, text },
+  );
 }
 
-/** Reads each skill's SKILL.md and folders, and each agent's and output style's own file. */
-async function readFiles(client: HttpClient, skills: readonly Located[], files: readonly Located[]) {
-  return Promise.all([
-    readItemFiles(
-      client,
-      skills.map(({ location }) => ({ location, file: 'SKILL.md' })),
-      true,
-    ),
-    readItemFiles(
-      client,
-      files.map(({ location }) => ({ location, file: '' })),
-      false,
-    ),
-  ]);
+/** Reads a batch of skills' SKILL.md and folders, or of agents' or output styles' own files, and builds their records. */
+function fileReader(reading: Reading, kind: FileKind) {
+  return async (batch: readonly Ranked[]): Promise<Read[]> => {
+    const skill = kind === 'skill';
+    const files = await readItemFiles(
+      reading.client,
+      batch.map(({ candidate: { location } }) => ({ location, file: skill ? 'SKILL.md' : '' })),
+      skill,
+    );
+    return batch.map((item, index) => fileRecord(kind, item, files[index], reading));
+  };
 }
 
-function buildAll(inputs: readonly RecordInput[], runDate: string, refuse: Refuse) {
-  return inputs.flatMap((input): ItemRecord[] => {
-    try {
-      return [buildRecord(input, runDate)];
-    } catch (error) {
-      if (!(error instanceof ZodError || error instanceof UnknownLicenseError)) throw error;
-      refuse(input.candidate.id, error);
-      return [];
-    }
-  });
-}
-
-interface Selection {
-  candidates: readonly Located[];
-  facts: ReadonlyMap<string, RepositoryFacts>;
-  plugins: readonly Located[];
-  inspected: ReadonlyMap<string, Inspection>;
-  skills: readonly Located[];
-  skillFiles: readonly ItemFile[];
-  agents: readonly Located[];
-  agentFiles: readonly ItemFile[];
-  hooks: readonly Located[];
-  mcpServers: readonly Located[];
-  outputStyles: readonly Located[];
-  outputStyleFiles: readonly ItemFile[];
-}
-
-type FactsOf = (candidate: Located) => RepositoryFacts | undefined;
-
-function marketplaceInputs(candidates: readonly Located[], factsOf: FactsOf): RecordInput[] {
-  return candidates.flatMap((candidate): RecordInput[] => {
-    const facts = factsOf(candidate);
-    return candidate.kind === 'marketplace' && candidate.entries !== undefined && facts !== undefined
-      ? [{ kind: 'marketplace', candidate, facts, entries: candidate.entries }]
-      : [];
-  });
-}
-
-function pluginInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
-  return selection.plugins.flatMap((candidate): RecordInput[] => {
-    const [facts, inspection, source] = [factsOf(candidate), selection.inspected.get(candidate.id), candidate.source];
-    return facts !== undefined && inspection !== undefined && source !== undefined
-      ? [{ kind: 'plugin', candidate, facts, inspection, source }]
-      : [];
-  });
-}
-
-function skillInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
-  return selection.skills.flatMap((candidate, index): RecordInput[] => {
-    const [facts, file] = [factsOf(candidate), selection.skillFiles[index]];
-    const text = textOf(file);
-    return facts !== undefined && file !== undefined && text !== undefined
-      ? [
-          {
-            kind: 'skill',
-            candidate,
-            facts,
-            text,
-            folders: file.folders,
-            tests: file.tests,
-            licenseFile: file.licenseFile,
-          },
-        ]
-      : [];
-  });
-}
-
-function fileInputs(
-  kind: 'agent' | 'output-style',
+function marketplaceRecords(
   candidates: readonly Located[],
-  files: readonly ItemFile[],
-  factsOf: FactsOf,
-): RecordInput[] {
-  return candidates.flatMap((candidate, index): RecordInput[] => {
-    const [facts, text] = [factsOf(candidate), textOf(files[index])];
-    return facts !== undefined && text !== undefined ? [{ kind, candidate, facts, text }] : [];
+  facts: ReadonlyMap<string, RepositoryFacts>,
+  build: Build,
+): ItemRecord[] {
+  return candidates.flatMap((candidate): ItemRecord[] => {
+    const found = facts.get(repositoryId(candidate.location));
+    if (candidate.kind !== 'marketplace' || candidate.entries === undefined || found === undefined) return [];
+    const record = build({ kind: 'marketplace', candidate, facts: found, entries: candidate.entries });
+    return record === 'refused' ? [] : [record];
   });
 }
 
-function hookInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
-  return selection.hooks.flatMap((candidate): RecordInput[] => {
-    const [facts, hooks] = [factsOf(candidate), candidate.hooks];
-    return facts !== undefined && hooks !== undefined ? [{ kind: 'hook', candidate, facts, hooks }] : [];
-  });
-}
-
-function mcpServerInputs(selection: Selection, factsOf: FactsOf): RecordInput[] {
-  return selection.mcpServers.flatMap((candidate): RecordInput[] => {
-    const [facts, mcpServer] = [factsOf(candidate), candidate.mcpServer];
-    return facts !== undefined && mcpServer !== undefined ? [{ kind: 'mcp-server', candidate, facts, mcpServer }] : [];
-  });
-}
-
-/** Pairs each selected item with its repository facts and what was read for it; an item without them gets no record. */
-function recordInputs(selection: Selection): RecordInput[] {
-  const factsOf: FactsOf = (candidate) => selection.facts.get(repositoryId(candidate.location));
-  return [
-    ...marketplaceInputs(selection.candidates, factsOf),
-    ...pluginInputs(selection, factsOf),
-    ...skillInputs(selection, factsOf),
-    ...fileInputs('agent', selection.agents, selection.agentFiles, factsOf),
-    ...hookInputs(selection, factsOf),
-    ...mcpServerInputs(selection, factsOf),
-    ...fileInputs('output-style', selection.outputStyles, selection.outputStyleFiles, factsOf),
-  ];
+/** Builds the records of a batch of hooks or MCP servers, whose facts were read with their candidates. */
+function listedReader({ build }: Reading) {
+  return (batch: readonly Ranked[]): Promise<Read[]> =>
+    Promise.resolve(
+      batch.map(({ candidate, facts }): Read => {
+        const { hooks, mcpServer } = candidate;
+        if (candidate.kind === 'hook')
+          return hooks === undefined ? undefined : build({ kind: 'hook', candidate, facts, hooks });
+        return mcpServer === undefined ? undefined : build({ kind: 'mcp-server', candidate, facts, mcpServer });
+      }),
+    );
 }
 
 /**
@@ -282,50 +258,54 @@ function factsRepositories(
   return uniqueRepositories([...locations(false), ...topicRepositories, ...servers.slice(0, serverRepositories)]);
 }
 
-/** The listed plugins to inspect, with the skills and agents they contain, and each topic repository GitHub found. */
-function placesToInspect(
-  plugins: readonly Located[],
-  topicRepositories: readonly Repository[],
-  facts: ReadonlyMap<string, RepositoryFacts>,
-) {
-  return [
-    ...plugins.map(({ location, id, provenance }): InspectedPlace => ({ location, container: id, provenance })),
-    ...topicRepositories
-      .filter((repository) => facts.has(repositoryId(repository)))
-      .map(
-        (repository): InspectedPlace => ({
-          location: { ...repository, path: '', ref: 'HEAD' },
-          provenance: ['github'],
-        }),
-      ),
-  ];
+/** Each topic repository GitHub found as a place to inspect. */
+function topicPlaces(topicRepositories: readonly Repository[], facts: ReadonlyMap<string, RepositoryFacts>) {
+  return topicRepositories
+    .filter((repository) => facts.has(repositoryId(repository)))
+    .map(
+      (repository): InspectedPlace => ({
+        location: { ...repository, path: '', ref: 'HEAD' },
+        provenance: ['github'],
+      }),
+    );
 }
 
-/** The most starred items of each kind, with the files read for the skills, agents and output styles among them. */
-async function select(
-  client: HttpClient,
-  found: Pick<Selection, 'candidates' | 'facts' | 'plugins' | 'inspected'>,
-  refuse: Refuse,
-): Promise<Selection> {
-  const { candidates, facts } = found;
-  const [skills, agents] = [top(candidates, 'skill', facts, perKind), top(candidates, 'agent', facts, perKind)];
-  const outputStyles = top(candidates, 'output-style', facts, perSmallKind);
-  const [skillFiles, files] = await readFiles(client, skills, [...agents, ...outputStyles]);
-  const [agentFiles, outputStyleFiles] = [files.slice(0, agents.length), files.slice(agents.length)];
-  refuseTooLarge(skills, skillFiles, refuse);
-  refuseTooLarge(agents, agentFiles, refuse);
-  refuseTooLarge(outputStyles, outputStyleFiles, refuse);
-  return {
-    ...found,
-    skills,
-    skillFiles,
-    agents,
-    agentFiles,
-    hooks: top(candidates, 'hook', facts, perSmallKind),
-    mcpServers: top(candidates, 'mcp-server', facts, perKind),
-    outputStyles,
-    outputStyleFiles,
-  };
+/**
+ * The run's records: every marketplace, the selected plugins and the most starred items of the other kinds; a refused
+ * item frees its place.
+ */
+async function itemRecords(
+  reading: Reading,
+  {
+    candidates,
+    facts,
+    plugins,
+  }: { candidates: readonly Located[]; facts: ReadonlyMap<string, RepositoryFacts>; plugins: readonly ItemRecord[] },
+): Promise<ItemRecord[]> {
+  const select = (kind: ItemKind, limit: number) =>
+    fill(
+      ranked(candidates, kind, facts),
+      limit,
+      kind === 'skill' || kind === 'agent' || kind === 'output-style'
+        ? fileReader(reading, kind)
+        : listedReader(reading),
+    );
+  const [skills, agents, hooks, mcpServers, outputStyles] = await Promise.all([
+    select('skill', perKind),
+    select('agent', perKind),
+    select('hook', perSmallKind),
+    select('mcp-server', perKind),
+    select('output-style', perSmallKind),
+  ]);
+  return [
+    ...marketplaceRecords(candidates, facts, reading.build),
+    ...plugins,
+    ...skills,
+    ...agents,
+    ...hooks,
+    ...mcpServers,
+    ...outputStyles,
+  ];
 }
 
 /** Reads every source, inspects the selected items on GitHub and returns the run report and the data files. */
@@ -355,12 +335,15 @@ export async function collect(
     (repository) => !excluded.has(repositoryId(repository)),
   );
   const facts = await readFacts(client, factsRepositories(listed, topicRepositories, log), runDate);
-  const plugins = top(listed, 'plugin', facts, perKind);
-  const { inspected, found } = await inspectPlaces(client, placesToInspect(plugins, topicRepositories, facts), refuse);
-  const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found]);
+  const reading: Reading = { client, refuse, build: recordBuilder(runDate, refuse) };
+  const found: Candidate[] = [];
+  const [plugins, topics] = await Promise.all([
+    fill(ranked(listed, 'plugin', facts), perKind, pluginReader(reading, found)),
+    inspectPlaces(client, topicPlaces(topicRepositories, facts), refuse),
+  ]);
+  const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found, ...topics.found]);
   const kept = applyExclusions(all, excluded);
-  const selection = await select(client, { candidates: kept.filter(isLocated), facts, plugins, inspected }, refuse);
-  const records = buildAll(recordInputs(selection), runDate, refuse);
+  const records = await itemRecords(reading, { candidates: kept.filter(isLocated), facts, plugins });
   const report: RunReport = {
     format: 'directory-run-report',
     schemaVersion: 4,

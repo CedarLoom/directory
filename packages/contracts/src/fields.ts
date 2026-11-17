@@ -49,6 +49,22 @@ export const httpsUrl = z
 export const date = z.iso.date();
 export const dateTime = z.iso.datetime();
 export const count = z.int().nonnegative();
+
+// Frontmatter fields and hook events are keys an author chooses; the cap keeps one file from filling a record with them.
+const maxAuthorKeys = 64;
+
+/** Keys an author chooses, such as frontmatter fields or hook events, at most 64. */
+export const authorKeys = z.array(keyword).max(maxAuthorKeys);
+
+/** A count per key an author chooses, at most 64 keys; `maxProperties` carries the cap into the JSON Schema. */
+export const countPerAuthorKey = z
+  .record(keyword, count)
+  .superRefine((value, context) => {
+    if (Object.keys(value).length > maxAuthorKeys)
+      context.addIssue({ code: 'too_big', origin: 'object', maximum: maxAuthorKeys, inclusive: true, input: value });
+  })
+  .meta({ maxProperties: maxAuthorKeys });
+
 export const share = z.number().min(0).max(1);
 export const gitSha = z.string().regex(/^[0-9a-f]{40}$/);
 export const semver = z.string().regex(/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/);

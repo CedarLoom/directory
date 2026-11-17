@@ -1,4 +1,4 @@
-import { versionLabel } from '@directory/contracts';
+import { pluginRecord, versionLabel } from '@directory/contracts';
 import { z } from 'zod';
 import { type HookEvents, hookEvents, hookFacts, inlineHookEvents } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
@@ -58,12 +58,15 @@ function inline(value: unknown): unknown {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : undefined;
 }
 
+const components = pluginRecord.shape.components.pick({ hooksByEvent: true });
+
+/** The handlers per event; more events than the record holds throw a ZodError. */
 function hooksByEvent(configs: readonly HookEvents[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const config of configs)
     for (const [event, groups] of Object.entries(config))
       counts[event] = (counts[event] ?? 0) + groups.reduce((sum, group) => sum + group.hooks.length, 0);
-  return counts;
+  return components.parse({ hooksByEvent: counts }).hooksByEvent;
 }
 
 function mcpServers(configs: readonly unknown[]): Server[] {
