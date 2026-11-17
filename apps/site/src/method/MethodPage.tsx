@@ -188,14 +188,18 @@ function LicenseFacts() {
         LicenseRef, is recorded without an SPDX id. A license file in the item's folder is recorded with the SPDX id of
         the license whose template in the SPDX License List 3.29 its text matches once whitespace, case, dash and quote
         styles, the spaces next to punctuation, title lines that hold only words of the license's name or id and a
-        version, and lines that hold only copyright notices are set aside as the SPDX matching guidelines describe; the
-        templates are those of the licenses GitHub detects, their earlier versions and other licenses items state. A
-        part that a template leaves free, such as the copyright holders in MIT's warranty disclaimer, takes any text, so
-        terms added there do not change the match. A license file that matches none of the templates, and one of several
-        license files in the folder, is recorded without an SPDX id. SPDX ids match in any case and are recorded as the
-        SPDX License List writes them. An expression takes the class of its most permissive part when OR joins its parts
-        and of its least permissive part when AND joins them. "No license detected" means that none of these was found,
-        not that the item has no license.
+        version, and copyright notices are set aside as the SPDX matching guidelines describe; the templates are those
+        of the licenses GitHub detects, their earlier versions and other licenses items state. A copyright notice opens
+        with Copyright, (c) or © and may name its holders in any case or script; a copyright line that holds a word of
+        terms, such as only, commercial, NC, proprietary, confidential, evaluation, trial, expires, internal, not,
+        prohibited, restricted or permission, is kept, so the text matches no template. Terms in other words, such as
+        "ask first", pass as a holder's name and do not change the match. A part that a template leaves free, such as
+        the copyright holders in MIT's warranty disclaimer, takes any text, so terms added there do not change the
+        match. A license file that matches none of the templates, and one of several license files in the folder, is
+        recorded without an SPDX id. SPDX ids match in any case and are recorded as the SPDX License List writes them.
+        An expression takes the class of its most permissive part when OR joins its parts and of its least permissive
+        part when AND joins them. "No license detected" means that none of these was found, not that the item has no
+        license.
       </Trans>
     </Text>
   );

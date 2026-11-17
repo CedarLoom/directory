@@ -55,6 +55,20 @@ it('names a license whatever its copyright lines say, and without them', () => {
   ]).toEqual(['MIT', 'MIT', 'MIT', 'MIT']);
 });
 
+it('names a license whatever the case or script of its holder', () => {
+  expect(
+    [
+      'Copyright 2024 foo contributors',
+      'Copyright (c) 2015 - present Microsoft Corporation',
+      'Copyright (c) 2026 Browser Use',
+      'Copyright (c) 2024 shareAI Lab',
+      'Copyright (c) 2026 数字生命卡兹克',
+      'Copyright (c) 2026 alchaincyf (花叔 · 花生)',
+      'Copyright (c) 2026 jnMetaCode (Chinese translation and localization)',
+    ].map((notice) => licenseTextId(mit(notice))),
+  ).toEqual(['MIT', 'MIT', 'MIT', 'MIT', 'MIT', 'MIT', 'MIT']);
+});
+
 it('names no license for a text that changes, adds or leaves out a term', () => {
   const text = mit('Copyright (c) 2024 Jane Doe');
   expect([
@@ -82,8 +96,13 @@ it('names no license for a copyright line that adds terms after its holder', () 
       '© 2024 Jane Doe (personal use only)',
       'Copyright 2024 X; no commercial use',
       '(c) 2024 Commercial use requires a paid license from Jane Doe',
+      'Copyright (c) 2024 Acme Corp - Proprietary and Confidential',
+      'Copyright (c) 2024 Acme Corp, confidential',
+      'Copyright (c) 2024 Jane Doe - Evaluation Copy',
+      'Copyright (c) 2024 Jane Doe - Expires 2027',
+      'Copyright (c) 2024 Jane Doe - NC',
     ].map((notice) => licenseTextId(mit(notice))),
-  ).toEqual([undefined, undefined, undefined, undefined, undefined, undefined]);
+  ).toEqual(Array.from({ length: 11 }, () => undefined));
 });
 
 it('names no license for a title line that adds terms to the name', () => {
@@ -91,11 +110,13 @@ it('names no license for a title line that adds terms to the name', () => {
   expect([
     licenseTextId(text.replace('MIT License', 'MIT License (non-commercial use only)')),
     licenseTextId(text.replace('MIT License', 'Non-Commercial License')),
+    // The words of another license's title.
+    licenseTextId(text.replace('MIT License', 'CC BY-NC-SA 4.0')),
     licenseTextId(
       text.replace(
         'MIT License',
         'This license forbids commercial use\nThis license forbids military use\nThis license ends in 2027',
       ),
     ),
-  ]).toEqual([undefined, undefined, undefined]);
+  ]).toEqual([undefined, undefined, undefined, undefined]);
 });

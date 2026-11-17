@@ -7,32 +7,13 @@ const copyrightNotice = /^(?:copyright ?(?:©|\(c\))|(?:copyright|©|\(c\)) ?(?:
 // A sentence break, but not after an initial such as the "A." of "A. Person".
 const sentenceBreak = /(?<=\p{L}{2}|\d|\))[.!?;] +(?=\p{L})/u;
 
-const noticeMarks = /^(?:(?:copyright|©|\(c\)) ?)+/i;
-const rightsReserved = /,? ?all rights reserved\.?$/i;
-const placeholder = /<[^<>]{1,40}>|\[[^[\]]{1,40}\]|\{[^{}]{1,40}\}/g;
-const holderSeparator = / *, *| +[-‐-―] +/;
-// A word of a holder's name: a capitalized word or initial, a year or a number of an address, a contact, a joining word
-// or a word of the GNU licenses' sample notice "year name of author".
-const holderWord =
-  /^(?:\p{Lu}[\p{L}\p{M}\p{N}'’.&-]*|\d[\p{N}.,‐-―-]*(?:present)?|\([^\s()]+\)|\S+@\S+|(?:https?:\/\/|www\.)\S+|and|and\/or|&|by|of|the|with|its|their|affiliates|contributors|authors|developers|maintainers|de|da|der|du|la|le|van|von|year|name|author)$/u;
-// A holder named by one lowercase word, such as a user name.
-const handle = /^@?[\p{Ll}\p{N}][\p{L}\p{N}_.-]*$/u;
-// Words of terms, which a name in Title Case would otherwise hide.
-const noticeTerm =
-  /\b(?:use[ds]?|only|(?:non-?)?commercial(?:ly)?|licen[cs]\w*|permi\w*|prohibit\w*|forbid\w*|restrict\w*|sell\w*|resale|military|personal|except\w*|without|not|no|must|shall|require\w*|requiring)\b/i;
+// Words and phrases of terms that a copyright line may add. A holder's name is not checked, as it may be spelled in any
+// case or script; words that are common in names, such as "use", "no", "free" or "personal", are left out.
+const addedTerm =
+  /\b(?:only|(?:non-?|no-?)?commercial(?:ly)?|nc|proprietary|confidential\w*|evaluation|trial|expir\w*|internal(?:ly)?|prohibit\w*|restrict\w*|forbid\w*|permi\w*|licen[cs]\w*|not|must|shall|require\w*|requiring|except\w*|without|sell\w*|resell\w*|resale|redistribut\w*|military|purposes?|attribution|mandatory|revoc\w*|revok\w*|free for)\b/i;
 
-function isHolder(holder: string): boolean {
-  const words = holder.split(' ').filter((word) => word !== '');
-  const name = words.filter((word) => !/^\d/.test(word));
-  return (name.length === 1 && handle.test(name[0] ?? '')) || words.every((word) => holderWord.test(word));
-}
-
-/** Whether all of a part is a copyright notice: its marks, years, holder names and contacts, and no terms. */
-function isWholeNotice(part: string): boolean {
-  if (!copyrightNotice.test(part) || noticeTerm.test(part)) return false;
-  const rest = part.replace(noticeMarks, '').replace(rightsReserved, '').replace(/\.$/, '').replace(placeholder, 'X');
-  return rest.split(holderSeparator).every(isHolder);
-}
+// A part of a copyright line that is a notice: it opens with the copyright marks and holds no words of terms.
+const isWholeNotice = (part: string) => copyrightNotice.test(part) && !addedTerm.test(part);
 
 // SPDX matching guidelines B.10 and B.11: a line of copyright notices is ignored, but not one that adds other terms.
 function isNotice(line: string): boolean {
