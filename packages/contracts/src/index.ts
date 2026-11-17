@@ -1,13 +1,19 @@
 export { canonicalJson, contentHash } from './content-hash.ts';
+export { dataFileContract, recordContracts } from './data-file.ts';
 export { exclusionsFile } from './exclusions.ts';
 export {
+  count,
+  dateTime,
   gitSha,
   httpsUrl,
   itemId,
   itemName,
   keyword,
+  kind,
   registryName,
+  semver,
   type SourceId,
+  sourceId,
   spdxId,
   versionLabel,
 } from './fields.ts';

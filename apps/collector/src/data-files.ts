@@ -11,7 +11,7 @@ import type { RepositoryFacts } from './repository-facts.ts';
 /** Published data files by path relative to the data folder; every file is written by the collector itself. */
 export type DataFiles = ReadonlyMap<string, string>;
 
-function jsonFile(value: unknown): string {
+export function jsonFile(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
