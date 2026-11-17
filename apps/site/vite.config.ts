@@ -16,6 +16,8 @@ function readJson(path: string): unknown {
 function validatedData() {
   const paths = readdirSync(dataFolder, { recursive: true, encoding: 'utf8' }).filter((path) => path.endsWith('.json'));
   for (const path of paths) {
+    // Parsed below with its typed contract, which the page list needs.
+    if (path === 'index.json') continue;
     const contract = dataFileContract(path.split(sep).join('/'));
     if (contract === undefined) throw new Error(`${path} is not a file of the data layout`);
     contract.parse(readJson(path));

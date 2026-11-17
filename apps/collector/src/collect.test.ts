@@ -833,9 +833,9 @@ it('keeps a deprecated server and leaves out a deleted one and one without a Git
 
 it('publishes meta.json with the run time, the versions, the sources read and the run statistics', async () => {
   const { report, files } = await run(fakeWorld(), '2026-11-16');
-  const meta = JSON.parse(publication(files, new Map(), report).get('meta.json') ?? '');
+  const meta = JSON.parse(publication(files, new Map(), { ...report, requests: 123 }).get('meta.json') ?? '');
   const versions = (version: unknown) => Object.fromEntries(Object.keys(firstItems).map((kind) => [kind, version]));
-  expect({ ...meta, stats: { ...meta.stats, requests: meta.stats.requests === report.requests } }).toEqual({
+  expect(meta).toEqual({
     schemaVersion: 1,
     runAt: '2026-11-16T06:00:00Z',
     schemaVersions: versions(1),
@@ -846,7 +846,7 @@ it('publishes meta.json with the run time, the versions, the sources read and th
       { id: 'github', readAt: '2026-11-16T06:00:00Z' },
       { id: 'mcp-registry', readAt: '2026-11-16T06:00:00Z' },
     ],
-    stats: { requests: true, itemsByKind: firstItems, otherSourceKinds: 0 },
+    stats: { requests: 123, itemsByKind: firstItems, otherSourceKinds: 0 },
   });
 });
 
