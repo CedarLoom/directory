@@ -269,19 +269,23 @@ function ownField(
   return given(manifest) && withholdsLicense.test(manifest) ? { value: manifest, source: 'manifest' } : undefined;
 }
 
-// The repository's license does not cover an item its plugin withholds; only the item's own license file can.
-function withheldByContainer(container: string | undefined, folderLicenseFile: boolean): License | undefined {
+// The repository's license does not cover an item its plugin withholds; only a license file in the item's own folder can.
+function withheldByContainer(
+  container: string | undefined,
+  folderLicenseFile: boolean,
+  containerFolder: boolean | undefined,
+): License | undefined {
   if (!withholds(container)) return undefined;
-  return folderLicenseFile
+  return folderLicenseFile && containerFolder !== true
     ? { source: 'license-file', class: 'none' }
     : { source: 'manifest', class: 'none', withheld: true };
 }
 
 /**
  * The item's license: a frontmatter value first, else a manifest value that withholds the license, else, when the
- * containing plugin's manifest value (`container`) withholds it, a license file in the item's folder or that withheld
- * value, else GitHub's detected one, else a manifest value, else a license file in the item's folder, which GitHub does
- * not name, as it reads the root only.
+ * containing plugin's manifest value (`container`) withholds it, a license file in the item's folder unless that is the
+ * plugin's folder (`containerFolder`), or that withheld value, else GitHub's detected one, else a manifest value, else a
+ * license file in the item's folder, which GitHub does not name, as it reads the root only.
  */
 export function licenseOf(
   detected: string | undefined,
@@ -289,11 +293,13 @@ export function licenseOf(
     declared,
     manifest,
     container,
+    containerFolder,
     folderLicenseFile = false,
   }: {
     declared?: string | undefined;
     manifest?: string | undefined;
     container?: string | undefined;
+    containerFolder?: boolean | undefined;
     folderLicenseFile?: boolean;
   } = {},
 ): License {
@@ -302,7 +308,7 @@ export function licenseOf(
     const { value, source } = own;
     return withholdsLicense.test(value) ? { source, class: 'none', withheld: true } : stated(value, source);
   }
-  const inherited = withheldByContainer(container, folderLicenseFile);
+  const inherited = withheldByContainer(container, folderLicenseFile, containerFolder);
   if (inherited !== undefined) return inherited;
   const inFolder: License = folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
   if (detected === undefined) return given(manifest) ? stated(manifest, 'manifest') : inFolder;

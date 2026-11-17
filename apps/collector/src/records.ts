@@ -50,9 +50,14 @@ export interface ItemRecord {
 
 /**
  * What a record is built from: the candidate, its repository's facts, the license field of its containing plugin's
- * manifest and what was read for its kind.
+ * manifest, whether the item's folder is that plugin's folder, and what was read for its kind.
  */
-export type RecordInput = { candidate: Located; facts: RepositoryFacts; containerLicense?: string | undefined } & (
+export type RecordInput = {
+  candidate: Located;
+  facts: RepositoryFacts;
+  containerLicense?: string | undefined;
+  inContainerFolder?: boolean;
+} & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
   | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin } }
   | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean; licenseFile: boolean }
@@ -74,7 +79,7 @@ const sourceOrder: readonly SourceId[] = [
 
 /** The fields every kind shares; a release or a version label counts as a release. */
 function baseFields(
-  { candidate, facts, containerLicense }: RecordInput,
+  { candidate, facts, containerLicense, inContainerFolder }: RecordInput,
   runDate: string,
   { signals, flags, version }: Assessment & { version?: string | undefined },
   license: Parameters<typeof licenseOf>[1] = {},
@@ -90,7 +95,7 @@ function baseFields(
     links: candidate.links,
     ...(candidate.container === undefined ? {} : { container: candidate.container }),
     listedIn: candidate.listedIn,
-    license: licenseOf(facts.license, { ...license, container: containerLicense }),
+    license: licenseOf(facts.license, { ...license, container: containerLicense, containerFolder: inContainerFolder }),
     ...(facts.maintenance === undefined ? {} : { maintenance: facts.maintenance }),
     popularity: [
       { signal: 'stars', ...pointer },

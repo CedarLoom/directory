@@ -199,12 +199,12 @@ export function MethodPage({ meta }: { meta: MetaFile }) {
             own folder. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the
             word proprietary alone, reads "Withheld: no license granted" in the list and on the item's page and scores
             as no license whatever the repository grants. A plugin manifest that withholds the license withholds it also
-            for the skills, agents, hooks and output styles listed as part of the plugin; a skill's own license field
-            still applies, and a license file in a skill's folder is recorded in its place. A blank field and one that
-            holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding
-            license field does not count as filled, neither for a skill's license field nor among a plugin's manifest
-            fields. A field that holds no SPDX expression of listed license and exception ids, such as one with a
-            LicenseRef, and a license file in the item's folder are recorded without an SPDX id. SPDX ids match in any
+            for the skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license
+            field still applies, and so does a license file in a skill's folder other than the plugin's. A blank field
+            and one that holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or
+            withholding license field does not count as filled, neither for a skill's license field nor among a plugin's
+            manifest fields. A field that holds no SPDX expression of listed license and exception ids, such as one with
+            a LicenseRef, and a license file in the item's folder are recorded without an SPDX id. SPDX ids match in any
             case and are recorded as the SPDX License List writes them. An expression takes the class of its most
             permissive part when OR joins its parts and of its least permissive part when AND joins them. "No license
             detected" means that none of these was found, not that the item has no license.

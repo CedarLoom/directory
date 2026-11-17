@@ -18,8 +18,10 @@ export const directoryPaths = {
   bin: 'bin',
 } as const;
 
+export const manifestPath = '.claude-plugin/plugin.json';
+
 const files = {
-  manifest: '.claude-plugin/plugin.json',
+  manifest: manifestPath,
   marketplace: '.claude-plugin/marketplace.json',
   hooks: 'hooks/hooks.json',
   mcp: '.mcp.json',
