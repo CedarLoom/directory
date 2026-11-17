@@ -2,6 +2,7 @@ import { pluginRecord, versionLabel } from '@directory/contracts';
 import { z } from 'zod';
 import { type HookEvents, hookEvents, hookFacts, hookModules, inlineHookEvents } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
+import { isLicenseValue } from './license-class.ts';
 import { unpinnedPackage } from './package-pin.ts';
 import type { Entry, Inspection } from './repository-tree.ts';
 
@@ -185,15 +186,28 @@ const text = z.string().min(1);
 const filled = (value: unknown): boolean => text.safeParse(value).success;
 const namedAuthor = z.object({ name: text });
 
-/** Of version, description, author, repository or homepage, and license: each given with a value. */
+/**
+ * Of version, description, author, repository or homepage, and license: each given with a value, the license read like
+ * a skill's license field.
+ */
 function manifestFields(plugin: z.infer<typeof manifest>, versioned: boolean): number {
   return [
     versioned,
     filled(plugin.description),
     filled(plugin.author) || namedAuthor.safeParse(plugin.author).success,
     filled(plugin.repository) || filled(plugin.homepage),
-    filled(plugin.license),
+    typeof plugin.license === 'string' && isLicenseValue(plugin.license),
   ].filter(Boolean).length;
+}
+
+const licensed = z.object({ license: text });
+
+/**
+ * The license field of a plugin manifest, for the items the plugin holds; a manifest that is no JSON object gives none,
+ * as the plugin's own record is refused for it.
+ */
+export function manifestLicense(file: string | undefined): string | undefined {
+  return licensed.safeParse(jsonText.safeParse(file).data).data?.license;
 }
 
 /** The facts of a plugin directory in the default layout; component paths a manifest adds are not followed. */

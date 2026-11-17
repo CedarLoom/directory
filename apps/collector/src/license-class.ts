@@ -258,28 +258,42 @@ export function isLicenseValue(value: string): boolean {
   return given(value) && !withholdsLicense.test(value);
 }
 
-// The field that decides over GitHub's detection: any frontmatter value, or a manifest value that withholds the license.
+const withholds = (value: string | undefined): value is string => given(value) && withholdsLicense.test(value);
+
+// The field that decides over GitHub's detection: any frontmatter value, a manifest value that withholds the license, or
+// one of the containing plugin's manifest unless the item has a license file in its own folder.
 function ownField(
   declared: string | undefined,
   manifest: string | undefined,
+  container: string | undefined,
+  folderLicenseFile: boolean,
 ): { value: string; source: 'manifest' | 'frontmatter' } | undefined {
   if (given(declared)) return { value: declared, source: 'frontmatter' };
-  return given(manifest) && withholdsLicense.test(manifest) ? { value: manifest, source: 'manifest' } : undefined;
+  if (withholds(manifest)) return { value: manifest, source: 'manifest' };
+  return withholds(container) && !folderLicenseFile ? { value: container, source: 'manifest' } : undefined;
 }
 
 /**
- * The item's license: a frontmatter value first, else a manifest value that withholds the license, else GitHub's detected one,
- * else a manifest value, else a license file in the item's folder, which GitHub does not name, as it reads the root only.
+ * The item's license: a frontmatter value first, else a manifest value that withholds the license, else such a value of
+ * the containing plugin's manifest (`container`) unless a license file in the item's folder states its own, else GitHub's
+ * detected one, else a manifest value, else a license file in the item's folder, which GitHub does not name, as it reads
+ * the root only.
  */
 export function licenseOf(
   detected: string | undefined,
   {
     declared,
     manifest,
+    container,
     folderLicenseFile = false,
-  }: { declared?: string | undefined; manifest?: string | undefined; folderLicenseFile?: boolean } = {},
+  }: {
+    declared?: string | undefined;
+    manifest?: string | undefined;
+    container?: string | undefined;
+    folderLicenseFile?: boolean;
+  } = {},
 ): License {
-  const own = ownField(declared, manifest);
+  const own = ownField(declared, manifest, container, folderLicenseFile);
   if (own !== undefined) {
     const { value, source } = own;
     return withholdsLicense.test(value) ? { source, class: 'none', withheld: true } : stated(value, source);

@@ -10,6 +10,7 @@ import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
 import { UnknownLicenseError } from './license-class.ts';
 import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
+import { manifestLicense } from './plugin-analyzer.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
 import { inspectLocations } from './repository-tree.ts';
@@ -121,11 +122,18 @@ function refusalLogger(log: (line: string) => void, counter: { refused: number }
 
 type Build = (input: RecordInput) => ItemRecord | 'refused';
 
-/** Builds a record, or logs a refusal when its facts do not fit the record or its license is unknown. */
-function recordBuilder(runDate: string, refuse: Refuse): Build {
+/**
+ * Builds a record, with the manifest license of the plugin that holds the item, or logs a refusal when its facts do not
+ * fit the record or its license is unknown.
+ */
+function recordBuilder(runDate: string, refuse: Refuse, manifestLicenses: ReadonlyMap<string, string>): Build {
   return (input) => {
+    const { container } = input.candidate;
     try {
-      return buildRecord(input, runDate);
+      return buildRecord(
+        container === undefined ? input : { ...input, containerLicense: manifestLicenses.get(container) },
+        runDate,
+      );
     } catch (error) {
       if (!(error instanceof ZodError || error instanceof UnknownLicenseError)) throw error;
       refuse(input.candidate.id, error);
@@ -172,8 +180,11 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
   return { inspections, found };
 }
 
-/** Inspects a batch of plugins and adds the items they hold to `found`, also those of a plugin refused for its own facts. */
-function pluginReader({ client, refuse, build }: Reading, found: Candidate[]) {
+/**
+ * Inspects a batch of plugins and adds the items they hold to `found` and their manifest licenses to `manifestLicenses`,
+ * also those of a plugin refused for its own facts.
+ */
+function pluginReader({ client, refuse, build }: Reading, found: Candidate[], manifestLicenses: Map<string, string>) {
   return async (batch: readonly Ranked[]): Promise<Read[]> => {
     const places = batch.map(
       ({ candidate: { location, id, provenance } }): InspectedPlace => ({ location, container: id, provenance }),
@@ -183,7 +194,10 @@ function pluginReader({ client, refuse, build }: Reading, found: Candidate[]) {
     return batch.map(({ candidate, facts }, index): Read => {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
       if (inspection === 'too-large') return 'refused';
-      if (inspection === undefined || source === undefined) return undefined;
+      if (inspection === undefined) return undefined;
+      const license = manifestLicense(inspection.files.manifest);
+      if (license !== undefined) manifestLicenses.set(candidate.id, license);
+      if (source === undefined) return undefined;
       return build({ kind: 'plugin', candidate, facts, inspection, source });
     });
   };
@@ -335,10 +349,12 @@ export async function collect(
     (repository) => !excluded.has(repositoryId(repository)),
   );
   const facts = await readFacts(client, factsRepositories(listed, topicRepositories, log), runDate);
-  const reading: Reading = { client, refuse, build: recordBuilder(runDate, refuse) };
+  // Filled while the plugins are read, before the items they hold are built.
+  const manifestLicenses = new Map<string, string>();
+  const reading: Reading = { client, refuse, build: recordBuilder(runDate, refuse, manifestLicenses) };
   const found: Candidate[] = [];
   const [plugins, topics] = await Promise.all([
-    fill(ranked(listed, 'plugin', facts), perKind, pluginReader(reading, found)),
+    fill(ranked(listed, 'plugin', facts), perKind, pluginReader(reading, found, manifestLicenses)),
     inspectPlaces(client, topicPlaces(topicRepositories, facts), refuse),
   ]);
   const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found, ...topics.found]);
