@@ -171,6 +171,33 @@ function Policies() {
   );
 }
 
+function LicenseFacts() {
+  return (
+    <Text>
+      <Trans id="method.licenseFacts">
+        The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the
+        repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's own
+        folder. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the word
+        proprietary alone, reads "Withheld: no license granted" in the list and on the item's page and scores as no
+        license whatever the repository grants. A plugin manifest that withholds the license withholds it also for the
+        skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license field still
+        applies, and so does a license file in a skill's folder other than the plugin's. A blank field and one that
+        holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding
+        license field does not count as filled, neither for a skill's license field nor among a plugin's manifest
+        fields. A field that holds no SPDX expression of listed license and exception ids, such as one with a
+        LicenseRef, is recorded without an SPDX id. A license file in the item's folder is recorded with the SPDX id of
+        the license whose template in the SPDX License List 3.29 its text matches once whitespace, case, punctuation and
+        copyright lines are set aside as the SPDX matching guidelines describe; the templates are those of the licenses
+        GitHub detects, their earlier versions and other licenses items state. A license file that matches none of them,
+        and one of several license files in the folder, is recorded without an SPDX id. SPDX ids match in any case and
+        are recorded as the SPDX License List writes them. An expression takes the class of its most permissive part
+        when OR joins its parts and of its least permissive part when AND joins them. "No license detected" means that
+        none of these was found, not that the item has no license.
+      </Trans>
+    </Text>
+  );
+}
+
 /** How the Directory collects and scores its items. */
 export function MethodPage({ meta }: { meta: MetaFile }) {
   const { i18n } = useLingui();
@@ -192,24 +219,7 @@ export function MethodPage({ meta }: { meta: MetaFile }) {
         <Title order={2} id="rubrics-heading">
           <Trans id="method.rubricsHeading">Rubrics</Trans>
         </Title>
-        <Text>
-          <Trans id="method.licenseFacts">
-            The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the
-            repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's
-            own folder. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the
-            word proprietary alone, reads "Withheld: no license granted" in the list and on the item's page and scores
-            as no license whatever the repository grants. A plugin manifest that withholds the license withholds it also
-            for the skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license
-            field still applies, and so does a license file in a skill's folder other than the plugin's. A blank field
-            and one that holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or
-            withholding license field does not count as filled, neither for a skill's license field nor among a plugin's
-            manifest fields. A field that holds no SPDX expression of listed license and exception ids, such as one with
-            a LicenseRef, and a license file in the item's folder are recorded without an SPDX id. SPDX ids match in any
-            case and are recorded as the SPDX License List writes them. An expression takes the class of its most
-            permissive part when OR joins its parts and of its least permissive part when AND joins them. "No license
-            detected" means that none of these was found, not that the item has no license.
-          </Trans>
-        </Text>
+        <LicenseFacts />
         <Stack gap="md">
           {rubrics.map((rubric) => (
             <RubricTable key={rubric.kind} rubric={rubric} />

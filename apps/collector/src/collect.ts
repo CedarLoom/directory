@@ -8,12 +8,12 @@ import type { HttpClient } from './http-client.ts';
 import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
-import { UnknownLicenseError } from './license-class.ts';
+import { licenseFileNames, UnknownLicenseError } from './license-class.ts';
 import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
 import { manifestLicense } from './plugin-analyzer.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
-import { inspectLocations, manifestPath } from './repository-tree.ts';
+import { type Inspection, inspectLocations, manifestPath } from './repository-tree.ts';
 import type { RunReport } from './run-report.ts';
 import type { SourceAdapter } from './source-adapter.ts';
 import { searchTopics } from './topic-search.ts';
@@ -202,6 +202,30 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
 }
 
 /**
+ * The text of each item's license file when its own folder holds exactly one: GitHub names a license at the repository
+ * root, and several license files may grant several licenses.
+ */
+async function readFolderLicenses(
+  client: HttpClient,
+  items: readonly { location: GitHubLocation; names: readonly string[] }[],
+): Promise<(string | undefined)[]> {
+  const targets = items.flatMap(({ location, names: [name, ...others] }, index) =>
+    location.path === '' || name === undefined || others.length > 0 ? [] : [{ index, location, file: name }],
+  );
+  const reads = await readItemFiles(client, targets, false);
+  const texts: (string | undefined)[] = items.map(() => undefined);
+  for (const [at, { index }] of targets.entries()) {
+    const file = reads[at]?.file;
+    // A license file over the size cap is no reason to refuse the item; it stays unnamed.
+    if (file !== undefined && file !== 'too-large') texts[index] = file.text;
+  }
+  return texts;
+}
+
+const rootLicenseFiles = (inspection: Inspection | 'too-large' | undefined) =>
+  inspection === undefined || inspection === 'too-large' ? [] : licenseFileNames(inspection.directories.root);
+
+/**
  * Inspects a batch of plugins and adds the items they hold to `found` and their manifest licenses to the containers,
  * also those of a plugin refused for its own facts.
  */
@@ -212,27 +236,47 @@ function pluginReader({ client, refuse, build, containers }: Reading, found: Can
     );
     const inspected = await inspectPlaces(client, places, refuse);
     found.push(...inspected.found);
+    const licenses = await readFolderLicenses(
+      client,
+      places.map(({ location }, index) => ({ location, names: rootLicenseFiles(inspected.inspections[index]) })),
+    );
     return batch.map(({ candidate, facts }, index): Read => {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
       if (inspection === 'too-large') return 'refused';
       if (inspection === undefined) return undefined;
       containers.licenses.set(candidate.id, { license: manifestLicense(inspection.files.manifest) });
       if (source === undefined) return undefined;
-      return build({ kind: 'plugin', candidate, facts, inspection, source });
+      return build({ kind: 'plugin', candidate, facts, inspection, source, folderLicenseText: licenses[index] });
     });
   };
 }
 
-function fileRecord(kind: FileKind, { candidate, facts }: Ranked, read: ItemFile | undefined, reading: Reading): Read {
+function fileRecord(
+  kind: FileKind,
+  { candidate, facts }: Ranked,
+  read: (ItemFile & { licenseText: string | undefined }) | undefined,
+  reading: Reading,
+): Read {
   if (read?.file === 'too-large') {
     reading.refuse(candidate.id, new Error(tooLarge));
     return 'refused';
   }
   const text = read?.file.text;
   if (read === undefined || text === undefined) return undefined;
-  const { folders, tests, licenseFile } = read;
+  const { folders, tests, licenseFiles, licenseText } = read;
   return reading.build(
-    kind === 'skill' ? { kind, candidate, facts, text, folders, tests, licenseFile } : { kind, candidate, facts, text },
+    kind === 'skill'
+      ? {
+          kind,
+          candidate,
+          facts,
+          text,
+          folders,
+          tests,
+          licenseFile: licenseFiles.length > 0,
+          folderLicenseText: licenseText,
+        }
+      : { kind, candidate, facts, text },
   );
 }
 
@@ -262,7 +306,7 @@ async function readManifestLicenses({ client, containers }: Reading, batch: read
   }
 }
 
-/** Reads a batch of skills' SKILL.md and folders, or of agents' or output styles' own files, and builds their records. */
+/** Reads a batch of skills' SKILL.md, folders and license file, or of agents' or output styles' own files, and builds their records. */
 function fileReader(reading: Reading, kind: FileKind) {
   return async (batch: readonly Ranked[]): Promise<Read[]> => {
     const skill = kind === 'skill';
@@ -274,7 +318,14 @@ function fileReader(reading: Reading, kind: FileKind) {
       ),
       readManifestLicenses(reading, batch),
     ]);
-    return batch.map((item, index) => fileRecord(kind, item, files[index], reading));
+    const licenses = await readFolderLicenses(
+      reading.client,
+      batch.map(({ candidate: { location } }, index) => ({ location, names: files[index]?.licenseFiles ?? [] })),
+    );
+    return batch.map((item, index) => {
+      const file = files[index];
+      return fileRecord(kind, item, file && { ...file, licenseText: licenses[index] }, reading);
+    });
   };
 }
 

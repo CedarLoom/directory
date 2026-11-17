@@ -4,6 +4,7 @@
   "ignore": [
     "**/pnpm-lock.yaml",
     "**/LICENSES/**",
+    "apps/collector/src/license-templates.json",
     "packages/contracts/schemas/**",
     "packages/contracts/fixtures/**",
     "rubrics/**",
