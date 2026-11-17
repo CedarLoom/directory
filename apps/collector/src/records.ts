@@ -126,7 +126,7 @@ function marketplace(input: InputOf<'marketplace'>, runDate: string) {
 }
 
 function plugin(input: InputOf<'plugin'>, runDate: string) {
-  // The scoring-only facts stay out of the record.
+  // The scoring-only facts stay out of the record; the manifest license feeds the record's license.
   const {
     manifestName,
     manifestFields,

@@ -55,3 +55,65 @@ it('counts neither third-party inventories nor scripts named after licenses', ()
     holds('license.json'),
   ]).toEqual([false, false, false, false, false, false, false]);
 });
+
+it('keeps a stated SPDX id the class table lacks as class none, in a manifest and a frontmatter', () => {
+  expect([licenseOf(undefined, { manifest: 'Apache-1.1' }), licenseOf(undefined, { declared: 'Apache-1.1' })]).toEqual([
+    { spdx: 'Apache-1.1', source: 'manifest', class: 'none' },
+    { spdx: 'Apache-1.1', source: 'frontmatter', class: 'none' },
+  ]);
+});
+
+it('reads a blank, UNLICENSED or proprietary manifest value as no manifest license', () => {
+  expect([
+    licenseOf(undefined, { manifest: ' ', folderLicenseFile: true }),
+    licenseOf(undefined, { manifest: 'UNLICENSED' }),
+    licenseOf(undefined, { manifest: 'unlicensed', folderLicenseFile: true }),
+    licenseOf(undefined, { manifest: 'Proprietary' }),
+    licenseOf(undefined, { manifest: 'PROPRIETARY', folderLicenseFile: true }),
+  ]).toEqual([
+    { source: 'license-file', class: 'none' },
+    { class: 'none' },
+    { source: 'license-file', class: 'none' },
+    { class: 'none' },
+    { source: 'license-file', class: 'none' },
+  ]);
+});
+
+it('counts LICENSE-<suffix> for a full SPDX id, a license family with an optional version, or CODE', () => {
+  expect(
+    [
+      'LICENSE-CODE',
+      'LICENSE-APACHE2',
+      'LICENSE-GPLv2',
+      'LICENSE-GPLv3',
+      'LICENSE-AGPLv3',
+      'LICENSE-LGPL',
+      'LICENSE-BSD',
+      'LICENSE-MPL-2',
+      'LICENSE-EPL',
+      'LICENSE-ISC',
+      'LICENSE-CC0',
+      'LICENSE-CC-BY',
+      'LICENSE-ZLIB',
+      'LICENSE-UNLICENSE',
+      'license-bsd-3-clause.txt',
+      'LICENSE-openssl',
+      'license-json.txt',
+    ].filter((name) => !holds(name)),
+  ).toEqual([]);
+});
+
+it('counts no LICENSE-<suffix> whose suffix is a generic word', () => {
+  expect(
+    [
+      'LICENSE-check.txt',
+      'LICENSE-any',
+      'LICENSE-doc.md',
+      'LICENSE-INFO.md',
+      'LICENSE-CC.txt',
+      'LICENSE-python.txt',
+      'LICENSE-vendor',
+      'LICENSE-THIRDPARTY',
+    ].filter((name) => holds(name)),
+  ).toEqual([]);
+});

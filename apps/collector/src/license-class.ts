@@ -2,7 +2,7 @@ import { spdxId } from '@directory/contracts';
 
 type LicenseClass = 'permissive' | 'copyleft' | 'source-available' | 'none';
 
-/** A license id the class table does not hold; the item is refused rather than given a guessed class. */
+/** A GitHub license id the class table does not hold; the item is refused rather than given a guessed class. */
 export class UnknownLicenseError extends Error {
   override name = 'UnknownLicenseError';
 }
@@ -88,16 +88,19 @@ export interface License {
 // LICENSE-MIT, COPYING.LESSER or UNLICENSE count; a file such as license.js is code, not a license.
 const licenseFileName =
   /^(?:(?:un)?licen[cs]e|copying(?:\.lesser)?|licen[cs]e-(?<id>.+?))(?:\.(?:md|markdown|txt|rst|html))?$/i;
-// The suffix of LICENSE-<id> is an SPDX id or its first part, as in LICENSE-APACHE; LICENSE-THIRDPARTY is no license.
+// LICENSE-DOC holds the terms of the documentation, not the DOC license.
 const licenseIds: ReadonlySet<string> = new Set(
-  spdxId.options.flatMap((id) => [id, id.split('-')[0] ?? id]).map((id) => id.toLowerCase()),
+  spdxId.options.filter((id) => id !== 'DOC').map((id) => id.toLowerCase()),
 );
+// A family with an optional version, as in LICENSE-APACHE2 or LICENSE-GPLv3, or LICENSE-CODE; LICENSE-INFO is none.
+const licenseSuffix =
+  /^(?:(?:mit|apache|bsd|[al]?gpl|mpl|epl|isc|cc0|cc-by|zlib|unlicense)(?:-?v?\d+(?:\.\d+)*)?|code)$/i;
 
 function isLicenseFileName(name: string): boolean {
   const match = licenseFileName.exec(name);
   if (match === null) return false;
   const id = match.groups?.['id'];
-  return id === undefined || licenseIds.has(id.toLowerCase());
+  return id === undefined || licenseIds.has(id.toLowerCase()) || licenseSuffix.test(id);
 }
 
 /** Whether a folder listing holds a license file. */
@@ -105,18 +108,28 @@ export function holdsLicenseFile(entries: readonly { name: string; type: string 
   return entries?.some(({ name, type }) => type === 'blob' && isLicenseFileName(name)) ?? false;
 }
 
-function classOf(id: string): LicenseClass {
+function knownClass(id: string): LicenseClass | undefined {
   // GPL-3.0-only and GPL-3.0-or-later share the class of GitHub's GPL-3.0.
-  const found = classes[id.replace(/-(only|or-later)$/, '')];
-  // The id is an SPDX id or GitHub's, never free text.
+  return classes[id.replace(/-(only|or-later)$/, '')];
+}
+
+function classOf(id: string): LicenseClass {
+  const found = knownClass(id);
+  // The id is GitHub's, never free text.
   if (found === undefined) throw new UnknownLicenseError(`no license class for ${id}`);
   return found;
 }
 
 // A stated value that is no SPDX id, such as a sentence, states terms of its own: class `none` without its text.
+// An SPDX id the class table lacks, such as Apache-1.1, keeps its id with class `none` rather than refusing the item.
 function stated(value: string, source: 'manifest' | 'frontmatter'): License {
-  return spdxId.safeParse(value).success ? { spdx: value, source, class: classOf(value) } : { source, class: 'none' };
+  return spdxId.safeParse(value).success
+    ? { spdx: value, source, class: knownClass(value) ?? 'none' }
+    : { source, class: 'none' };
 }
+
+// A blank value, npm's UNLICENSED or proprietary grants no license, so the manifest states none.
+const grantsNoLicense = /^\s*(?:unlicensed|proprietary)?\s*$/i;
 
 /**
  * The item's license: a frontmatter value first, else GitHub's detected one, else a plugin manifest value, else a
@@ -133,7 +146,7 @@ export function licenseOf(
 ): License {
   if (declared !== undefined) return stated(declared, 'frontmatter');
   if (detected === undefined) {
-    if (manifest !== undefined) return stated(manifest, 'manifest');
+    if (manifest !== undefined && !grantsNoLicense.test(manifest)) return stated(manifest, 'manifest');
     return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
   }
   // NOASSERTION: GitHub found a license file it could not name.
