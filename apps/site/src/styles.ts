@@ -2,6 +2,8 @@ import '@fontsource-variable/inter/index.css';
 import '@mantine/core/styles/baseline.css';
 import '@mantine/core/styles/default-css-variables.css';
 import '@mantine/core/styles/global.css';
+// Before Anchor: an anchor is also a Text, and the later rule of equal weight wins its underline.
+import '@mantine/core/styles/Text.css';
 import '@mantine/core/styles/Anchor.css';
 import '@mantine/core/styles/Badge.css';
 import '@mantine/core/styles/Checkbox.css';
@@ -14,7 +16,6 @@ import '@mantine/core/styles/SimpleGrid.css';
 import '@mantine/core/styles/Stack.css';
 import '@mantine/core/styles/Table.css';
 import '@mantine/core/styles/ScrollArea.css';
-import '@mantine/core/styles/Text.css';
 import '@mantine/core/styles/Title.css';
 import '@mantine/core/styles/UnstyledButton.css';
 import './theme/tokens.css';

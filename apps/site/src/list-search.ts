@@ -2,6 +2,9 @@ import { z } from 'zod';
 import type { FitLabel, Kind, LicenseClass, Maintenance } from './data-types.ts';
 import { fitLabels, kinds, licenseClasses, maintenanceStates } from './vocabulary.ts';
 
+// The page policy allows no eval, and zod's `new Function` probe would be reported as a violation.
+z.config({ jitless: true });
+
 export const columnIds = [
   'name',
   'kind',

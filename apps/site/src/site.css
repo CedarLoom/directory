@@ -31,7 +31,7 @@ body {
 .site-header a,
 .disclosure summary,
 .sort-button,
-td a {
+.mantine-Table-td a {
   display: inline-flex;
   align-items: center;
   min-block-size: var(--size-target);
@@ -73,15 +73,14 @@ td a {
   flex-direction: row-reverse;
 }
 
-/* Fields of 16 px stop phone browsers from zooming in on focus. */
-input,
-select {
-  font-size: var(--font-size-field);
-  min-block-size: var(--size-field);
+/* Mantine's default input size reads this variable. */
+.mantine-Input-wrapper {
+  --input-height-sm: max(2.25rem, var(--size-field));
 }
 
-input[type="checkbox"] {
-  min-block-size: auto;
+/* Fields of 16 px stop phone browsers from zooming in on focus. */
+.mantine-Input-input {
+  font-size: var(--font-size-field);
 }
 
 .history-change {
