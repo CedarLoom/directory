@@ -1,9 +1,9 @@
-import type { I18n, MessageDescriptor } from '@lingui/core';
+import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Table, Title } from '@mantine/core';
 import type { Rubric } from '../data-types.ts';
-import { flagLabels, kindLabels, signalLabels } from '../labels.ts';
+import { flagLabels, kindLabels, signalName } from '../labels.ts';
 import { ScrollTable } from '../layout/ScrollTable.tsx';
 
 const groupLabels = {
@@ -16,12 +16,7 @@ const groupLabels = {
   provenance: msg({ id: 'group.provenance', message: 'Provenance' }),
 } satisfies Record<Rubric['signals'][number]['group'], MessageDescriptor>;
 
-function signalName(i18n: I18n, id: string): string {
-  const label = signalLabels[id];
-  return label === undefined ? id : i18n._(label);
-}
-
-/** The signals that give points only when another signal of the record is above 0, by that signal. */
+/** The signals that give points only when another signal of the record is true or above 0, by that signal. */
 function Gates({ rubric }: { rubric: Rubric }) {
   const { i18n } = useLingui();
   const gates = new Map<string, string[]>();
@@ -33,7 +28,7 @@ function Gates({ rubric }: { rubric: Rubric }) {
     return (
       <p key={gateId}>
         <Trans id="method.gate">
-          {signals}: points only when {gate} is above 0, so an empty item gets none.
+          {signals}: no points without {gate}, so an empty item gets none.
         </Trans>
       </p>
     );

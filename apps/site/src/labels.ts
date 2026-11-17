@@ -1,4 +1,4 @@
-import type { MessageDescriptor } from '@lingui/core';
+import type { I18n, MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import type { Flag, FitLabel, ItemRecord, Kind, LicenseClass, Maintenance, RecentCommits } from './data-types.ts';
 import type { ColumnId } from './list-search.ts';
@@ -127,7 +127,7 @@ export const flagLabels = {
 } satisfies Record<Flag, MessageDescriptor>;
 
 /** The rubric signals by id; a signal of a newer rubric without a label shows its id. */
-export const signalLabels: Readonly<Record<string, MessageDescriptor>> = {
+const signalLabels: Readonly<Record<string, MessageDescriptor>> = {
   lastPush: msg({ id: 'signal.lastPush', message: 'Last push' }),
   recentCommits: msg({ id: 'signal.recentCommits', message: 'Commits in the last 90 days' }),
   release: msg({ id: 'signal.release', message: 'Has a release' }),
@@ -154,11 +154,17 @@ export const signalLabels: Readonly<Record<string, MessageDescriptor>> = {
   manifestFields: msg({ id: 'signal.manifestFields', message: 'Manifest fields' }),
   noRootClaudeMd: msg({ id: 'signal.noRootClaudeMd', message: 'No CLAUDE.md at the plugin root' }),
   alwaysOnComponents: msg({ id: 'signal.alwaysOnComponents', message: 'Always-on components' }),
-  componentCount: msg({ id: 'signal.componentCount', message: 'Components' }),
+  hasComponents: msg({ id: 'signal.hasComponents', message: 'Components' }),
   hasEvals: msg({ id: 'signal.hasEvals', message: 'Ships evals' }),
   licenseField: msg({ id: 'signal.licenseField', message: 'Has a license field that is neither blank nor withheld' }),
   testsShipped: msg({ id: 'signal.testsShipped', message: 'Ships tests' }),
 };
+
+/** The label of a signal, or its id when it has none. */
+export function signalName(i18n: I18n, id: string): string {
+  const label = signalLabels[id];
+  return label === undefined ? id : i18n._(label);
+}
 
 export const columnLabels = {
   name: msg({ id: 'column.name', message: 'Name' }),

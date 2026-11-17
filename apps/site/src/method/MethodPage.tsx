@@ -101,8 +101,8 @@ function NotMeasured() {
         </List.Item>
         <List.Item>
           <Trans id="method.notMeasured.componentPaths">
-            Plugin components that the manifest names by path instead of the default layout or an inline value: their
-            hooks, MCP servers, LSP servers, monitors and mod modules are not counted and raise no flag.
+            Plugin components that the manifest names by path, and commands or agents in subfolders: they are not
+            counted and raise no flag, and only keep the plugin from counting as empty.
           </Trans>
         </List.Item>
       </List>

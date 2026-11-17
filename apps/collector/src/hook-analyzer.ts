@@ -62,9 +62,12 @@ export function hookEvents(text: string): HookEvents | undefined {
   return jsonText.pipe(hooksFile).parse(text).hooks;
 }
 
-/** The count of mod modules a hooks file lists; no hooks file lists none. */
-export function hookModules(text: string | undefined): number {
-  return text === undefined ? 0 : (jsonText.pipe(modulesFile).parse(text).modules?.length ?? 0);
+/** The count of mod modules that hooks configurations, a hooks file and the `hooks` object of plugin.json, list. */
+export function hookModules(configs: readonly unknown[]): number {
+  return configs.reduce<number>(
+    (sum, config) => sum + (config === undefined ? 0 : (modulesFile.parse(config).modules?.length ?? 0)),
+    0,
+  );
 }
 
 /** The events of the `hooks` value of plugin.json; a malformed value throws, as a malformed hooks file does. */

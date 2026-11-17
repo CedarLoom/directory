@@ -22,7 +22,11 @@ const manifest = z.object({
   lspServers: z.unknown().optional(),
   // `monitors` is read at the top level and under `experimental`, where newer manifests declare it.
   monitors: z.unknown().optional(),
-  experimental: z.object({ monitors: z.unknown().optional() }).optional(),
+  experimental: z.unknown().optional(),
+  commands: z.unknown().optional(),
+  agents: z.unknown().optional(),
+  skills: z.unknown().optional(),
+  outputStyles: z.unknown().optional(),
   userConfig,
   channels: z.array(z.object({ userConfig })).optional(),
 });
@@ -40,6 +44,8 @@ const serverMap = z.record(z.string(), server);
 const wrappedServers = z.object({ mcpServers: serverMap });
 const lspConfig = z.record(z.string(), z.unknown());
 const monitorList = z.array(z.unknown());
+// `experimental` holds other settings too; a value that is no object holds no monitors.
+const experimental = z.object({ monitors: z.unknown().optional() });
 
 // A Set, so a type such as `constructor` reads no inherited property.
 const transports: ReadonlySet<string> = new Set(['stdio', 'http', 'sse'] as const);
@@ -102,11 +108,40 @@ function lspServers(configs: readonly unknown[]): number {
   );
 }
 
-/** The monitors of the default file and those inline in the manifest; a manifest value that is a path is not followed. */
-function monitors(text: string | undefined, plugin: z.infer<typeof manifest>): number {
-  const lists = [plugin.monitors, plugin.experimental?.monitors].filter((value) => Array.isArray(value));
-  if (text !== undefined) lists.push(monitorList.parse(jsonText.parse(text)));
-  return lists.reduce((sum, list) => sum + list.length, 0);
+/** The monitor objects of the default file and of the manifest's lists; a path, alone or in a list, is not followed. */
+function monitors(text: string | undefined, manifestValues: readonly unknown[]): number {
+  return [...manifestValues, text === undefined ? undefined : monitorList.parse(jsonText.parse(text))]
+    .flatMap((value) => (Array.isArray(value) ? value : []))
+    .filter((entry) => typeof entry === 'object' && entry !== null).length;
+}
+
+/** The `monitors` values of the manifest, at the top level and under `experimental`. */
+function manifestMonitors(plugin: z.infer<typeof manifest>): unknown[] {
+  return [plugin.monitors, experimental.safeParse(plugin.experimental).data?.monitors];
+}
+
+const isPath = (value: unknown): boolean => typeof value === 'string';
+
+/** The manifest names a component path, or commands or agents sit in subfolders: components the counts leave out. */
+function uncountedComponents(
+  plugin: z.infer<typeof manifest>,
+  monitorValues: readonly unknown[],
+  { commands, agents }: Inspection['directories'],
+): boolean {
+  const values = [
+    plugin.commands,
+    plugin.agents,
+    plugin.skills,
+    plugin.outputStyles,
+    plugin.hooks,
+    plugin.mcpServers,
+    plugin.lspServers,
+    ...monitorValues,
+  ];
+  return (
+    values.some((value) => isPath(value) || (Array.isArray(value) && value.some(isPath))) ||
+    countEntries(commands, false, 'tree') + countEntries(agents, false, 'tree') > 0
+  );
 }
 
 function countEntries(
@@ -149,6 +184,7 @@ export function analyzePlugin({ directories, files }: Inspection) {
   const serverList = mcpServers([parseFile(files.mcp), inline(plugin.mcpServers)]);
   const stdio = serverList.filter(({ type = 'stdio' }) => type === 'stdio');
   const secrets = secretReferences(plugin);
+  const monitorValues = manifestMonitors(plugin);
   return {
     ...(version.success ? { version: version.data } : {}),
     components: {
@@ -159,10 +195,11 @@ export function analyzePlugin({ directories, files }: Inspection) {
       mcpServersByTransport: mcpServersByTransport(serverList),
       lspServers: lspServers([parseFile(files.lsp), inline(plugin.lspServers)]),
       outputStyles: countEntries(directories.outputStyles, true),
-      monitors: monitors(files.monitors, plugin),
+      monitors: monitors(files.monitors, monitorValues),
       binFiles: countEntries(directories.bin, false),
     },
-    modules: hookModules(files.hooks),
+    modules: hookModules([parseFile(files.hooks), inlineHooks]),
+    uncountedComponents: uncountedComponents(plugin, monitorValues, directories),
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
     manifestFields: manifestFields(plugin, version.success),

@@ -23,18 +23,34 @@ it('reads hooks given inline in plugin.json like a hooks file', () => {
   ]);
 });
 
-it('counts monitors in the default file and inline in the manifest, and the mod modules of the hooks file', () => {
+it('counts monitors in the default file and inline in the manifest, and the mod modules of both hooks configurations', () => {
   const monitor = { name: 'deploys', command: '${CLAUDE_PLUGIN_ROOT}/watch.sh', description: 'Deploy status' };
   const { components, modules } = analyzePlugin({
     directories: {},
     files: {
       monitors: JSON.stringify([monitor, { ...monitor, name: 'errors', when: 'on-skill-invoke:debug' }]),
-      manifest: JSON.stringify({ monitors: [monitor], experimental: { monitors: './more-monitors.json' } }),
+      manifest: JSON.stringify({
+        monitors: [monitor, './extra-monitors.json'],
+        experimental: { monitors: './more-monitors.json' },
+        hooks: { hooks: {}, modules: ['./inline-mod.mjs'] },
+      }),
       hooks: JSON.stringify({ modules: ['./mod.mjs'] }),
     },
   });
-  expect([components.monitors, modules]).toEqual([3, 1]);
+  expect([components.monitors, modules]).toEqual([3, 2]);
 });
+
+it.each([
+  [{}, {}, false],
+  [{ experimental: true }, {}, false],
+  [{ commands: './src/commands' }, {}, true],
+  [{ experimental: { monitors: ['./monitors.json'] } }, {}, true],
+  [{}, { commands: [{ name: 'git', type: 'tree' as const }] }, true],
+])('tells components the counts leave out: manifest %j, directories %j', (fields, directories, uncounted) =>
+  expect(analyzePlugin({ directories, files: { manifest: JSON.stringify(fields) } }).uncountedComponents).toBe(
+    uncounted,
+  ),
+);
 
 const manifestFields = (fields: object) =>
   analyzePlugin({ directories: {}, files: { manifest: JSON.stringify(fields) } }).manifestFields;

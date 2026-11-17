@@ -33,7 +33,7 @@ msgid "list.count"
 msgstr "{0} of {1} items"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:62
+#: src/method/RubricTable.tsx:57
 msgid "method.rubricHeading"
 msgstr "{kind}, rubric {version}"
 
@@ -43,14 +43,14 @@ msgid "method.sourceRead"
 msgstr "{name}, read {readAt}"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:46
+#: src/item/ScoreBreakdown.tsx:45
 msgid "item.pointsOf"
 msgstr "{points} of {max}"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:35
+#: src/method/RubricTable.tsx:30
 msgid "method.gate"
-msgstr "{signals}: points only when {gate} is above 0, so an empty item gets none."
+msgstr "{signals}: no points without {gate}, so an empty item gets none."
 
 #. js-lingui-explicit-id
 #: src/item/ItemFacts.tsx:58
@@ -163,7 +163,7 @@ msgid "nav.home"
 msgstr "CedarLoom Directory"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:170
+#: src/labels.ts:176
 msgid "column.fit"
 msgstr "CedarLoom fit"
 
@@ -219,7 +219,7 @@ msgstr "Complements CedarLoom"
 
 #. js-lingui-explicit-id
 #: src/labels.ts:157
-msgid "signal.componentCount"
+msgid "signal.hasComponents"
 msgstr "Components"
 
 #. js-lingui-explicit-id
@@ -308,7 +308,7 @@ msgid "source.github"
 msgstr "GitHub: repository facts, stars and a search by topic"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:71
+#: src/method/RubricTable.tsx:66
 msgid "method.group"
 msgstr "Group"
 
@@ -383,7 +383,7 @@ msgid "list.caption"
 msgstr "Items, sorted by the chosen column"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:165
+#: src/labels.ts:171
 msgid "column.kind"
 msgstr "Kind"
 
@@ -408,7 +408,7 @@ msgid "signal.lastPush"
 msgstr "Last push"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:172
+#: src/labels.ts:178
 msgid "column.pushedAt"
 msgstr "Last push"
 
@@ -428,7 +428,7 @@ msgid "signal.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:169
+#: src/labels.ts:175
 msgid "column.licenseClass"
 msgstr "License"
 
@@ -523,7 +523,7 @@ msgid "kinds.mcp-server"
 msgstr "MCP servers"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:71
+#: src/item/ScoreBreakdown.tsx:70
 msgid "item.measured"
 msgstr "Measured"
 
@@ -543,7 +543,7 @@ msgid "method.title"
 msgstr "Method | CedarLoom Directory"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:164
+#: src/labels.ts:170
 msgid "column.name"
 msgstr "Name"
 
@@ -654,7 +654,7 @@ msgid "item.notMeasured"
 msgstr "not measured"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:171
+#: src/labels.ts:177
 msgid "column.listedOfficial"
 msgstr "Official listing"
 
@@ -706,7 +706,7 @@ msgstr "Plugin"
 #. js-lingui-explicit-id
 #: src/method/MethodPage.tsx:103
 msgid "method.notMeasured.componentPaths"
-msgstr "Plugin components that the manifest names by path instead of the default layout or an inline value: their hooks, MCP servers, LSP servers, monitors and mod modules are not counted and raise no flag."
+msgstr "Plugin components that the manifest names by path, and commands or agents in subfolders: they are not counted and raise no flag, and only keep the plugin from counting as empty."
 
 #. js-lingui-explicit-id
 #: src/labels.ts:18
@@ -714,12 +714,12 @@ msgid "kinds.plugin"
 msgstr "Plugins"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:74
+#: src/method/RubricTable.tsx:69
 msgid "method.maxPoints"
 msgstr "Points"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:74
+#: src/item/ScoreBreakdown.tsx:73
 msgid "item.points"
 msgstr "Points"
 
@@ -794,7 +794,7 @@ msgid "signal.safety"
 msgstr "Safety flags"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:173
+#: src/labels.ts:179
 msgid "column.flagCount"
 msgstr "Safety flags"
 
@@ -804,12 +804,12 @@ msgid "item.flagsHeading"
 msgstr "Safety flags"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:48
+#: src/method/RubricTable.tsx:43
 msgid "method.penalties"
 msgstr "Safety points lost per flag:"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:166
+#: src/labels.ts:172
 msgid "column.score"
 msgstr "Score"
 
@@ -819,7 +819,7 @@ msgid "item.historyTotal"
 msgstr "Score"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:62
+#: src/item/ScoreBreakdown.tsx:61
 msgid "item.scoreHeading"
 msgstr "Score {total} of 100, rubric {version}"
 
@@ -884,12 +884,12 @@ msgid "signal.testsShipped"
 msgstr "Ships tests"
 
 #. js-lingui-explicit-id
-#: src/method/RubricTable.tsx:68
+#: src/method/RubricTable.tsx:63
 msgid "method.signal"
 msgstr "Signal"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:68
+#: src/item/ScoreBreakdown.tsx:67
 msgid "item.signal"
 msgstr "Signal"
 
@@ -934,12 +934,12 @@ msgid "signal.matchersSpecific"
 msgstr "Specific matchers"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:167
+#: src/labels.ts:173
 msgid "column.stars"
 msgstr "Stars (repository)"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:168
+#: src/labels.ts:174
 msgid "column.starsGained30d"
 msgstr "Stars +30d (repository)"
 

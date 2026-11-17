@@ -41,7 +41,7 @@
       "group": "token-cost",
       "max": 15,
       "scale": { "type": "linear", "full": 10, "zero": 40 },
-      "gate": "componentCount"
+      "gate": "hasComponents"
     },
     { "id": "safety", "group": "safety", "max": 30, "scale": { "type": "flags" } },
     { "id": "hasEvals", "group": "evals", "max": 5, "scale": { "type": "present" } }

@@ -44,7 +44,7 @@
     "nameValid": true,
     "noRootClaudeMd": true,
     "alwaysOnComponents": 6,
-    "componentCount": 9,
+    "hasComponents": true,
     "hasEvals": true
   },
   "flags": ["hook-shell-command", "hook-session-start"],

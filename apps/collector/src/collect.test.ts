@@ -773,7 +773,7 @@ const expectedScores = [
       nameValid: true,
       noRootClaudeMd: true,
       alwaysOnComponents: 3,
-      componentCount: 7,
+      hasComponents: true,
       hasEvals: true,
     },
     // The hook command holds `curl`; the stdio server runs `npx` without a package version.

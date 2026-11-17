@@ -122,8 +122,10 @@ export interface PluginFacts {
     monitors: number;
     binFiles: number;
   };
-  /** The mod modules the hooks file lists. */
+  /** The mod modules the hooks configurations list. */
   modules: number;
+  /** Components at manifest paths or in subfolders, which the counts leave out. */
+  uncountedComponents: boolean;
   hasEvals: boolean;
   /** The facts of each hook configuration: hooks/hooks.json and hooks inline in plugin.json. */
   hooks: readonly HookFacts[];
@@ -145,18 +147,21 @@ export function pluginAssessment(facts: PluginFacts): Assessment {
       nameValid: validName(facts.name),
       noRootClaudeMd: !facts.rootClaudeMd,
       alwaysOnComponents: components.skills + components.agents + components.commands,
-      // Every component of the default layout and each mod module; a plugin without any is empty.
-      componentCount:
-        components.skills +
-        components.agents +
-        components.commands +
-        sum(components.hooksByEvent) +
-        sum(components.mcpServersByTransport) +
-        components.lspServers +
-        components.outputStyles +
-        components.monitors +
-        components.binFiles +
-        facts.modules,
+      // A plugin without a counted component, a mod module or a component the counts leave out is empty.
+      hasComponents:
+        facts.uncountedComponents ||
+        [
+          components.skills,
+          components.agents,
+          components.commands,
+          sum(components.hooksByEvent),
+          sum(components.mcpServersByTransport),
+          components.lspServers,
+          components.outputStyles,
+          components.monitors,
+          components.binFiles,
+          facts.modules,
+        ].some((count) => count > 0),
       hasEvals: facts.hasEvals,
     },
     flags: raised([

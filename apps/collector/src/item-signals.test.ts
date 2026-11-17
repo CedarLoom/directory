@@ -17,6 +17,7 @@ const emptyPlugin: PluginFacts = {
     binFiles: 0,
   },
   modules: 0,
+  uncountedComponents: false,
   hasEvals: false,
   hooks: [],
   mcpUnpinnedPackage: false,
@@ -30,7 +31,7 @@ const nameValid = (name: string) => pluginAssessment({ ...emptyPlugin, name }).s
 it('accepts a kebab-case plugin name that starts with claude, as official plugins do', () =>
   expect(['claude-code-setup', 'Lint'].map(nameValid)).toEqual([true, false]));
 
-it('flags monitors, LSP servers and mod modules and counts every component', () => {
+it('flags monitors, LSP servers and mod modules', () => {
   const { signals, flags } = pluginAssessment({
     ...emptyPlugin,
     components: {
@@ -43,11 +44,19 @@ it('flags monitors, LSP servers and mod modules and counts every component', () 
     },
     modules: 1,
   });
-  expect([signals['componentCount'], flags]).toEqual([
-    9,
+  expect([signals['hasComponents'], flags]).toEqual([
+    true,
     ['monitor-background-command', 'lsp-server-command', 'mod-module', 'mcp-remote'],
   ]);
 });
+
+it.each([
+  [{}, false],
+  [{ uncountedComponents: true }, true],
+  [{ components: { ...emptyPlugin.components, binFiles: 1 } }, true],
+])('tells a plugin with components from an empty one: %j', (facts, hasComponents) =>
+  expect(pluginAssessment({ ...emptyPlugin, ...facts }).signals['hasComponents']).toBe(hasComponents),
+);
 
 const licenseField = (declaredLicense: string | undefined) =>
   skillAssessment(

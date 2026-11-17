@@ -57,7 +57,7 @@ describe('no token-cost points without content, so an empty item scores below th
     ],
     [
       'plugin',
-      { ...plugin, signals: { ...plugin.signals, alwaysOnComponents: 0, componentCount: 0 } },
+      { ...plugin, signals: { ...plugin.signals, alwaysOnComponents: 0, hasComponents: false } },
       plugin,
       [72.6, 87.6],
     ],
