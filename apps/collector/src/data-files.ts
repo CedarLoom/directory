@@ -68,7 +68,7 @@ function indexRow({ value, owner }: ItemRecord, popularity: Popularity | undefin
     score: value.score.total,
     ...(popularity === undefined ? {} : { stars: popularity.stars }),
     ...(popularity?.gained === undefined ? {} : { starsGained30d: popularity.gained }),
-    licenseClass: value.license.class,
+    licenseClass: value.license.withheld === true ? 'withheld' : value.license.class,
     fit: value.cedarloomFit.label,
     listedOfficial: value.listedIn.includes(officialMarketplace),
     ...(value.maintenance === undefined ? {} : { pushedAt: value.maintenance.pushedAt }),

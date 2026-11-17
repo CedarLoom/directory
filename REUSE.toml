@@ -9,6 +9,27 @@ precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Eike Landin"
 SPDX-License-Identifier = "ISC"
 
+# The SPDX License List exception ids, copied from the list and written into the pattern of the record schemas.
+[[annotations]]
+path = "packages/contracts/src/spdx-exception-ids.ts"
+precedence = "override"
+SPDX-FileCopyrightText = "Linux Foundation and its Contributors"
+SPDX-License-Identifier = "CC-BY-3.0"
+
+[[annotations]]
+path = [
+  "packages/contracts/schemas/v1/agent.schema.json",
+  "packages/contracts/schemas/v1/hook.schema.json",
+  "packages/contracts/schemas/v1/marketplace.schema.json",
+  "packages/contracts/schemas/v1/mcp-server.schema.json",
+  "packages/contracts/schemas/v1/output-style.schema.json",
+  "packages/contracts/schemas/v1/plugin.schema.json",
+  "packages/contracts/schemas/v1/skill.schema.json",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Linux Foundation and its Contributors"
+SPDX-License-Identifier = "CC-BY-3.0"
+
 # Own records (facts, scores, flags, tags), rubrics and curation files: CC0 1.0.
 [[annotations]]
 path = ["data/**", "rubrics/**", "curation/**"]

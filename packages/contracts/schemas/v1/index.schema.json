@@ -54,8 +54,10 @@
                   "permissive",
                   "copyleft",
                   "source-available",
-                  "none"
-                ]
+                  "none",
+                  "withheld"
+                ],
+                "description": "The class of the license; `withheld` where the license field of the item withholds the license."
               },
               "fit": {
                 "type": "string",
@@ -152,8 +154,10 @@
                   "permissive",
                   "copyleft",
                   "source-available",
-                  "none"
-                ]
+                  "none",
+                  "withheld"
+                ],
+                "description": "The class of the license; `withheld` where the license field of the item withholds the license."
               },
               "fit": {
                 "type": "string",

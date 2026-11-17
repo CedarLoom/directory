@@ -1,6 +1,7 @@
 import type { Pin, SourceKind } from '@directory/contracts';
 import type { Scorable } from '@directory/scoring';
 import type { HookFacts } from './hook-analyzer.ts';
+import { isLicenseValue } from './license-class.ts';
 import { type MarketplaceEntries, share } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
 
@@ -43,7 +44,7 @@ export function skillAssessment(
       nameValid: validName(facts.declaredName) && (folderName === undefined || facts.declaredName === folderName),
       descriptionLength: facts.descriptionLength,
       bodyLines: facts.bodyLines,
-      licenseField: facts.declaredLicense !== undefined,
+      licenseField: facts.declaredLicense !== undefined && isLicenseValue(facts.declaredLicense),
       metadataTokens: facts.tokens.metadata,
       bodyTokens: facts.tokens.body,
       testsShipped: facts.tests,

@@ -51,11 +51,23 @@ const common = {
   links,
   container: itemId.optional(),
   listedIn: z.array(itemId),
-  license: z.strictObject({
-    spdx: spdxExpression.optional(),
-    source: z.enum(['github-detected', 'manifest', 'frontmatter', 'license-file']).optional(),
-    class: licenseClass,
-  }),
+  // Two strict objects, so the JSON Schema carries the withheld rule too: a withheld license has a manifest or frontmatter source, class `none` and no `spdx`.
+  license: z.union([
+    z.strictObject({
+      spdx: spdxExpression.optional(),
+      source: z.enum(['github-detected', 'manifest', 'frontmatter', 'license-file']).optional(),
+      class: licenseClass,
+      withheld: z.never().optional(),
+    }),
+    z.strictObject({
+      spdx: z.never().optional(),
+      source: z.enum(['manifest', 'frontmatter']),
+      class: z.literal('none'),
+      withheld: z
+        .literal(true)
+        .describe('The value at `source` withholds the license, such as UNLICENSED, NONE or proprietary.'),
+    }),
+  ]),
   maintenance: maintenance.optional(),
   popularity: z.array(
     z.discriminatedUnion('signal', [

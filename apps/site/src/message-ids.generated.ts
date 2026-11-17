@@ -119,6 +119,7 @@ declare module '@lingui/core' {
       | 'license.notDetected'
       | 'license.permissive'
       | 'license.source-available'
+      | 'license.withheld'
       | 'licenseSource.frontmatter'
       | 'licenseSource.github-detected'
       | 'licenseSource.license-file'

@@ -433,6 +433,17 @@ it('records a license file in a skill folder when the repository root has none',
   ]).toEqual([{ source: 'license-file', class: 'none' }, { class: 'none' }]);
 });
 
+it('lists a skill whose license field withholds the license as withheld, not as a license class', async () => {
+  const world = fakeWorld();
+  const repository = world.get('example-org/plugin-0');
+  if (repository === undefined) throw new Error('example-org/plugin-0 is missing');
+  repository.files['skills/skill-0/SKILL.md'] =
+    `---\nname: skill-0\ndescription: ${marker}\nlicense: UNLICENSED\n---\n# Skill\n`;
+  const { files } = await run(world, '2026-11-16');
+  const rows = indexFile.parse(JSON.parse(files.get('index.json') ?? '')).items;
+  expect(rows.find((row) => row.id === 'gh.example-org.plugin-0.skills.skill-0')?.licenseClass).toBe('withheld');
+});
+
 it("records a plugin's manifest license, else a license file in its folder, when the repository root has none", async () => {
   const world = fakeWorld();
   world.set('example-org/market', {

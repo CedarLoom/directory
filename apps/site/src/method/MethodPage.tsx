@@ -190,12 +190,14 @@ export function MethodPage({ meta }: { meta: MetaFile }) {
           <Trans id="method.licenseFacts">
             The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the
             repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's
-            own folder. A field that holds no SPDX expression of listed license ids, such as one with a LicenseRef or an
-            exception, and a license file in the item's folder are recorded without an SPDX id. An expression takes the
+            own folder. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the
+            word proprietary alone, reads "Withheld: no license granted" in the list and on the item's page and scores
+            as no license whatever the repository grants; a blank field and one that holds NOASSERTION state nothing, so
+            the next of these sources applies. A field that holds no SPDX expression of listed license and exception
+            ids, such as one with a LicenseRef, and a license file in the item's folder are recorded without an SPDX id.
+            SPDX ids match in any case and are recorded as the SPDX License List writes them. An expression takes the
             class of its most permissive part when OR joins its parts and of its least permissive part when AND joins
-            them. A frontmatter field that grants no license, such as UNLICENSED or proprietary, reads "No license
-            detected" whatever the repository grants; otherwise "No license detected" means that none of these was
-            found, not that the item has no license.
+            them. "No license detected" means that none of these was found, not that the item has no license.
           </Trans>
         </Text>
         <Stack gap="md">

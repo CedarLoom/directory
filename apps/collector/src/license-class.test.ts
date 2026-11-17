@@ -12,7 +12,7 @@ it('classes an SPDX id with an -only or -or-later suffix like its base id', () =
 });
 
 it('keeps a frontmatter license stated in words over the repository license, as class none without its text', () => {
-  expect(licenseOf('MIT', { declared: 'Proprietary. LICENSE.txt has complete terms' })).toEqual({
+  expect(licenseOf('MIT', { declared: 'See LICENSE.txt for the complete terms' })).toEqual({
     source: 'frontmatter',
     class: 'none',
   });
@@ -86,11 +86,18 @@ it('classes an earlier version of a license like the version GitHub detects', ()
   ]);
 });
 
-it('reads a NONE or NOASSERTION manifest value as no manifest license', () => {
+it('reads a NOASSERTION field like a blank one, so the next source applies, GitHub at the root included', () => {
   expect([
-    licenseOf(undefined, { manifest: 'NONE' }),
-    licenseOf(undefined, { manifest: 'NOASSERTION', folderLicenseFile: true }),
-  ]).toEqual([{ class: 'none' }, { source: 'license-file', class: 'none' }]);
+    licenseOf('MIT', { manifest: 'NOASSERTION', folderLicenseFile: true }),
+    licenseOf('MIT', { declared: 'noassertion' }),
+    licenseOf(undefined, { declared: 'NOASSERTION', manifest: 'Apache-2.0' }),
+    licenseOf(undefined, { manifest: ' NOASSERTION ', folderLicenseFile: true }),
+  ]).toEqual([
+    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+    { spdx: 'Apache-2.0', source: 'manifest', class: 'permissive' },
+    { source: 'license-file', class: 'none' },
+  ]);
 });
 
 it('counts LICENSE-<suffix> for a license family the class table holds, without a version', () => {
@@ -113,19 +120,25 @@ it('counts LICENSE-<suffix> for a license family the class table holds, without 
   ).toEqual([]);
 });
 
-it('reads a blank, UNLICENSED or proprietary manifest value as no manifest license', () => {
+it('reads a blank field as none, so the root license or the folder license file decides', () => {
   expect([
+    licenseOf('MIT', { declared: ' ' }),
     licenseOf(undefined, { manifest: ' ', folderLicenseFile: true }),
-    licenseOf(undefined, { manifest: 'UNLICENSED' }),
-    licenseOf(undefined, { manifest: 'unlicensed', folderLicenseFile: true }),
-    licenseOf(undefined, { manifest: 'Proprietary' }),
-    licenseOf(undefined, { manifest: 'PROPRIETARY', folderLicenseFile: true }),
   ]).toEqual([
+    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
     { source: 'license-file', class: 'none' },
-    { class: 'none' },
-    { source: 'license-file', class: 'none' },
-    { class: 'none' },
-    { source: 'license-file', class: 'none' },
+  ]);
+});
+
+it('reads an UNLICENSED, NONE or proprietary manifest value as withheld, over the root license', () => {
+  expect([
+    licenseOf('MIT', { manifest: 'UNLICENSED', folderLicenseFile: true }),
+    licenseOf(undefined, { manifest: 'none' }),
+    licenseOf('Apache-2.0', { manifest: 'PROPRIETARY' }),
+  ]).toEqual([
+    { source: 'manifest', class: 'none', withheld: true },
+    { source: 'manifest', class: 'none', withheld: true },
+    { source: 'manifest', class: 'none', withheld: true },
   ]);
 });
 
@@ -144,7 +157,6 @@ it('counts LICENSE-<suffix> for a full SPDX id, a license family with an optiona
       'LICENSE-ISC',
       'LICENSE-CC0',
       'LICENSE-CC-BY',
-      'LICENSE-ZLIB',
       'LICENSE-UNLICENSE',
       'license-bsd-3-clause.txt',
       'LICENSE-GPL-3.0-or-later',
@@ -197,18 +209,63 @@ it('classes an SPDX expression by its most permissive OR part and its least perm
     licenseOf(undefined, { declared: 'MIT AND (GPL-2.0+ OR BUSL-1.1)' }),
     licenseOf(undefined, { declared: 'MIT AND LicenseRef-Custom' }),
     licenseOf(undefined, { declared: 'GPL-2.0-only WITH Classpath-exception-2.0' }),
+    licenseOf(undefined, { declared: 'MIT WITH No-commercial-use' }),
   ]).toEqual([
     { spdx: 'MIT OR Apache-2.0', source: 'manifest', class: 'permissive' },
     { source: 'manifest', class: 'copyleft' },
-    { spdx: 'MIT AND (GPL-2.0+ OR BUSL-1.1)', source: 'frontmatter', class: 'copyleft' },
+    { spdx: 'MIT AND (GPL-2.0-or-later OR BUSL-1.1)', source: 'frontmatter', class: 'copyleft' },
     { source: 'frontmatter', class: 'none' },
-    { source: 'frontmatter', class: 'copyleft' },
+    { spdx: 'GPL-2.0-only WITH Classpath-exception-2.0', source: 'frontmatter', class: 'copyleft' },
+    { source: 'frontmatter', class: 'none' },
   ]);
 });
 
-it('reads an UNLICENSED or proprietary frontmatter value as no license, not as the repository license', () => {
-  expect([licenseOf('MIT', { declared: 'UNLICENSED' }), licenseOf('MIT', { declared: 'proprietary' })]).toEqual([
-    { class: 'none' },
-    { class: 'none' },
+it('reads an UNLICENSED or proprietary frontmatter value as withheld, not as the repository license', () => {
+  expect([
+    licenseOf('MIT', { declared: 'UNLICENSED' }),
+    licenseOf('MIT', { declared: 'proprietary' }),
+    licenseOf('MIT', { declared: ' Proprietary. ' }),
+  ]).toEqual([
+    { source: 'frontmatter', class: 'none', withheld: true },
+    { source: 'frontmatter', class: 'none', withheld: true },
+    { source: 'frontmatter', class: 'none', withheld: true },
   ]);
+});
+
+it('reads a sentence that starts with Proprietary as a license of its own, not as withheld', () => {
+  expect([
+    licenseOf('MIT', { declared: 'Proprietary. LICENSE.txt has complete terms' }),
+    licenseOf(undefined, { manifest: 'Proprietary, all rights reserved' }),
+  ]).toEqual([
+    { source: 'frontmatter', class: 'none' },
+    { source: 'manifest', class: 'none' },
+  ]);
+});
+
+it('stores a stated expression in one spelling, its ids in the listed case', () => {
+  expect([
+    licenseOf(undefined, { manifest: '(mit)' }),
+    licenseOf(undefined, { declared: 'MIT  OR  apache-2.0' }),
+    licenseOf(undefined, { declared: '(MIT AND ISC) AND (0BSD OR gpl-3.0+)' }),
+  ]).toEqual([
+    { spdx: 'MIT', source: 'manifest', class: 'permissive' },
+    { spdx: 'MIT OR Apache-2.0', source: 'frontmatter', class: 'permissive' },
+    { spdx: 'MIT AND ISC AND (0BSD OR GPL-3.0-or-later)', source: 'frontmatter', class: 'permissive' },
+  ]);
+});
+
+it('counts LICENSE-<suffix> for a listed -only id, but not for an -only suffix to an id the list lacks', () => {
+  expect([holds('LICENSE-GPL-3.0-only'), holds('license-lgpl-2.1-only.txt'), holds('LICENSE-MIT-only')]).toEqual([
+    true,
+    true,
+    false,
+  ]);
+});
+
+it('counts no LICENSE-<suffix> for an id the class table lacks or for software named like its license', () => {
+  expect(
+    ['LICENSE-X11', 'LICENSE-HPND', 'LICENSE-zlib', 'LICENSE-ZLIB', 'LICENSE-vim', 'LICENSE-postgresql'].filter(
+      (name) => holds(name),
+    ),
+  ).toEqual([]);
 });
