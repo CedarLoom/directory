@@ -1,4 +1,10 @@
-import { parseSpdxExpression, type SpdxExpression, spdxExpression, spdxId } from '@directory/contracts';
+import {
+  listedLicenseId,
+  parseSpdxExpression,
+  type SpdxExpression,
+  spdxExpression,
+  spdxText,
+} from '@directory/contracts';
 
 type LicenseClass = 'permissive' | 'copyleft' | 'source-available' | 'none';
 
@@ -159,33 +165,41 @@ export interface License {
   spdx?: string;
   source?: 'github-detected' | 'manifest' | 'frontmatter' | 'license-file';
   class: LicenseClass;
+  withheld?: true;
 }
 
 // LICENSE-MIT, COPYING.LESSER or UNLICENSE count; a file such as license.js is code, not a license.
 const licenseFileName =
   /^(?:(?:un)?licen[cs]e|copying(?:\.lesser)?|licen[cs]e-(?<id>.+?))(?:\.(?:md|markdown|txt|rst|html))?$/i;
 const onlyOrLater = /-(?:only|or-later)$/;
-// Only class table ids count in full: LICENSE-openssl or LICENSE-curl is mostly the notice of a vendored library.
-const tableIds: ReadonlySet<string> = new Set(Object.keys(classes).map((id) => id.toLowerCase()));
-// A family is a class table id without its version: LICENSE-BUSL counts, LICENSE-INFO or LICENSE-python does not.
+// Software named like its license: LICENSE-zlib or LICENSE-python is mostly the notice of a vendored copy.
+const vendoredNotices: ReadonlySet<string> = new Set(['python', 'zlib', 'vim', 'postgresql']);
+// A family is a class table id without its version: LICENSE-BUSL counts, LICENSE-INFO does not.
 const licenseFamilies: ReadonlySet<string> = new Set(
   Object.keys(classes)
     .map((id) => id.replace(/-\d.*$/, '').toLowerCase())
-    .filter((family) => family !== 'python'),
+    .filter((family) => !vendoredNotices.has(family)),
 );
 // A family may carry a version of its own, as in LICENSE-APACHE2 or LICENSE-GPLv3.
 const familyVersion = /-?v?\d+(?:\.\d+)*$/;
 
+// A full SPDX id counts when the class table holds it: LICENSE-openssl or LICENSE-curl is mostly a vendored notice.
+function isTableId(suffix: string): boolean {
+  const id = listedLicenseId(suffix);
+  return id !== undefined && !vendoredNotices.has(id.toLowerCase()) && knownClass(id) !== undefined;
+}
+
 function isLicenseFileName(name: string): boolean {
   const match = licenseFileName.exec(name);
   if (match === null) return false;
-  const suffix = match.groups?.['id']?.toLowerCase();
+  const suffix = match.groups?.['id'];
+  if (suffix === undefined) return true;
+  const lowerCase = suffix.toLowerCase();
   return (
-    suffix === undefined ||
-    suffix === 'code' ||
-    tableIds.has(suffix.replace(onlyOrLater, '')) ||
-    licenseFamilies.has(suffix) ||
-    licenseFamilies.has(suffix.replace(familyVersion, ''))
+    lowerCase === 'code' ||
+    isTableId(suffix) ||
+    licenseFamilies.has(lowerCase) ||
+    licenseFamilies.has(lowerCase.replace(familyVersion, ''))
   );
 }
 
@@ -226,27 +240,32 @@ function expressionClass(expression: SpdxExpression): LicenseClass {
 // A stated value that is no SPDX expression, such as a sentence, states terms of its own: class `none` without its text.
 // An SPDX id the class table lacks, such as Unicode-3.0, keeps its id with class `none` rather than refusing the item.
 function stated(value: string, source: 'manifest' | 'frontmatter'): License {
-  const written = value.trim();
-  const expression = parseSpdxExpression(written);
+  const expression = parseSpdxExpression(value.trim());
   if (expression === undefined) return { source, class: 'none' };
-  // A deprecated plus id such as GPL-2.0+ is stored as its -or-later id.
-  const orLater = /^([^ ()]+)\+$/.exec(written)?.[1]?.concat('-or-later');
-  const spdx = orLater !== undefined && spdxId.safeParse(orLater).success ? orLater : written;
+  const spdx = spdxText(expression);
   const licenseClass = expressionClass(expression);
-  // A LicenseRef or an exception id is the author's own text, which a record does not copy.
+  // A LicenseRef is the author's own text, which a record does not copy.
   return spdxExpression.safeParse(spdx).success
     ? { spdx, source, class: licenseClass }
     : { source, class: licenseClass };
 }
 
-// Blank, npm's UNLICENSED, SPDX's NONE or NOASSERTION, or proprietary grants no license.
-const grantsNoLicense = /^\s*(?:unlicensed|proprietary|none|noassertion)?\s*$/i;
-// Of these, only UNLICENSED, proprietary and NONE state that no license is granted; a blank or NOASSERTION states nothing.
-const withholdsLicense = /^\s*(?:unlicensed|proprietary|none)\s*$/i;
+// npm's UNLICENSED, SPDX's NONE, proprietary or a sentence that starts with it grants no license.
+const withholdsLicense = /^\s*(?:unlicensed\s*|none\s*|proprietary\b[\s\S]*)$/i;
+// SPDX's NOASSERTION states nothing about the license, nor does a blank value.
+const assertsNothing = /^\s*(?:noassertion)?\s*$/i;
+
+const given = (value: string | undefined): value is string => value !== undefined && value.trim() !== '';
+
+/** Whether a license field grants a license: it neither withholds one nor asserts nothing. */
+export function grantsLicense(value: string): boolean {
+  return !withholdsLicense.test(value) && !assertsNothing.test(value);
+}
 
 /**
- * The item's license: a frontmatter value first, even one that grants no license, else GitHub's detected one, else a
- * plugin manifest value that grants one, else a license file in the item's folder.
+ * The item's license: a frontmatter value first, else a plugin manifest value that withholds the license, else GitHub's
+ * detected one, else a manifest value that grants one, else a license file in the item's folder.
+ * A NOASSERTION field states no license, so a license file in the item's folder decides, not the repository's.
  * A license file in the item's folder is not named, as GitHub detects licenses at the repository root only.
  */
 export function licenseOf(
@@ -257,13 +276,14 @@ export function licenseOf(
     folderLicenseFile = false,
   }: { declared?: string | undefined; manifest?: string | undefined; folderLicenseFile?: boolean } = {},
 ): License {
-  // The record has no value for a license withheld, so a frontmatter that grants none reads as none detected.
-  if (declared !== undefined)
-    return withholdsLicense.test(declared) ? { class: 'none' } : stated(declared, 'frontmatter');
-  if (detected === undefined) {
-    if (manifest !== undefined && !grantsNoLicense.test(manifest)) return stated(manifest, 'manifest');
-    return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
-  }
+  const inFolder: License = folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
+  const own = (value: string, source: 'manifest' | 'frontmatter'): License => {
+    if (withholdsLicense.test(value)) return { source, class: 'none', withheld: true };
+    return assertsNothing.test(value) ? inFolder : stated(value, source);
+  };
+  if (given(declared)) return own(declared, 'frontmatter');
+  if (given(manifest) && !grantsLicense(manifest)) return own(manifest, 'manifest');
+  if (detected === undefined) return given(manifest) ? stated(manifest, 'manifest') : inFolder;
   // NOASSERTION: GitHub found a license file it could not name.
   if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
   return { spdx: detected, source: 'github-detected', class: classOf(detected) };

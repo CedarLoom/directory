@@ -11,6 +11,7 @@ export interface Scorable {
     spdx?: string | undefined;
     source?: string | undefined;
     class: 'permissive' | 'copyleft' | 'source-available' | 'none';
+    withheld?: true | undefined;
   };
   maintenance?: { pushedAt: string; recentCommits: 'none' | '1-4' | '5+'; archived: boolean } | undefined;
   signals: Readonly<Record<string, number | boolean>>;
@@ -70,7 +71,9 @@ function flagsShare({ record, rubric, signal }: Context): number {
 
 function licenseLevel({ license }: Scorable): keyof Extract<Scale, { type: 'license' }>['levels'] {
   // Class `none` with a source: the item states a license that no SPDX id names or whose class is not known.
-  return license.class === 'none' && license.source !== undefined ? 'custom' : license.class;
+  return license.class === 'none' && license.source !== undefined && license.withheld !== true
+    ? 'custom'
+    : license.class;
 }
 
 /** The share of a scale that reads the record's own signal value. */

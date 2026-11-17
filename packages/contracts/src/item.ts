@@ -55,6 +55,12 @@ const common = {
     spdx: spdxExpression.optional(),
     source: z.enum(['github-detected', 'manifest', 'frontmatter', 'license-file']).optional(),
     class: licenseClass,
+    withheld: z
+      .literal(true)
+      .optional()
+      .describe(
+        'The value at `source` withholds the license, such as UNLICENSED, NONE or proprietary; the class is then `none`.',
+      ),
   }),
   maintenance: maintenance.optional(),
   popularity: z.array(

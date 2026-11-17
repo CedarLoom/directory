@@ -1,8 +1,8 @@
 # US spelling everywhere.
 [default]
 locale = "en-us"
-# ND is the no-derivatives part of Creative Commons SPDX ids.
-extend-ignore-re = ["CC-BY(-NC)?-ND-[0-9.]+"]
+# ND is the no-derivatives part of Creative Commons SPDX ids; harbour-exception is an SPDX exception id.
+extend-ignore-re = ["CC-BY(-NC)?-ND-[0-9.]+", "harbour-exception"]
 
 # axe is the name of the accessibility test engine.
 [default.extend-words]

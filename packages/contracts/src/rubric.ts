@@ -34,7 +34,7 @@ const scale = z.discriminatedUnion('type', [
       }),
     })
     .describe(
-      '`license.class`; `custom` is class `none` with a license the item states: one no SPDX id names, or an SPDX id or expression of no known class.',
+      '`license.class`; `custom` is class `none` with a license the item states: one no SPDX id names, or an SPDX id or expression of no known class; a withheld license (`license.withheld`) is `none`.',
     ),
   z
     .strictObject({ type: z.literal('flags') })

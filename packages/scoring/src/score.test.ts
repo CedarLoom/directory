@@ -82,6 +82,9 @@ it('gives an archived item no maintenance points', () =>
 it('gives half the license points to a license no SPDX id names', () =>
   expect(scored({ ...agent, license: { source: 'github-detected', class: 'none' } }).total).toBe(75));
 
+it('gives no license points to a license the item withholds', () =>
+  expect(scored({ ...agent, license: { source: 'frontmatter', class: 'none', withheld: true } }).total).toBe(70));
+
 it('restores safety points for a positive flag, up to the maximum', () =>
   expect(scored({ ...plugin, flags: ['hook-shell-command', 'listed-official-marketplace'] }).total).toBe(97.6));
 

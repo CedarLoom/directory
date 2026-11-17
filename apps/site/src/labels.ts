@@ -38,8 +38,9 @@ export function licenseClassOfId(licenseClass: LicenseClass): MessageDescriptor 
     : licenseClassLabels[licenseClass];
 }
 
-/** A license with no SPDX id: one found without an id, none detected, or its class. */
-export function licenseWithoutId({ class: licenseClass, source }: ItemRecord['license']): MessageDescriptor {
+/** A license with no SPDX id: one withheld, one found without an id, none detected, or its class. */
+export function licenseWithoutId({ class: licenseClass, source, withheld }: ItemRecord['license']): MessageDescriptor {
+  if (withheld === true) return msg({ id: 'license.withheld', message: 'Withheld: no license granted' });
   if (licenseClass !== 'none') return licenseClassLabels[licenseClass];
   return source === undefined
     ? msg({ id: 'license.notDetected', message: 'No license detected' })
@@ -148,7 +149,7 @@ export const signalLabels: Readonly<Record<string, MessageDescriptor>> = {
   noRootClaudeMd: msg({ id: 'signal.noRootClaudeMd', message: 'No CLAUDE.md at the plugin root' }),
   alwaysOnComponents: msg({ id: 'signal.alwaysOnComponents', message: 'Always-on components' }),
   hasEvals: msg({ id: 'signal.hasEvals', message: 'Ships evals' }),
-  licenseField: msg({ id: 'signal.licenseField', message: 'Has a license field' }),
+  licenseField: msg({ id: 'signal.licenseField', message: 'Has a license field that grants a license' }),
   testsShipped: msg({ id: 'signal.testsShipped', message: 'Ships tests' }),
 };
 
