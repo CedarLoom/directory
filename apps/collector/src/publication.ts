@@ -51,6 +51,17 @@ const recordLinks = z.looseObject({
   popularity: z.array(z.looseObject({ ref: z.string().optional() })),
 });
 
+/** The id a history or popularity file names in its file name. */
+const fileId = (path: string) => path.slice(path.lastIndexOf('/') + 1, -'.json'.length);
+
+/** A history file of an excluded item: by its record, or, when an earlier run removed the record, by its own id or its repository's. */
+function excludedHistory(path: string, excludedHistories: ReadonlySet<string>, excluded: ReadonlySet<string>): boolean {
+  const id = fileId(path);
+  // Every id but an MCP server's starts with the id of its repository, `gh.<owner>.<repo>`.
+  const repository = path.startsWith('history/mcp-server/') ? id : id.split('.', 3).join('.');
+  return excludedHistories.has(path) || excluded.has(id) || excluded.has(repository);
+}
+
 /** Published files the run drops: every record it lacks, and the history and popularity file of an excluded item. */
 function removals(candidate: DataFiles, published: DataFiles, excluded: ReadonlySet<string>): string[] {
   const excludedHistories = new Set<string>();
@@ -60,7 +71,7 @@ function removals(candidate: DataFiles, published: DataFiles, excluded: Readonly
     if (!path.startsWith('records/')) continue;
     const record = recordLinks.parse(JSON.parse(text));
     const refs = record.popularity.flatMap(({ ref }) => (ref === undefined ? [] : [ref]));
-    // An excluded repository takes out the items in it, as collect does for a repository found by topic.
+    // An excluded repository takes out the items in it, as collect does.
     const gone = isExcluded(record, excluded) || refs.some((ref) => excluded.has(ref));
     if (gone) excludedHistories.add(`history/${path.slice('records/'.length)}`);
     for (const ref of refs) (gone ? excludedRefs : keptRefs).add(ref);
@@ -68,10 +79,10 @@ function removals(candidate: DataFiles, published: DataFiles, excluded: Readonly
   return [...published.keys()].filter((path) => {
     if (candidate.has(path) || path === 'index.json' || path === 'meta.json') return false;
     if (path.startsWith('records/')) return true;
-    // A file whose record an earlier run removed is matched by its own id.
-    const id = path.slice(path.lastIndexOf('/') + 1, -'.json'.length);
-    if (path.startsWith('history/')) return excludedHistories.has(path) || excluded.has(id);
-    return (excludedRefs.has(id) || excluded.has(id)) && !keptRefs.has(id);
+    if (path.startsWith('history/')) return excludedHistory(path, excludedHistories, excluded);
+    // A popularity file whose records an earlier run removed is matched by its own id.
+    const id = fileId(path);
+    return path.startsWith('popularity/') && (excludedRefs.has(id) || excluded.has(id)) && !keptRefs.has(id);
   });
 }
 

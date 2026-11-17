@@ -4,7 +4,7 @@ import { expect, it } from 'vitest';
 import { z } from 'zod';
 import { readDataFolder } from './data-folder.ts';
 import { readRubricFiles } from './rubric-files.ts';
-import { type RunFiles, runRefusals } from './validation.ts';
+import { checkRun, type RunFiles } from './validation.ts';
 
 const folder = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 // The site's fixture data: 22 items of every kind, each with its record, history and popularity file.
@@ -25,17 +25,19 @@ const fixtureIndex = indexRows.parse(JSON.parse(publishedIndex ?? ''));
 /** The fixture items of each kind as the run report counts them. */
 const fixtureCounts = { marketplace: 3, plugin: 3, skill: 4, agent: 3, hook: 3, 'mcp-server': 3, 'output-style': 3 };
 
-/** The refusals for a run of these files, with the fixture counts in its report unless `reportedItems` is given. */
-const refusals = (files: Partial<RunFiles> = {}) =>
-  runRefusals({
+/** The check of a run of these files, with the fixture counts in its report unless `reportedItems` is given. */
+const check = (files: Partial<RunFiles> = {}) =>
+  checkRun({
     candidate: candidate(),
     reportedItems: fixtureCounts,
     publishedIndex,
-    allowRemovals: false,
+    allowRemovals: new Set(),
     rubrics,
     lock,
     ...files,
   });
+
+const refusals = (files: Partial<RunFiles> = {}) => check(files).refused;
 
 /** The index without the items at the given positions. */
 function indexWithout(positions: readonly number[]) {
@@ -70,13 +72,20 @@ const skillPath = 'records/skill/gh.example-org.skills.pdf-forms.json';
 
 it('accepts a run that produced the published files', () => expect(refusals()).toEqual([]));
 
+const noMcpServers = {
+  candidate: candidate(indexWithout([16, 17, 18])),
+  reportedItems: { ...fixtureCounts, 'mcp-server': 0 },
+};
+
 it('refuses a run in which every published MCP server vanished', () =>
-  expect(
-    refusals({
-      candidate: candidate(indexWithout([16, 17, 18])),
-      reportedItems: { ...fixtureCounts, 'mcp-server': 0 },
-    }),
-  ).toEqual(['index.json: 3 of 3 published mcp-server items vanished, more than 20 percent']));
+  expect(refusals(noMcpServers)).toEqual([
+    'index.json: 3 of 3 published mcp-server items vanished, more than 20 percent',
+  ]));
+
+it('refuses the vanished items of a kind whose removals are not allowed', () =>
+  expect(refusals({ ...noMcpServers, allowRemovals: new Set(['skill']) })).toEqual([
+    'index.json: 3 of 3 published mcp-server items vanished, more than 20 percent',
+  ]));
 
 // 59 of 300 items vanished, under 20 percent of all of them.
 const sixtyToOne = {
@@ -97,8 +106,11 @@ const sixtyToOne = {
 it('refuses a run in which a kind fell from 60 items to 1', () =>
   expect(refusals(sixtyToOne)).toEqual(['index.json: 59 of 60 published skill items vanished, more than 20 percent']));
 
-it('accepts a kind that fell from 60 items to 1 when removals are allowed', () =>
-  expect(refusals({ ...sixtyToOne, allowRemovals: true })).toEqual([]));
+it('accepts a kind that fell from 60 items to 1 when its removals are allowed, and names the loss', () =>
+  expect(check({ ...sixtyToOne, allowRemovals: new Set(['skill']) })).toEqual({
+    refused: [],
+    accepted: ['index.json: 59 of 60 published skill items vanished, more than 20 percent'],
+  }));
 
 it('refuses a run report whose item counts differ from the index', () =>
   expect(refusals({ reportedItems: { ...fixtureCounts, skill: 5, hook: 2 } })).toEqual([

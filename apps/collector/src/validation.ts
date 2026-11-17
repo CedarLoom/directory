@@ -14,8 +14,8 @@ export interface RunFiles {
   reportedItems: RunReport['items'];
   /** `index.json` of the last published run; undefined before the first. */
   publishedIndex: string | undefined;
-  /** Accepts any share of vanished items, for an intended removal. */
-  allowRemovals: boolean;
+  /** Kinds whose vanished items are accepted, for an intended removal. */
+  allowRemovals: ReadonlySet<string>;
   /** The rubric files by path under `rubrics/`, without `lock.json`. */
   rubrics: Readonly<Record<string, unknown>>;
   /** The parsed `rubrics/lock.json`. */
@@ -91,8 +91,11 @@ function reportRefusals(items: readonly IndexRow[], reported: RunReport['items']
   });
 }
 
-/** Refuses a run that lost more than the vanished share of a kind, which a source that changed its format can empty. */
-function vanishedRefusals(items: readonly IndexRow[], publishedIndex: string | undefined): string[] {
+/** Each kind that lost more than the vanished share of its published items, which a source that changed its format can empty, with its line. */
+function vanishedKinds(
+  items: readonly IndexRow[],
+  publishedIndex: string | undefined,
+): { kind: string; line: string }[] {
   if (publishedIndex === undefined) return [];
   const after = new Set(items.map(itemKey));
   const published = new Set(indexRows.parse(JSON.parse(publishedIndex)).items.map(itemKey));
@@ -101,14 +104,25 @@ function vanishedRefusals(items: readonly IndexRow[], publishedIndex: string | u
     const vanished = keys.filter((key) => !after.has(key)).length;
     return vanished > keys.length * vanishedShare
       ? [
-          `index.json: ${vanished} of ${keys.length} published ${itemKind} items vanished, more than ${vanishedShare * 100} percent`,
+          {
+            kind: itemKind,
+            line: `index.json: ${vanished} of ${keys.length} published ${itemKind} items vanished, more than ${vanishedShare * 100} percent`,
+          },
         ]
       : [];
   });
 }
 
-/** Why the run must not be published: every file that breaks its contract, size cap or path, an index row without its record, index counts that differ from the run report, too many vanished items of a kind unless removals are allowed, or rubric files that differ from their lock; empty when the run holds. */
-export function runRefusals(files: RunFiles): string[] {
+/** What `validate` found: the reasons to refuse the run and the vanished items it accepts for the allowed kinds. */
+export interface RunCheck {
+  /** Every file that breaks its contract, size cap or path, an index row without its record, index counts that differ from the run report, too many vanished items of a kind whose removals are not allowed, or rubric files that differ from their lock; empty when the run holds. */
+  refused: string[];
+  /** Too many vanished items of a kind whose removals are allowed. */
+  accepted: string[];
+}
+
+/** Checks the files of a run against their contracts, the run report, the published index and the rubric lock. */
+export function checkRun(files: RunFiles): RunCheck {
   const refusals: string[] = [];
   let released: Set<string> | undefined;
   try {
@@ -125,14 +139,18 @@ export function runRefusals(files: RunFiles): string[] {
     if (refusal !== undefined) refusals.push(refusal);
   }
   const indexText = files.candidate.get('index.json');
-  if (indexText === undefined) return [...refusals, 'index.json: missing'];
+  if (indexText === undefined) return { refused: [...refusals, 'index.json: missing'], accepted: [] };
   // A candidate index against its contract has its refusal above; the checks that read it need a valid one.
   const index = jsonText.pipe(indexFile).safeParse(indexText);
-  if (!index.success) return refusals;
-  return [
-    ...refusals,
-    ...listingRefusals(index.data.items, files.candidate),
-    ...reportRefusals(index.data.items, files.reportedItems),
-    ...(files.allowRemovals ? [] : vanishedRefusals(index.data.items, files.publishedIndex)),
-  ];
+  if (!index.success) return { refused: refusals, accepted: [] };
+  const vanished = vanishedKinds(index.data.items, files.publishedIndex);
+  return {
+    refused: [
+      ...refusals,
+      ...listingRefusals(index.data.items, files.candidate),
+      ...reportRefusals(index.data.items, files.reportedItems),
+      ...vanished.filter((loss) => !files.allowRemovals.has(loss.kind)).map(({ line }) => line),
+    ],
+    accepted: vanished.filter((loss) => files.allowRemovals.has(loss.kind)).map(({ line }) => line),
+  };
 }

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { Command, CommanderError } from '@commander-js/extra-typings';
+import { Command, CommanderError, InvalidArgumentError } from '@commander-js/extra-typings';
+import { kind } from '@directory/contracts';
 import { ZodError } from 'zod';
 import { systemClock } from './clock.ts';
 import { collect, summaryLine } from './collect.ts';
@@ -15,7 +16,7 @@ import { readRubricFiles } from './rubric-files.ts';
 import { runReport } from './run-report.ts';
 import { sourceAdapters } from './sources.ts';
 import { topics } from './topic-search.ts';
-import { runRefusals } from './validation.ts';
+import { checkRun } from './validation.ts';
 
 const defaultExclusions = fileURLToPath(new URL('../../../curation/exclusions.json', import.meta.url));
 const rubricsFolder = fileURLToPath(new URL('../../../rubrics', import.meta.url));
@@ -39,6 +40,18 @@ const log = (line: string) => console.error(line);
 
 async function readReport(file: string) {
   return runReport.parse(JSON.parse(await readFile(file, 'utf8')));
+}
+
+/** Adds the kinds of one `--allow-removals` value, a comma list, to those of the earlier ones. */
+function allowedKinds(value: string, previous: readonly string[]): string[] {
+  return [
+    ...previous,
+    ...value.split(',').map((part) => {
+      const parsed = kind.safeParse(part.trim());
+      if (!parsed.success) throw new InvalidArgumentError(`not a kind; one of ${kind.options.join(', ')}`);
+      return parsed.data;
+    }),
+  ];
 }
 
 const program = new Command()
@@ -104,8 +117,10 @@ program
   .requiredOption('--report <file>', 'the run report `collect` printed')
   .requiredOption('--published <folder>', 'the published data folder of the last run')
   .option(
-    '--allow-removals',
-    'accepts a run that lost more than 20 percent of the published items or of the items of a kind, for an intended removal',
+    '--allow-removals <kinds>',
+    'accepts a run that lost more than 20 percent of the published items of these kinds, for an intended removal; repeatable or a comma list',
+    allowedKinds,
+    [],
   )
   .action(async ({ candidate, report: reportFile, published, allowRemovals }) => {
     const report = await readReport(reportFile);
@@ -114,16 +129,17 @@ program
       readDataFile(published, 'index.json'),
       readRubricFiles(rubricsFolder),
     ]);
-    const refusals = runRefusals({
+    const { refused, accepted } = checkRun({
       candidate: candidateFiles,
       reportedItems: report.items,
       publishedIndex,
-      allowRemovals: allowRemovals === true,
+      allowRemovals: new Set(allowRemovals),
       rubrics,
       lock,
     });
-    for (const refusal of refusals) log(`validate: refused: ${refusal}`);
-    if (refusals.length > 0) {
+    for (const line of accepted) log(`validate: accepted: ${line}`);
+    for (const refusal of refused) log(`validate: refused: ${refusal}`);
+    if (refused.length > 0) {
       process.exitCode = 65;
       return;
     }

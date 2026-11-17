@@ -1,5 +1,6 @@
 import { exclusionsFile } from '@directory/contracts';
 import type { Candidate } from './candidate.ts';
+import { repositoryId } from './github-location.ts';
 
 export function parseExclusions(text: string): ReadonlySet<string> {
   return new Set(exclusionsFile.parse(JSON.parse(text)).ids);
@@ -13,7 +14,11 @@ export function isExcluded(
   return excluded.has(id) || (container !== undefined && excluded.has(container));
 }
 
-/** Leaves out the excluded ids and the items they contain. */
+/** Leaves out the excluded ids, the items they contain and the items in an excluded repository. */
 export function applyExclusions(candidates: readonly Candidate[], excluded: ReadonlySet<string>): Candidate[] {
-  return candidates.filter((candidate) => !isExcluded(candidate, excluded));
+  return candidates.filter(
+    (candidate) =>
+      !isExcluded(candidate, excluded) &&
+      (candidate.location === undefined || !excluded.has(repositoryId(candidate.location))),
+  );
 }

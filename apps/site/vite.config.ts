@@ -18,7 +18,7 @@ function validatedData() {
     .filter((path) => path.endsWith('.json'))
     .map((path) => path.split(sep).join('/'));
   const index = indexFile.parse(readJson('index.json'));
-  // An item that left the index keeps its history and popularity file, which no page loads and the build leaves unread.
+  // An item that left the index keeps its history and popularity file, which no page loads: the build checks only its path.
   const used = new Set<string>();
   for (const { kind, id } of index.items) {
     const record = recordContracts[kind].parse(readJson(`records/${kind}/${id}.json`));

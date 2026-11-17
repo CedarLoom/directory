@@ -66,3 +66,15 @@ it('removes the history and popularity file of an item in an excluded repository
     'popularity/gh.acme.tool.json',
   ]);
 });
+
+it('removes the history an item kept after it left the index once its repository is excluded', () => {
+  const files = new Map([['history/skill/gh.acme.tool.lint.json', '{}']]);
+  expect(publication(candidate, files, report, new Set(['gh.acme.tool'])).removed).toEqual([
+    'history/skill/gh.acme.tool.lint.json',
+  ]);
+});
+
+it('keeps a file outside the data layout whose name is an excluded id', () => {
+  const files = new Map([['notes/gh.acme.tool.json', '{}']]);
+  expect(publication(candidate, files, report, new Set(['gh.acme.tool'])).removed).toEqual([]);
+});
