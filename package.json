@@ -15,6 +15,7 @@
     "knip": "knip --max-issues 0",
     "jscpd": "jscpd .",
     "licenses": "pnpm licenses list --json | node scripts/licenses.ts",
+    "rubric-lock": "node scripts/rubric-lock.ts",
     "check": "sh scripts/check.sh"
   },
   "devDependencies": {

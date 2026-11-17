@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, sep } from 'node:path';
 import type { DataFiles } from './data-files.ts';
 
@@ -42,13 +42,28 @@ export async function updateDataFolder(folder: string, files: DataFiles, removed
   await writeDataFolder(folder, files);
 }
 
-/** Writes each file into the folder; a file not given stays as it is. */
-export async function writeDataFolder(folder: string, files: DataFiles): Promise<void> {
+/**
+ * Writes each file into the folder through a temporary file beside it, renamed over the file, so a stop or a failed
+ * write never leaves a cut file; a file not given stays as it is.
+ */
+export async function writeDataFolder(
+  folder: string,
+  files: DataFiles,
+  write: (path: string, text: string) => Promise<void> = writeFile,
+): Promise<void> {
   await Promise.all(
     [...files].map(async ([path, text]) => {
       const target = join(folder, ...path.split('/'));
+      // Not a `.json` name, so a folder read never takes it for a data file.
+      const temporary = `${target}.tmp`;
       await mkdir(dirname(target), { recursive: true });
-      await writeFile(target, text);
+      try {
+        await write(temporary, text);
+        await rename(temporary, target);
+      } catch (error) {
+        await rm(temporary, { force: true });
+        throw error;
+      }
     }),
   );
 }
