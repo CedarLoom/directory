@@ -1,13 +1,12 @@
 import { expect, it } from 'vitest';
 import hook from '../../../rubrics/hook/1.0.0.json' with { type: 'json' };
 import lock from '../../../rubrics/lock.json' with { type: 'json' };
-import { currentRubric, lockedRubrics } from './rubrics.ts';
+import { lockedRubrics } from './rubrics.ts';
 
 const released = { 'hook/1.0.0.json': hook };
 const hookLock = { 'hook/1.0.0.json': lock['hook/1.0.0.json'] };
 
-it('accepts a released rubric that matches its hash', () =>
-  expect(lockedRubrics(released, hookLock)).toEqual([currentRubric('hook')]));
+it('accepts a released rubric that matches its hash', () => expect(lockedRubrics(released, hookLock)).toEqual([hook]));
 
 it('refuses an edited released rubric', () => {
   const edited = structuredClone(hook);

@@ -1,5 +1,6 @@
 import { versionLabel } from '@directory/contracts';
 import { z } from 'zod';
+import { inlineHookFacts } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
 import type { Entry, Inspection } from './repository-tree.ts';
 
@@ -75,13 +76,14 @@ function parseFile(text: string | undefined): unknown {
 export function analyzePlugin({ directories, files }: Inspection) {
   const plugin = manifest.parse(parseFile(files.manifest) ?? {});
   const version = versionLabel.safeParse(plugin.version);
+  const inlineHooks = inline(plugin.hooks);
   return {
     ...(version.success ? { version: version.data } : {}),
     components: {
       skills: countEntries(directories.skills, false, 'tree'),
       agents: countEntries(directories.agents, true),
       commands: countEntries(directories.commands, true),
-      hooksByEvent: hooksByEvent([parseFile(files.hooks), inline(plugin.hooks)]),
+      hooksByEvent: hooksByEvent([parseFile(files.hooks), inlineHooks]),
       mcpServersByTransport: mcpServersByTransport([parseFile(files.mcp), inline(plugin.mcpServers)]),
       lspServers: lspServers([parseFile(files.lsp), inline(plugin.lspServers)]),
       outputStyles: countEntries(directories.outputStyles, true),
@@ -100,5 +102,7 @@ export function analyzePlugin({ directories, files }: Inspection) {
       plugin.license !== undefined,
     ].filter(Boolean).length,
     rootClaudeMd: directories.root?.some((entry) => entry.name === 'CLAUDE.md') ?? false,
+    // Hooks in plugin.json run like those in hooks/hooks.json, so they raise the same flags.
+    inlineHookFacts: inlineHookFacts(inlineHooks),
   };
 }

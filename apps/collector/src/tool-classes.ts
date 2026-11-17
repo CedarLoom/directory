@@ -35,8 +35,8 @@ export function toolClasses(value: string | string[] | undefined): ToolClass[] {
   return order.filter((toolClass) => found.has(toolClass));
 }
 
-// A bare `Bash` or `Bash(*)` allows every command; a rule such as `Bash(git diff:*)` limits it.
-const anyBash = /(?:^|[\s,])Bash(?:\(\*\))?(?=[\s,]|$)/;
+// A bare or quoted `Bash`, `Bash()`, `Bash(*)` or `Bash(*:*)` allows every command; `Bash(git diff:*)` limits it.
+const anyBash = /(?:^|[\s,])(["']?)Bash(?:\((?:\*(?::\*)?)?\))?\1(?=[\s,]|$)/;
 
 /** The `allowed-tools` or `tools` field allows Bash without a rule. */
 export function unrestrictedBash(value: string | string[] | undefined): boolean {

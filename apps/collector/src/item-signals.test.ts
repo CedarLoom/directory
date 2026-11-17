@@ -8,7 +8,7 @@ const nameValid = (name: string) =>
     rootClaudeMd: false,
     components: { skills: 0, agents: 0, commands: 0, hooksByEvent: {}, mcpServersByTransport: {}, binFiles: 0 },
     hasEvals: false,
-    hooks: undefined,
+    hooks: [],
     source: { kind: 'github', pin: 'sha' },
     listedIn: [],
   }).signals['nameValid'];

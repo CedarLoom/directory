@@ -134,13 +134,13 @@ function marketplace(input: InputOf<'marketplace'>, runDate: string) {
 }
 
 function plugin(input: InputOf<'plugin'>, runDate: string) {
-  const { manifestName, manifestFields, rootClaudeMd, ...facts } = analyzePlugin(input.inspection);
+  const { manifestName, manifestFields, rootClaudeMd, inlineHookFacts, ...facts } = analyzePlugin(input.inspection);
   const assessment = pluginAssessment({
     ...facts,
     name: manifestName ?? input.candidate.name,
     manifestFields,
     rootClaudeMd,
-    hooks: input.hooks,
+    hooks: [input.hooks, inlineHookFacts].filter((hooks) => hooks !== undefined),
     source: input.source,
     listedIn: input.candidate.listedIn,
   });

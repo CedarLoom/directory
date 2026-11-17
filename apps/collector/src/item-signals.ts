@@ -97,12 +97,13 @@ export function outputStyleAssessment(facts: {
   };
 }
 
-function hookFlags(hooks: HookFacts | undefined, sessionStart: boolean) {
+/** The hook flags raised by any of the hook configurations. */
+function hookFlags(configs: readonly HookFacts[], sessionStart: boolean) {
   return [
-    ['hook-shell-command', hooks?.handlerTypes.includes('command') === true],
+    ['hook-shell-command', configs.some(({ handlerTypes }) => handlerTypes.includes('command'))],
     ['hook-session-start', sessionStart],
-    ['hook-match-all', hooks?.matcherBreadth === 'match-all'],
-    ['hook-http', hooks?.handlerTypes.includes('http') === true],
+    ['hook-match-all', configs.some(({ matcherBreadth }) => matcherBreadth === 'match-all')],
+    ['hook-http', configs.some(({ handlerTypes }) => handlerTypes.includes('http'))],
   ] as const;
 }
 
@@ -110,7 +111,7 @@ export function hookAssessment(hooks: HookFacts): Assessment {
   return {
     signals: { matchersSpecific: hooks.matcherBreadth !== 'match-all' },
     flags: raised([
-      ...hookFlags(hooks, hooks.events.includes('SessionStart')),
+      ...hookFlags([hooks], hooks.events.includes('SessionStart')),
       ['network-indicator', hooks.networkIndicator],
     ]),
   };
@@ -129,8 +130,8 @@ export interface PluginFacts {
     binFiles: number;
   };
   hasEvals: boolean;
-  /** The facts of the plugin's hooks/hooks.json, when it has one the hook analyzer read. */
-  hooks: HookFacts | undefined;
+  /** The facts of each hook configuration the hook analyzer read: hooks/hooks.json and hooks inline in plugin.json. */
+  hooks: readonly HookFacts[];
   source: { kind: SourceKind; pin: Pin };
   listedIn: readonly string[];
 }
@@ -149,7 +150,7 @@ export function pluginAssessment(facts: PluginFacts): Assessment {
     flags: raised([
       ...hookFlags(hooks, (components.hooksByEvent['SessionStart'] ?? 0) > 0),
       ['bin-executables', components.binFiles > 0],
-      ['network-indicator', hooks?.networkIndicator === true],
+      ['network-indicator', hooks.some(({ networkIndicator }) => networkIndicator)],
       ['mcp-remote', http + sse > 0],
       ['install-command-source', facts.source.kind === 'command'],
       ['unpinned-source', facts.source.pin === 'none'],

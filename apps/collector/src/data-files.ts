@@ -73,7 +73,8 @@ function indexRow({ value, owner }: ItemRecord, popularity: Popularity | undefin
     listedOfficial: value.listedIn.includes(officialMarketplace),
     ...(value.maintenance === undefined ? {} : { pushedAt: value.maintenance.pushedAt }),
     archived: value.maintenance?.archived ?? false,
-    flagCount: value.flags.length,
+    // The official listing is a flag that adds points, shown as listedOfficial rather than counted as a concern.
+    flagCount: value.flags.filter((flag) => flag !== 'listed-official-marketplace').length,
     tags: value.tags,
   };
 }

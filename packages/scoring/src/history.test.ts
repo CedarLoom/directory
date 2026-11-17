@@ -23,5 +23,13 @@ it('adds an entry when the rubric version changes', () =>
     { date: '2026-11-17', rubric: '1.1.0', total: 81 },
   ]));
 
+it('replaces the entry of a run on the same date', () =>
+  expect(
+    nextHistory([...entries, { date: '2026-11-17', rubric: '1.0.0', total: 80 }], scoreOf(79), '2026-11-17'),
+  ).toEqual([
+    { date: '2026-11-02', rubric: '1.0.0', total: 81 },
+    { date: '2026-11-17', rubric: '1.0.0', total: 79 },
+  ]));
+
 it('starts the history with the first score', () =>
   expect(nextHistory([], scoreOf(64.5), '2026-11-17')).toEqual([{ date: '2026-11-17', rubric: '1.0.0', total: 65 }]));

@@ -4,9 +4,13 @@ import { jsonText } from './json-text.ts';
 
 const handlerTypes = ['command', 'http', 'prompt', 'agent'] as const;
 // Upstream files carry more keys than these; only the keys a fact needs are read, the rest is stripped.
-const handler = z.object({ type: z.enum(handlerTypes), command: z.unknown().optional(), args: z.unknown().optional() });
+// A handler type not listed above is read but left out of the facts, so it cannot hide the file's other handlers.
+const handler = z.object({ type: z.string(), command: z.unknown().optional(), args: z.unknown().optional() });
 const group = z.object({ matcher: z.string().optional(), hooks: z.array(handler) });
-const hooksFile = z.object({ hooks: z.record(z.string(), z.array(group)).optional() });
+const events = z.record(z.string(), z.array(group));
+const hooksFile = z.object({ hooks: events.optional() });
+// `hooks` in plugin.json holds the same object as a hooks file, or the events directly.
+const inlineHooks = z.union([z.object({ hooks: events }), events.transform((hooks) => ({ hooks }))]);
 
 export interface HookFacts {
   events: string[];
@@ -43,7 +47,16 @@ function matcherBreadth(groups: readonly (readonly [string, Group])[]): HookFact
 /** The facts of a hooks file; a file without a `hooks` object, such as one that only lists modules, holds no hooks. */
 export function analyzeHooks(text: string): HookFacts | undefined {
   const { hooks } = jsonText.pipe(hooksFile).parse(text);
-  if (hooks === undefined) return undefined;
+  return hooks === undefined ? undefined : hookFacts(hooks);
+}
+
+/** The facts of the `hooks` value of plugin.json; a malformed one gives undefined, as the plugin's other facts stay. */
+export function inlineHookFacts(value: unknown): HookFacts | undefined {
+  const { data } = inlineHooks.safeParse(value);
+  return data === undefined ? undefined : hookFacts(data.hooks);
+}
+
+function hookFacts(hooks: Record<string, Group[]>): HookFacts {
   const groups = Object.entries(hooks).flatMap(([event, list]) => list.map((entry) => [event, entry] as const));
   const handlers = groups.flatMap(([, { hooks: list }]) => list);
   const commands = handlers.filter(({ type }) => type === 'command');

@@ -701,6 +701,18 @@ it('scores each kind from the signals and flags read for it', async () => {
   ).toEqual(expectedScores);
 });
 
+it('counts the concern flags in the index row and shows the official listing on its own', async () => {
+  const { files } = await run(fakeWorld(), '2026-11-16');
+  const row = indexFile
+    .parse(JSON.parse(files.get('index.json') ?? '{}'))
+    .items.find(({ id }) => id === 'gh.example-org.plugin-0');
+  expect({ score: row?.score, flagCount: row?.flagCount, listedOfficial: row?.listedOfficial }).toEqual({
+    score: 75.3,
+    flagCount: 4,
+    listedOfficial: true,
+  });
+});
+
 it('adds a history entry once the push age crosses a step and keeps the history while it does not', async () => {
   const path = 'history/hook/gh.example-org.plugin-0.hooks.json';
   const first = await run(fakeWorld(), '2026-11-16');

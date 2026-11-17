@@ -1,6 +1,6 @@
 /** A Markdown file split into its YAML frontmatter fields and its body. */
 export interface Frontmatter {
-  /** Top-level keys in file order: a string, or a list for a flow or block list; a block scalar reads as ''. */
+  /** Top-level keys in file order: a string, or a list for a flow or block list. */
   fields: Map<string, string | string[]>;
   /** Characters between the `---` lines. */
   metadataLength: number;
@@ -28,8 +28,8 @@ function inlineValue(raw: string): string | string[] {
       .split(',')
       .map(unquote)
       .filter((item) => item !== '');
-  // A block scalar's text follows on indented lines, which no field read here needs.
-  return /^[|>][+-]?$/.test(value) ? '' : unquote(value);
+  // A block scalar header, with its optional chomping and indentation indicators; its text follows on indented lines.
+  return /^[|>][1-9+-]{0,2}$/.test(value) ? '' : unquote(value);
 }
 
 /** Adds a block list item to the key above it when that key opened a list. */
@@ -53,21 +53,21 @@ function addTextLine(fields: Map<string, string | string[]>, key: string, line: 
 
 /**
  * Reads the top-level keys only; nested maps are not parsed, as no stored fact needs them. A block scalar or a plain
- * value that continues on indented lines reads as its lines joined by spaces, which keeps its length.
+ * value on indented lines reads as its lines joined by spaces, which keeps its length; under a key without a value,
+ * `- ` lines form a block list.
  */
 function readFields(block: string): Map<string, string | string[]> {
   const fields = new Map<string, string | string[]>();
   let current: string | undefined;
-  let text = false;
+  let empty = false;
   for (const line of block.split(/\r?\n/)) {
     const [, key, value] = keyLine.exec(line) ?? [];
     if (key !== undefined) {
       const raw = value?.trim() ?? '';
-      const parsed = inlineValue(raw);
-      [current, text] = [key, raw !== '' && typeof parsed === 'string'];
-      fields.set(key, parsed);
-    } else if (current !== undefined && text) addTextLine(fields, current, line);
-    else if (current !== undefined) addListItem(fields, current, line);
+      [current, empty] = [key, raw === ''];
+      fields.set(key, inlineValue(raw));
+    } else if (current !== undefined && empty && listItem.test(line)) addListItem(fields, current, line);
+    else if (current !== undefined) addTextLine(fields, current, line);
   }
   return fields;
 }

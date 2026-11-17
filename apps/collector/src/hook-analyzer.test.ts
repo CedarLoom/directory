@@ -30,6 +30,19 @@ it('reads a download tool or a URL in a command or its arguments as a network in
   ]).toEqual([true, true, false]);
 });
 
+it('reads the other handlers of a file that holds a handler type it does not know', () => {
+  const file = {
+    hooks: { Stop: [{ hooks: [{ type: 'mcp_tool' }, { type: 'command', command: 'wget example.test' }] }] },
+  };
+  expect(analyzeHooks(JSON.stringify(file))).toEqual({
+    events: ['Stop'],
+    handlerTypes: ['command'],
+    commandForms: ['shell'],
+    matcherBreadth: 'none',
+    networkIndicator: true,
+  });
+});
+
 it('holds no hooks in a file that only lists modules', () => {
   expect(analyzeHooks(JSON.stringify({ modules: ['./audit.js'] }))).toBeUndefined();
 });
