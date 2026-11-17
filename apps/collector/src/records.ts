@@ -127,8 +127,16 @@ function marketplace(input: InputOf<'marketplace'>, runDate: string) {
 
 function plugin(input: InputOf<'plugin'>, runDate: string) {
   // The scoring-only facts stay out of the record.
-  const { manifestName, manifestFields, rootClaudeMd, hooks, mcpUnpinnedPackage, mcpSecretsRequired, ...facts } =
-    analyzePlugin(input.inspection);
+  const {
+    manifestName,
+    manifestFields,
+    manifestLicense,
+    rootClaudeMd,
+    hooks,
+    mcpUnpinnedPackage,
+    mcpSecretsRequired,
+    ...facts
+  } = analyzePlugin(input.inspection);
   const assessment = pluginAssessment({
     ...facts,
     name: manifestName ?? input.candidate.name,
@@ -147,7 +155,7 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
         input,
         runDate,
         { ...assessment, version: facts.version },
-        { folderLicenseFile: holdsLicenseFile(input.inspection.directories.root) },
+        { manifest: manifestLicense, folderLicenseFile: holdsLicenseFile(input.inspection.directories.root) },
       ),
       kind: 'plugin',
       ...facts,

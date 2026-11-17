@@ -187,9 +187,9 @@ export function MethodPage({ meta }: { meta: MetaFile }) {
         <Text>
           <Trans id="method.licenseFacts">
             The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the
-            repository root, else a license file in a skill's or plugin's own folder. A field that holds no SPDX id and
-            a license file in the item's folder are recorded without an SPDX id. "No license detected" means that none
-            of these was found, not that the item has no license.
+            repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's
+            own folder. A field that holds no SPDX id and a license file in the item's folder are recorded without an
+            SPDX id. "No license detected" means that none of these was found, not that the item has no license.
           </Trans>
         </Text>
         <Stack gap="md">

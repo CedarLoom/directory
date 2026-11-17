@@ -81,16 +81,28 @@ const classes: Readonly<Record<string, LicenseClass>> = {
 
 export interface License {
   spdx?: string;
-  source?: 'github-detected' | 'frontmatter' | 'license-file';
+  source?: 'github-detected' | 'manifest' | 'frontmatter' | 'license-file';
   class: LicenseClass;
 }
 
 // LICENSE-MIT, COPYING.LESSER or UNLICENSE count; a file such as license.js is code, not a license.
-const licenseFileName = /^((un)?licen[cs]e(-[a-z0-9.]+)?|copying(\.lesser)?)(\.(md|markdown|txt|rst|html))?$/i;
+const licenseFileName =
+  /^(?:(?:un)?licen[cs]e|copying(?:\.lesser)?|licen[cs]e-(?<id>.+?))(?:\.(?:md|markdown|txt|rst|html))?$/i;
+// The suffix of LICENSE-<id> is an SPDX id or its first part, as in LICENSE-APACHE; LICENSE-THIRDPARTY is no license.
+const licenseIds: ReadonlySet<string> = new Set(
+  spdxId.options.flatMap((id) => [id, id.split('-')[0] ?? id]).map((id) => id.toLowerCase()),
+);
+
+function isLicenseFileName(name: string): boolean {
+  const match = licenseFileName.exec(name);
+  if (match === null) return false;
+  const id = match.groups?.['id'];
+  return id === undefined || licenseIds.has(id.toLowerCase());
+}
 
 /** Whether a folder listing holds a license file. */
 export function holdsLicenseFile(entries: readonly { name: string; type: string }[] | undefined): boolean {
-  return entries?.some(({ name, type }) => type === 'blob' && licenseFileName.test(name)) ?? false;
+  return entries?.some(({ name, type }) => type === 'blob' && isLicenseFileName(name)) ?? false;
 }
 
 function classOf(id: string): LicenseClass {
@@ -101,20 +113,29 @@ function classOf(id: string): LicenseClass {
   return found;
 }
 
+// A stated value that is no SPDX id, such as a sentence, states terms of its own: class `none` without its text.
+function stated(value: string, source: 'manifest' | 'frontmatter'): License {
+  return spdxId.safeParse(value).success ? { spdx: value, source, class: classOf(value) } : { source, class: 'none' };
+}
+
 /**
- * The item's license: a frontmatter value first, else GitHub's detected one, else a license file in the item's folder.
- * A frontmatter value that is no SPDX id, such as a sentence, states terms of its own: class `none` without its text.
+ * The item's license: a frontmatter value first, else GitHub's detected one, else a plugin manifest value, else a
+ * license file in the item's folder.
  * A license file in the item's folder is not named, as GitHub detects licenses at the repository root only.
  */
 export function licenseOf(
   detected: string | undefined,
-  { declared, folderLicenseFile = false }: { declared?: string | undefined; folderLicenseFile?: boolean } = {},
+  {
+    declared,
+    manifest,
+    folderLicenseFile = false,
+  }: { declared?: string | undefined; manifest?: string | undefined; folderLicenseFile?: boolean } = {},
 ): License {
-  if (declared !== undefined)
-    return spdxId.safeParse(declared).success
-      ? { spdx: declared, source: 'frontmatter', class: classOf(declared) }
-      : { source: 'frontmatter', class: 'none' };
-  if (detected === undefined) return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
+  if (declared !== undefined) return stated(declared, 'frontmatter');
+  if (detected === undefined) {
+    if (manifest !== undefined) return stated(manifest, 'manifest');
+    return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
+  }
   // NOASSERTION: GitHub found a license file it could not name.
   if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
   return { spdx: detected, source: 'github-detected', class: classOf(detected) };

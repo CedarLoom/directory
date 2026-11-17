@@ -433,6 +433,37 @@ it('records a license file in a skill folder when the repository root has none',
   ]).toEqual([{ source: 'license-file', class: 'none' }, { class: 'none' }]);
 });
 
+it("records a plugin's manifest license, else a license file in its folder, when the repository root has none", async () => {
+  const world = fakeWorld();
+  world.set('example-org/market', {
+    // The most stars of the run, so its plugins are inspected first.
+    stars: 99_999,
+    unlicensed: true,
+    files: {
+      '.claude-plugin/marketplace.json': JSON.stringify({
+        name: 'market',
+        plugins: [
+          { name: 'stated', source: './plugins/stated' },
+          { name: 'filed', source: './plugins/filed' },
+        ],
+      }),
+      'plugins/stated/.claude-plugin/plugin.json': JSON.stringify({ name: 'stated', license: 'MIT' }),
+      'plugins/stated/LICENSE': marker,
+      'plugins/filed/.claude-plugin/plugin.json': JSON.stringify({ name: 'filed' }),
+      'plugins/filed/LICENSE': marker,
+    },
+  });
+  const { files } = await run(world, '2026-11-16');
+  const license = (path: string) => z.object({ license: z.unknown() }).parse(JSON.parse(files.get(path) ?? '')).license;
+  expect([
+    license('records/plugin/gh.example-org.market.plugins.stated.json'),
+    license('records/plugin/gh.example-org.market.plugins.filed.json'),
+  ]).toEqual([
+    { spdx: 'MIT', source: 'manifest', class: 'permissive' },
+    { source: 'license-file', class: 'none' },
+  ]);
+});
+
 it('writes records, popularity files and the index, and no third-party text', async () => {
   const { files } = await run(fakeWorld(), '2026-11-16');
   const paths = [...files.keys()];
