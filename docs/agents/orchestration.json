@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 2,
+  "startLabel": "cedarloom:ready-for-agent",
+  "trustedAuthors": [],
+  "merge": {
+    "allowed": true,
+    "requiredChecks": ["check"],
+    "mode": "strict"
+  },
+  "closeIssue": true
+}

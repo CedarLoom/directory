@@ -1,6 +1,7 @@
 name: Correct an entry
 description: Report a value on an item's page that is wrong.
 title: "Correct: "
+labels: [triage]
 body:
   - type: markdown
     attributes:
