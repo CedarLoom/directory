@@ -142,6 +142,24 @@ it('reads an UNLICENSED, NONE or proprietary manifest value as withheld, over th
   ]);
 });
 
+it("reads a containing plugin's withholding manifest value for an item without a license of its own", () => {
+  expect([
+    licenseOf('MIT', { container: 'UNLICENSED' }),
+    licenseOf(undefined, { container: 'proprietary' }),
+    licenseOf('MIT', { declared: 'Apache-2.0', container: 'UNLICENSED' }),
+    licenseOf('MIT', { container: 'NONE', folderLicenseFile: true }),
+    licenseOf('MIT', { container: 'Apache-2.0' }),
+    licenseOf('MIT', { container: 'NOASSERTION' }),
+  ]).toEqual([
+    { source: 'manifest', class: 'none', withheld: true },
+    { source: 'manifest', class: 'none', withheld: true },
+    { spdx: 'Apache-2.0', source: 'frontmatter', class: 'permissive' },
+    { source: 'license-file', class: 'none' },
+    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+  ]);
+});
+
 it('counts LICENSE-<suffix> for a full SPDX id, a license family with an optional version, or CODE', () => {
   expect(
     [

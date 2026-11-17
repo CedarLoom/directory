@@ -116,6 +116,14 @@ it('counts only manifest fields that hold a value', () => {
   ]).toEqual([0, 5]);
 });
 
+it('counts a license field that is blank, NOASSERTION or withholds the license as not filled', () => {
+  expect(
+    [' ', 'NOASSERTION', 'UNLICENSED', 'none', 'Proprietary', 'Proprietary, see TERMS.md'].map((license) =>
+      manifestFields({ license }),
+    ),
+  ).toEqual([0, 0, 0, 0, 0, 1]);
+});
+
 const facts = (servers: object, manifest: object = {}) => {
   const { mcpUnpinnedPackage, mcpSecretsRequired } = analyzePlugin({
     directories: {},

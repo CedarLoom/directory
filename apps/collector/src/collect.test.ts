@@ -503,7 +503,7 @@ it('records a license file in a skill folder when the repository root has none',
   repository.files['skills/skill-0/SKILL.md'] = `---\nname: skill-0\ndescription: ${marker}\n---\n# Skill\n`;
   repository.files['skills/skill-0/LICENSE.txt'] = marker;
   const { files } = await run(world, '2026-11-16');
-  const license = (path: string) => z.object({ license: z.unknown() }).parse(JSON.parse(files.get(path) ?? '')).license;
+  const license = (path: string) => recordLicense(files, path);
   expect([
     license('records/skill/gh.example-org.plugin-0.skills.skill-0.json'),
     license('records/plugin/gh.example-org.plugin-0.json'),
@@ -519,6 +519,75 @@ it('lists a skill whose license field withholds the license as withheld, not as 
   const { files } = await run(world, '2026-11-16');
   const rows = indexFile.parse(JSON.parse(files.get('index.json') ?? '')).items;
   expect(rows.find((row) => row.id === 'gh.example-org.plugin-0.skills.skill-0')?.licenseClass).toBe('withheld');
+});
+
+const withheld = { source: 'manifest', class: 'none', withheld: true };
+
+/** The license of the record a run wrote at `path`. */
+function recordLicense(files: ReadonlyMap<string, string>, path: string): unknown {
+  return z.object({ license: z.unknown() }).parse(JSON.parse(files.get(path) ?? '')).license;
+}
+
+/** The repository of the world, which the test changes. */
+function repositoryOf(world: World, name: string): FakeRepository {
+  const repository = world.get(name);
+  if (repository === undefined) throw new Error(`${name} is missing`);
+  return repository;
+}
+
+it("records a plugin's withholding manifest license for the items it holds, and no other plugin's", async () => {
+  const world = fakeWorld();
+  repositoryOf(world, 'example-org/plugin-0').files['.claude-plugin/plugin.json'] = JSON.stringify({
+    name: 'plugin-0',
+    license: 'UNLICENSED',
+  });
+  const { files } = await run(world, '2026-11-16');
+  const license = (path: string) => recordLicense(files, path);
+  expect([
+    license('records/agent/gh.example-org.plugin-0.agents.agent-0.json'),
+    license('records/hook/gh.example-org.plugin-0.hooks.json'),
+    license('records/output-style/gh.example-org.plugin-0.output-styles.terse.json'),
+    license('records/agent/gh.example-org.plugin-2.agents.agent-2.json'),
+  ]).toEqual([withheld, withheld, withheld, { spdx: 'MIT', source: 'github-detected', class: 'permissive' }]);
+});
+
+it('records the withholding manifest license of a plugin outside the inspected ones for a skill its entry lists', async () => {
+  const world = fakeWorld();
+  const market = repositoryOf(world, 'example-org/market');
+  const { plugins } = z
+    .object({ plugins: z.array(z.record(z.string(), z.unknown())) })
+    .parse(JSON.parse(market.files['.claude-plugin/marketplace.json'] ?? ''));
+  plugins[999] = { ...plugins[999], skills: ['./skills/skill-999'] };
+  market.files['.claude-plugin/marketplace.json'] = JSON.stringify({ name: 'market', plugins });
+  const plugin = repositoryOf(world, 'example-org/plugin-999');
+  plugin.files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-999', license: 'UNLICENSED' });
+  plugin.files['skills/skill-999/SKILL.md'] = `---\nname: skill-999\ndescription: ${marker}\n---\n${marker}\n`;
+  const { files } = await run(world, '2026-11-16');
+  expect(recordLicense(files, 'records/skill/gh.example-org.plugin-999.skills.skill-999.json')).toEqual(withheld);
+});
+
+it("records a skill listed in its withholding plugin's own folder as withheld, like the plugin", async () => {
+  const world = fakeWorld();
+  const official = repositoryOf(world, 'anthropics/claude-plugins-official');
+  const { plugins } = z
+    .object({ plugins: z.array(z.unknown()) })
+    .parse(JSON.parse(official.files['.claude-plugin/marketplace.json'] ?? ''));
+  official.stars = 6000;
+  official.files = {
+    '.claude-plugin/marketplace.json': JSON.stringify({
+      name: 'claude-plugins-official',
+      plugins: [...plugins, { name: 'folder', source: './folder', skills: ['./'] }],
+    }),
+    'folder/.claude-plugin/plugin.json': JSON.stringify({ name: 'folder', license: 'proprietary' }),
+    'folder/SKILL.md': `---\nname: folder\ndescription: ${marker}\n---\n${marker}\n`,
+    'folder/LICENSE': marker,
+  };
+  const { files } = await run(world, '2026-11-16');
+  const license = (path: string) => recordLicense(files, path);
+  expect([
+    license('records/plugin/gh.anthropics.claude-plugins-official.folder.json'),
+    license('records/skill/gh.anthropics.claude-plugins-official.folder.json'),
+  ]).toEqual([withheld, withheld]);
 });
 
 it("records a plugin's manifest license, else a license file in its folder, when the repository root has none", async () => {
@@ -542,7 +611,7 @@ it("records a plugin's manifest license, else a license file in its folder, when
     },
   });
   const { files } = await run(world, '2026-11-16');
-  const license = (path: string) => z.object({ license: z.unknown() }).parse(JSON.parse(files.get(path) ?? '')).license;
+  const license = (path: string) => recordLicense(files, path);
   expect([
     license('records/plugin/gh.example-org.market.plugins.stated.json'),
     license('records/plugin/gh.example-org.market.plugins.filed.json'),

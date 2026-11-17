@@ -3,16 +3,17 @@ import { type Candidate, type Located, mergeCandidates } from './candidate.ts';
 import { type DataFiles, dataFiles } from './data-files.ts';
 import { applyExclusions, type Exclusions } from './exclusions.ts';
 import type { Repository } from './github-contents.ts';
-import { repositoryId } from './github-location.ts';
+import { type GitHubLocation, repositoryId } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
 import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
 import { UnknownLicenseError } from './license-class.ts';
 import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
+import { manifestLicense } from './plugin-analyzer.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
-import { inspectLocations } from './repository-tree.ts';
+import { inspectLocations, manifestPath } from './repository-tree.ts';
 import type { RunReport } from './run-report.ts';
 import type { SourceAdapter } from './source-adapter.ts';
 import { searchTopics } from './topic-search.ts';
@@ -121,14 +122,43 @@ function refusalLogger(log: (line: string) => void, counter: { refused: number }
 
 type Build = (input: RecordInput) => ItemRecord | 'refused';
 
-/** Builds a record, or logs a refusal when its facts do not fit the record or its license is unknown. */
-function recordBuilder(runDate: string, refuse: Refuse): Build {
+const tooLarge = 'a file is cut by GitHub or over the size cap';
+
+/** The listed plugins, by id: where each lives and the license field of each manifest read so far. */
+interface Containers {
+  locations: ReadonlyMap<string, GitHubLocation>;
+  /** Filled before the items a plugin holds are built; too large when its manifest is. */
+  licenses: Map<string, { license: string | undefined } | 'too-large'>;
+}
+
+/**
+ * Builds a record, with the manifest license of the plugin that holds the item, or logs a refusal when its facts do not
+ * fit the record, its license is unknown or its plugin's manifest is too large.
+ */
+function recordBuilder(runDate: string, refuse: Refuse, { locations, licenses }: Containers): Build {
   return (input) => {
+    const { container, id, location } = input.candidate;
+    const manifest = container === undefined ? undefined : licenses.get(container);
+    if (manifest === 'too-large') {
+      refuse(id, new Error(tooLarge));
+      return 'refused';
+    }
+    const plugin = container === undefined ? undefined : locations.get(container);
     try {
-      return buildRecord(input, runDate);
+      // An item lives in its plugin's repository, so the same path is the plugin's own folder.
+      return buildRecord(
+        plugin === undefined
+          ? input
+          : {
+              ...input,
+              containerLicense: manifest?.license,
+              inContainerFolder: plugin.path === location.path,
+            },
+        runDate,
+      );
     } catch (error) {
       if (!(error instanceof ZodError || error instanceof UnknownLicenseError)) throw error;
-      refuse(input.candidate.id, error);
+      refuse(id, error);
       return 'refused';
     }
   };
@@ -139,9 +169,8 @@ interface Reading {
   client: HttpClient;
   refuse: Refuse;
   build: Build;
+  containers: Containers;
 }
-
-const tooLarge = 'a file is cut by GitHub or over the size cap';
 
 /** The topic repositories that have an id; a name too long for one is refused, so it cannot stop the run. */
 function identified(repositories: readonly Repository[], refuse: Refuse): Repository[] {
@@ -172,8 +201,11 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
   return { inspections, found };
 }
 
-/** Inspects a batch of plugins and adds the items they hold to `found`, also those of a plugin refused for its own facts. */
-function pluginReader({ client, refuse, build }: Reading, found: Candidate[]) {
+/**
+ * Inspects a batch of plugins and adds the items they hold to `found` and their manifest licenses to the containers,
+ * also those of a plugin refused for its own facts.
+ */
+function pluginReader({ client, refuse, build, containers }: Reading, found: Candidate[]) {
   return async (batch: readonly Ranked[]): Promise<Read[]> => {
     const places = batch.map(
       ({ candidate: { location, id, provenance } }): InspectedPlace => ({ location, container: id, provenance }),
@@ -183,7 +215,9 @@ function pluginReader({ client, refuse, build }: Reading, found: Candidate[]) {
     return batch.map(({ candidate, facts }, index): Read => {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
       if (inspection === 'too-large') return 'refused';
-      if (inspection === undefined || source === undefined) return undefined;
+      if (inspection === undefined) return undefined;
+      containers.licenses.set(candidate.id, { license: manifestLicense(inspection.files.manifest) });
+      if (source === undefined) return undefined;
       return build({ kind: 'plugin', candidate, facts, inspection, source });
     });
   };
@@ -202,15 +236,44 @@ function fileRecord(kind: FileKind, { candidate, facts }: Ranked, read: ItemFile
   );
 }
 
+/**
+ * Reads the manifest license of each plugin that holds an item of the batch and that no inspection read, such as a
+ * plugin outside the selection whose marketplace entry lists skills.
+ */
+async function readManifestLicenses({ client, containers }: Reading, batch: readonly Ranked[]): Promise<void> {
+  const { locations, licenses } = containers;
+  const unread = new Set(
+    batch.flatMap(({ candidate: { container } }) =>
+      container === undefined || licenses.has(container) ? [] : [container],
+    ),
+  );
+  const plugins = [...unread].flatMap((id) => {
+    const location = locations.get(id);
+    return location === undefined ? [] : [{ id, location }];
+  });
+  const manifests = await readItemFiles(
+    client,
+    plugins.map(({ location }) => ({ location, file: manifestPath })),
+    false,
+  );
+  for (const [index, { id }] of plugins.entries()) {
+    const file = manifests[index]?.file;
+    licenses.set(id, file === 'too-large' ? file : { license: manifestLicense(file?.text) });
+  }
+}
+
 /** Reads a batch of skills' SKILL.md and folders, or of agents' or output styles' own files, and builds their records. */
 function fileReader(reading: Reading, kind: FileKind) {
   return async (batch: readonly Ranked[]): Promise<Read[]> => {
     const skill = kind === 'skill';
-    const files = await readItemFiles(
-      reading.client,
-      batch.map(({ candidate: { location } }) => ({ location, file: skill ? 'SKILL.md' : '' })),
-      skill,
-    );
+    const [files] = await Promise.all([
+      readItemFiles(
+        reading.client,
+        batch.map(({ candidate: { location } }) => ({ location, file: skill ? 'SKILL.md' : '' })),
+        skill,
+      ),
+      readManifestLicenses(reading, batch),
+    ]);
     return batch.map((item, index) => fileRecord(kind, item, files[index], reading));
   };
 }
@@ -335,7 +398,11 @@ export async function collect(
     (repository) => !excluded.has(repositoryId(repository)),
   );
   const facts = await readFacts(client, factsRepositories(listed, topicRepositories, log), runDate);
-  const reading: Reading = { client, refuse, build: recordBuilder(runDate, refuse) };
+  const containers: Containers = {
+    locations: new Map(listed.flatMap(({ kind, id, location }) => (kind === 'plugin' ? [[id, location]] : []))),
+    licenses: new Map(),
+  };
+  const reading: Reading = { client, refuse, build: recordBuilder(runDate, refuse, containers), containers };
   const found: Candidate[] = [];
   const [plugins, topics] = await Promise.all([
     fill(ranked(listed, 'plugin', facts), perKind, pluginReader(reading, found)),
