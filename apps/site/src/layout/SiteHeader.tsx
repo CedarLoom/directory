@@ -23,7 +23,7 @@ export function SiteHeader() {
               </strong>
             </NavLink>
             {kinds.map((kind) => (
-              <NavLink key={kind} to="/$kind/" params={{ kind }} activeOptions={{ includeSearch: false }}>
+              <NavLink key={kind} to="/$kind/" params={{ kind }} activeOptions={{ exact: true, includeSearch: false }}>
                 {i18n._(kindPluralLabels[kind])}
               </NavLink>
             ))}

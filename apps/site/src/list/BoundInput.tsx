@@ -1,5 +1,5 @@
 import { TextInput } from '@mantine/core';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 /** The numbers the list's search schema accepts for this bound. */
 interface Range {
@@ -38,17 +38,18 @@ export function BoundInput({
   onChange,
 }: Props) {
   const [text, setText] = useState(asText(value));
+  const [shownValue, setShownValue] = useState(value);
   // A bound changed elsewhere, as by the back button, replaces the text.
-  useEffect(() => {
-    setText((current) => (parse(current, { integer, min, max }) === value ? current : asText(value)));
-  }, [value, integer, min, max]);
+  if (value !== shownValue) {
+    setShownValue(value);
+    if (parse(text, { integer, min, max }) !== value) setText(asText(value));
+  }
   return (
     <TextInput
       label={label}
-      type="number"
+      // A number field reports text such as `1e` as empty, which would clear the bound instead of marking it invalid.
+      type="text"
       inputMode={integer ? 'numeric' : 'decimal'}
-      min={min}
-      max={max}
       value={text}
       error={parse(text, { integer, min, max }) === null}
       onChange={(event) => {

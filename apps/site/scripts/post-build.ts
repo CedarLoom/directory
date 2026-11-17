@@ -20,6 +20,9 @@ export function withPolicy(html: string): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data:",
     "connect-src 'self'",
+    // Neither falls back to default-src, and no page has a base element or a form.
+    "base-uri 'none'",
+    "form-action 'none'",
   ].join('; ');
   const head = html.indexOf('<head>');
   if (head < 0) throw new Error('The page has no <head>');

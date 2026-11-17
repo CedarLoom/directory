@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "oxc", "import", "node"],
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "react"],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -31,7 +31,10 @@
     "typescript/no-non-null-assertion": "error",
     "typescript/no-explicit-any": "error",
     "typescript/ban-ts-comment": "error",
-    "typescript/no-floating-promises": "error"
+    "typescript/no-floating-promises": "error",
+    "react/react-in-jsx-scope": "off",
+    "react/no-danger": "error",
+    "react/jsx-no-script-url": "error"
   },
   "overrides": [
     {

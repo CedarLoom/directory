@@ -9,6 +9,7 @@ export function ScrollTable({ headers, children }: { headers: readonly ReactNode
         <Table.Thead>
           <Table.Tr>
             {headers.map((header, index) => (
+              // oxlint-disable-next-line react/no-array-index-key -- the headers are a fixed list that never reorders
               <Table.Th key={index} scope="col" data-numeric={index === headers.length - 1 || undefined}>
                 {header}
               </Table.Th>

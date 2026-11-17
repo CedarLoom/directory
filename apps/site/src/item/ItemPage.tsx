@@ -4,11 +4,10 @@ import type { ItemRecord } from '../data-types.ts';
 import type { Item } from '../item-data.ts';
 import { flagLabels } from '../labels.ts';
 import { ExternalLink } from '../layout/ExternalLink.tsx';
+import { newIssueUrl } from '../new-issue-url.ts';
 import { ItemFacts } from './ItemFacts.tsx';
 import { ScoreBreakdown } from './ScoreBreakdown.tsx';
 import { ScoreHistory } from './ScoreHistory.tsx';
-
-const reportUrl = 'https://github.com/CedarLoom/directory/issues/new';
 
 function Links({ links }: { links: ItemRecord['links'] }) {
   return (
@@ -78,7 +77,7 @@ export function ItemPage({ item, runAt }: { item: Item; runAt: string }) {
         <Trans id="item.dataAsOf">
           Data as of {changedAt}; last collector run {runDate}.
         </Trans>{' '}
-        <ExternalLink href={reportUrl}>
+        <ExternalLink href={newIssueUrl}>
           <Trans id="item.report">Report a problem with this entry</Trans>
         </ExternalLink>
       </Text>

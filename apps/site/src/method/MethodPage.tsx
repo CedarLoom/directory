@@ -4,10 +4,9 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { List, Stack, Text, Title } from '@mantine/core';
 import type { MetaFile } from '../data-types.ts';
 import { ExternalLink } from '../layout/ExternalLink.tsx';
+import { newIssueUrl } from '../new-issue-url.ts';
 import { RubricTable } from './RubricTable.tsx';
 import { rubrics } from './rubrics.ts';
-
-const issuesUrl = 'https://github.com/CedarLoom/directory/issues/new';
 
 const sourceLabels: Readonly<Record<string, MessageDescriptor>> = {
   'official-marketplace': msg({
@@ -99,7 +98,7 @@ function Policies() {
         <Trans id="method.takedown">
           To correct an entry or to have your item removed, open an issue. A removed item stays out of later runs.
         </Trans>{' '}
-        <ExternalLink href={issuesUrl}>
+        <ExternalLink href={newIssueUrl}>
           <Trans id="method.openIssue">Open an issue</Trans>
         </ExternalLink>
       </Text>

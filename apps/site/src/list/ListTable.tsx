@@ -29,13 +29,16 @@ function useListTable({ rows, sort, cols, page, onSortChange }: Omit<Props, 'cap
     features,
     columns,
     data: rows,
-    getRowId: (row) => row.id,
+    // An id is unique within its kind only: a marketplace and a root skill of one repository share it.
+    getRowId: (row) => `${row.kind}/${row.id}`,
     state: {
       sorting: [sort],
       columnVisibility: Object.fromEntries(columnIds.map((id) => [id, cols.includes(id)])),
       pagination: { pageIndex: page - 1, pageSize },
     },
     enableSortingRemoval: false,
+    // The address holds one sort; a shift-click would otherwise add a second one and be dropped.
+    enableMultiSort: false,
     onSortingChange: (updater) => {
       const [next] = typeof updater === 'function' ? updater([sort]) : updater;
       if (next !== undefined) onSortChange(next);

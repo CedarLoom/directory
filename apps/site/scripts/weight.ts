@@ -59,6 +59,7 @@ for (const [route, { chunks, capKb }] of Object.entries(budget.routes)) {
   report(`${route} route`, chunksKb(own), capKb, 'kB');
 }
 const data = Object.keys(manifest).filter((key) => dataChunk.test(key));
+if (data.length === 0) throw new Error('The manifest has no data chunks; has their path changed?');
 const largest = Math.max(...data.map((key) => chunksKb([key])));
 report(`largest of ${data.length} data chunks`, largest, budget.dataChunkKb, 'kB');
 // GitHub Pages takes the site as one gzip archive; the per-file gzip sum estimates its size.

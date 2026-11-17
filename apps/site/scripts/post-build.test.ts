@@ -8,7 +8,7 @@ describe('withPolicy', () => {
     expect(withPolicy(page)).toBe(
       '<html><head><meta http-equiv="Content-Security-Policy" content="default-src \'self\'; ' +
         "script-src 'self' 'sha256-ypeBEsobvcr6wjGzmiPcTaeG7/gUfE5yuYB3ha/uSLs='; style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data:; connect-src 'self'\"/><title>x</title></head><body><script>a</script>" +
+        "img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'\"/><title>x</title></head><body><script>a</script>" +
         '<script src="/x.js"></script></body></html>',
     );
   });

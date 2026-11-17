@@ -1,11 +1,12 @@
 import type { MessageDescriptor } from '@lingui/core';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Checkbox, Group, NativeSelect, SimpleGrid, Stack, TextInput } from '@mantine/core';
+import { Checkbox, Group, NativeSelect, SimpleGrid, Stack } from '@mantine/core';
 import type { ReactNode } from 'react';
 import { fitLabels, kindLabels, licenseClassLabels, maintenanceLabels } from '../labels.ts';
 import type { ListFilters as Filters } from '../list-search.ts';
 import * as vocabulary from '../vocabulary.ts';
 import { BoundInput } from './BoundInput.tsx';
+import { SearchInput } from './SearchInput.tsx';
 
 interface Props {
   filters: Filters;
@@ -86,16 +87,19 @@ function SearchAndToggles({ filters, tags, onChange }: Omit<Props, 'showKinds'>)
   const { t } = useLingui();
   return (
     <Stack gap="xs">
-      <TextInput
-        type="search"
+      <SearchInput
         label={<Trans id="filter.q">Search names, owners and tags</Trans>}
         value={filters.q}
-        onChange={(event) => onChange({ q: event.currentTarget.value })}
+        onChange={(q) => onChange({ q })}
       />
       <NativeSelect
         label={<Trans id="filter.tag">Category tag</Trans>}
         value={filters.tag}
-        data={[{ value: '', label: t({ id: 'filter.anyTag', message: 'Any tag' }) }, ...tags]}
+        data={[
+          { value: '', label: t({ id: 'filter.anyTag', message: 'Any tag' }) },
+          // A tag from the address that no row has stays shown, so it can be cleared.
+          ...(filters.tag === '' || tags.includes(filters.tag) ? tags : [filters.tag, ...tags]),
+        ]}
         onChange={(event) => onChange({ tag: event.currentTarget.value })}
       />
       <Checkbox
