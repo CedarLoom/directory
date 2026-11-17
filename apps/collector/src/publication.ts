@@ -2,6 +2,7 @@ import { count, metaFile, recordContracts, type SourceId, sourceId } from '@dire
 import { currentRubric } from '@directory/scoring';
 import { z } from 'zod';
 import { type DataFiles, jsonFile } from './data-files.ts';
+import { isExcluded } from './exclusions.ts';
 import type { RunReport } from './run-report.ts';
 
 const recordFacts = z.looseObject({
@@ -43,11 +44,66 @@ function metaText(report: RunReport, candidate: DataFiles): string {
   return jsonFile(meta);
 }
 
-/**
- * The files `publish` writes into the published data folder: each file of the validated run whose text differs from the
- * published one, and `meta.json` with the run time. A file the run did not produce stays as it is.
- */
-export function publication(candidate: DataFiles, published: DataFiles, report: RunReport): Map<string, string> {
+// What a record names of the files that belong to it.
+const recordLinks = z.looseObject({
+  id: z.string(),
+  container: z.string().optional(),
+  popularity: z.array(z.looseObject({ ref: z.string().optional() })),
+});
+
+/** The id a history or popularity file names in its file name. */
+const fileId = (path: string) => path.slice(path.lastIndexOf('/') + 1, -'.json'.length);
+
+/** A history file of an excluded item: by its record, or, when an earlier run removed the record, by its own id or its repository's. */
+function excludedHistory(path: string, excludedHistories: ReadonlySet<string>, excluded: ReadonlySet<string>): boolean {
+  const id = fileId(path);
+  // Every id but an MCP server's starts with the id of its repository, `gh.<owner>.<repo>`.
+  const repository = path.startsWith('history/mcp-server/') ? id : id.split('.', 3).join('.');
+  return excludedHistories.has(path) || excluded.has(id) || excluded.has(repository);
+}
+
+/** Published files the run drops: every record it lacks, and the history and popularity file of an excluded item. */
+function removals(candidate: DataFiles, published: DataFiles, excluded: ReadonlySet<string>): string[] {
+  const excludedHistories = new Set<string>();
+  const [excludedRefs, keptRefs] = [new Set<string>(), new Set<string>()];
+  // The run's copy of a record replaces the published one; a record the run lacks still keeps its popularity file.
+  for (const [path, text] of new Map([...published, ...candidate])) {
+    if (!path.startsWith('records/')) continue;
+    const record = recordLinks.parse(JSON.parse(text));
+    const refs = record.popularity.flatMap(({ ref }) => (ref === undefined ? [] : [ref]));
+    // An excluded repository takes out the items in it, as collect does.
+    const gone = isExcluded(record, excluded) || refs.some((ref) => excluded.has(ref));
+    if (gone) excludedHistories.add(`history/${path.slice('records/'.length)}`);
+    for (const ref of refs) (gone ? excludedRefs : keptRefs).add(ref);
+  }
+  return [...published.keys()].filter((path) => {
+    if (candidate.has(path) || path === 'index.json' || path === 'meta.json') return false;
+    if (path.startsWith('records/')) return true;
+    if (path.startsWith('history/')) return excludedHistory(path, excludedHistories, excluded);
+    // A popularity file whose records an earlier run removed is matched by its own id.
+    const id = fileId(path);
+    return path.startsWith('popularity/') && (excludedRefs.has(id) || excluded.has(id)) && !keptRefs.has(id);
+  });
+}
+
+/** What `publish` does to the published data folder. */
+export interface Publication {
+  /** Each file of the validated run whose text differs from the published one, and `meta.json` with the run time. */
+  files: Map<string, string>;
+  /** Paths of the published files to remove. */
+  removed: string[];
+}
+
+/** The files `publish` writes into the published data folder and the ones it removes; any other file stays as it is. */
+export function publication(
+  candidate: DataFiles,
+  published: DataFiles,
+  report: RunReport,
+  excluded: ReadonlySet<string>,
+): Publication {
   const files = [...candidate, ['meta.json', metaText(report, candidate)] as const];
-  return new Map(files.filter(([path, text]) => published.get(path) !== text));
+  return {
+    files: new Map(files.filter(([path, text]) => published.get(path) !== text)),
+    removed: removals(candidate, published, excluded),
+  };
 }

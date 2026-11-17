@@ -1,11 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { Command, CommanderError } from '@commander-js/extra-typings';
+import { Command, CommanderError, InvalidArgumentError } from '@commander-js/extra-typings';
+import { kind } from '@directory/contracts';
 import { ZodError } from 'zod';
 import { systemClock } from './clock.ts';
 import { collect, summaryLine } from './collect.ts';
 import { commitDataFolder } from './data-commit.ts';
-import { readDataFile, readDataFolder, writeDataFolder } from './data-folder.ts';
+import { readDataFile, readDataFolder, removeDataFiles, writeDataFolder } from './data-folder.ts';
 import { parseExclusions } from './exclusions.ts';
 import { gitHubHeaders } from './github-contents.ts';
 import { createHttpClient, RequestError } from './http-client.ts';
@@ -15,7 +16,7 @@ import { readRubricFiles } from './rubric-files.ts';
 import { runReport } from './run-report.ts';
 import { sourceAdapters } from './sources.ts';
 import { topics } from './topic-search.ts';
-import { runRefusals } from './validation.ts';
+import { checkRun } from './validation.ts';
 
 const defaultExclusions = fileURLToPath(new URL('../../../curation/exclusions.json', import.meta.url));
 const rubricsFolder = fileURLToPath(new URL('../../../rubrics', import.meta.url));
@@ -39,6 +40,18 @@ const log = (line: string) => console.error(line);
 
 async function readReport(file: string) {
   return runReport.parse(JSON.parse(await readFile(file, 'utf8')));
+}
+
+/** Adds the kinds of one `--allow-removals` value, a comma list, to those of the earlier ones. */
+function allowedKinds(value: string, previous: readonly string[]): string[] {
+  return [
+    ...previous,
+    ...value.split(',').map((part) => {
+      const parsed = kind.safeParse(part.trim());
+      if (!parsed.success) throw new InvalidArgumentError(`not a kind; one of ${kind.options.join(', ')}`);
+      return parsed.data;
+    }),
+  ];
 }
 
 const program = new Command()
@@ -103,16 +116,30 @@ program
   .requiredOption('--candidate <folder>', 'the data folder `collect --out` wrote')
   .requiredOption('--report <file>', 'the run report `collect` printed')
   .requiredOption('--published <folder>', 'the published data folder of the last run')
-  .action(async ({ candidate, report, published }) => {
-    await readReport(report);
+  .option(
+    '--allow-removals <kinds>',
+    'accepts a run that lost more than 20 percent of the published items of these kinds, for an intended removal; repeatable or a comma list',
+    allowedKinds,
+    [],
+  )
+  .action(async ({ candidate, report: reportFile, published, allowRemovals }) => {
+    const report = await readReport(reportFile);
     const [candidateFiles, publishedIndex, { rubrics, lock }] = await Promise.all([
       readDataFolder(candidate),
       readDataFile(published, 'index.json'),
       readRubricFiles(rubricsFolder),
     ]);
-    const refusals = runRefusals({ candidate: candidateFiles, publishedIndex, rubrics, lock });
-    for (const refusal of refusals) log(`validate: refused: ${refusal}`);
-    if (refusals.length > 0) {
+    const { refused, accepted } = checkRun({
+      candidate: candidateFiles,
+      reportedItems: report.items,
+      publishedIndex,
+      allowRemovals: new Set(allowRemovals),
+      rubrics,
+      lock,
+    });
+    for (const line of accepted) log(`validate: accepted: ${line}`);
+    for (const refusal of refused) log(`validate: refused: ${refusal}`);
+    if (refused.length > 0) {
       process.exitCode = 65;
       return;
     }
@@ -122,20 +149,28 @@ program
 program
   .command('publish')
   .description(
-    'Writes the changed files of a validated run and meta.json into the published data folder and commits them.',
+    'Writes the changed files of a validated run and meta.json into the published data folder, removes the files of items that left or are excluded, and commits them.',
   )
   .requiredOption('--candidate <folder>', 'the data folder of the validated run')
   .requiredOption('--report <file>', 'the run report `collect` printed')
   .requiredOption('--data <folder>', 'the published data folder, inside a git work tree of the data branch')
-  .action(async ({ candidate, report: reportFile, data }) => {
+  .option('--exclusions <file>', 'the exclusions file', defaultExclusions)
+  .action(async ({ candidate, report: reportFile, data, exclusions }) => {
     const report = await readReport(reportFile);
-    const [candidateFiles, published] = await Promise.all([readDataFolder(candidate), readDataFolder(data)]);
+    const [candidateFiles, published, excluded] = await Promise.all([
+      readDataFolder(candidate),
+      readDataFolder(data),
+      readFile(exclusions, 'utf8').then(parseExclusions),
+    ]);
     if (!candidateFiles.has('index.json')) program.error(`publish: ${candidate} holds no index.json`);
-    const files = publication(candidateFiles, published, report);
+    const { files, removed } = publication(candidateFiles, published, report, excluded);
     await writeDataFolder(data, files);
+    await removeDataFiles(data, removed);
     // Also commits what an earlier publish wrote but failed to commit.
     const committed = await commitDataFolder(data, `chore(data): refresh of ${report.runAt}`);
-    log(`publish: ${files.size} changed files${committed ? ', committed' : ', nothing to commit'}`);
+    log(
+      `publish: ${files.size} changed files, ${removed.length} removed${committed ? ', committed' : ', nothing to commit'}`,
+    );
   });
 
 try {
