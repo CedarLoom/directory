@@ -45,6 +45,27 @@ describe('total at a fixed run date', () => {
   ])('%s', (_kind, record, total) => expect(scored(record).total).toBe(total));
 });
 
+describe('no token-cost points without content, so an empty item scores below the same item with content', () => {
+  it.each([
+    ['skill', { ...skill, signals: { ...skill.signals, bodyLines: 0, bodyTokens: 0 } }, skill, [68, 88.2]],
+    ['agent', { ...agent, signals: { ...agent.signals, bodyLines: 0, bodyTokens: 0 } }, agent, [60, 80]],
+    [
+      'output-style',
+      { ...outputStyle, signals: { ...outputStyle.signals, bodyLines: 0, tokens: 20 } },
+      outputStyle,
+      [50, 90],
+    ],
+    [
+      'plugin',
+      { ...plugin, signals: { ...plugin.signals, alwaysOnComponents: 0, hasComponents: false } },
+      plugin,
+      [72.6, 87.6],
+    ],
+  ] satisfies [string, Scorable, Scorable, number[]][])('%s', (_kind, empty, full, totals) =>
+    expect([scored(empty).total, scored(full).total]).toEqual(totals),
+  );
+});
+
 it('gives each signal its points', () =>
   expect(scored(skill).parts).toEqual([
     { signal: 'lastPush', points: 10, max: 10 },

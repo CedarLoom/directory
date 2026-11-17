@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "kind": "agent",
+  "version": "1.1.0",
+  "signals": [
+    {
+      "id": "lastPush",
+      "group": "maintenance",
+      "max": 10,
+      "scale": {
+        "type": "push-age",
+        "steps": [
+          { "days": 90, "share": 1 },
+          { "days": 180, "share": 0.75 },
+          { "days": 365, "share": 0.5 },
+          { "days": 730, "share": 0.25 }
+        ]
+      }
+    },
+    {
+      "id": "recentCommits",
+      "group": "maintenance",
+      "max": 5,
+      "scale": { "type": "recent-commits", "levels": { "none": 0, "1-4": 0.5, "5+": 1 } }
+    },
+    { "id": "release", "group": "maintenance", "max": 5, "scale": { "type": "present" } },
+    {
+      "id": "license",
+      "group": "license",
+      "max": 10,
+      "scale": {
+        "type": "license",
+        "levels": { "permissive": 1, "copyleft": 1, "source-available": 0.5, "custom": 0.5, "none": 0 }
+      }
+    },
+    { "id": "nameValid", "group": "quality", "max": 5, "scale": { "type": "present" } },
+    { "id": "descriptionLength", "group": "quality", "max": 10, "scale": { "type": "within", "min": 80 } },
+    { "id": "toolsDeclared", "group": "quality", "max": 10, "scale": { "type": "present" } },
+    { "id": "bodyLines", "group": "quality", "max": 5, "scale": { "type": "within", "min": 1, "max": 500 } },
+    {
+      "id": "metadataTokens",
+      "group": "token-cost",
+      "max": 5,
+      "scale": { "type": "linear", "full": 100, "zero": 400 },
+      "gate": "bodyLines"
+    },
+    {
+      "id": "bodyTokens",
+      "group": "token-cost",
+      "max": 10,
+      "scale": { "type": "linear", "full": 5000, "zero": 20000 },
+      "gate": "bodyLines"
+    },
+    { "id": "safety", "group": "safety", "max": 25, "scale": { "type": "flags" } }
+  ],
+  "flagPenalties": [
+    { "flag": "agent-inherits-all-tools", "points": 15 },
+    { "flag": "allowed-tools-unrestricted-bash", "points": 10 }
+  ]
+}

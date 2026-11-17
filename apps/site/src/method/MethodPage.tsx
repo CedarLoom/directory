@@ -99,6 +99,12 @@ function NotMeasured() {
         <List.Item>
           <Trans id="method.notMeasured.tokens">Token counts are estimates: characters divided by four.</Trans>
         </List.Item>
+        <List.Item>
+          <Trans id="method.notMeasured.componentPaths">
+            Plugin components that the manifest names by path, commands or agents in subfolders, and themes and
+            workflows: they are not counted and raise no flag, and only keep the plugin from counting as empty.
+          </Trans>
+        </List.Item>
       </List>
     </section>
   );

@@ -57,7 +57,19 @@ export const rubricFile = z
     schemaVersion: z.literal(1),
     kind,
     version: semver,
-    signals: z.array(z.strictObject({ id: keyword, group, max: z.number().positive(), scale })).min(1),
+    signals: z
+      .array(
+        z.strictObject({
+          id: keyword,
+          group,
+          max: z.number().positive(),
+          scale,
+          gate: keyword
+            .optional()
+            .describe('A signal of the record that must be true or above 0, else the signal gives 0.'),
+        }),
+      )
+      .min(1),
     flagPenalties: z.array(z.strictObject({ flag, points: z.number() })),
   })
   .refine(({ signals }) => new Set(signals.map(({ id }) => id)).size === signals.length, 'signal ids are unique')

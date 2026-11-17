@@ -9,6 +9,8 @@ const handler = z.object({ type: z.string(), command: z.unknown().optional(), ar
 const group = z.object({ matcher: z.string().optional(), hooks: z.array(handler) });
 const events = z.record(z.string(), z.array(group));
 const hooksFile = z.object({ hooks: events.optional() });
+// A mod lists the code modules Claude Code loads from the hooks file.
+const modulesFile = z.object({ modules: z.array(z.string()).optional() });
 // `hooks` in plugin.json holds the same object as a hooks file, or the events directly.
 const inlineHooks = z.union([z.object({ hooks: events }), events.transform((hooks) => ({ hooks }))]);
 
@@ -58,6 +60,14 @@ function matcherBreadth(groups: readonly (readonly [string, Group])[]): HookFact
 /** The events of a hooks file; a file without a `hooks` object, such as one that only lists modules, holds no hooks. */
 export function hookEvents(text: string): HookEvents | undefined {
   return jsonText.pipe(hooksFile).parse(text).hooks;
+}
+
+/** The count of mod modules that hooks configurations, a hooks file and the `hooks` object of plugin.json, list. */
+export function hookModules(configs: readonly unknown[]): number {
+  return configs.reduce<number>(
+    (sum, config) => sum + (config === undefined ? 0 : (modulesFile.parse(config).modules?.length ?? 0)),
+    0,
+  );
 }
 
 /** The events of the `hooks` value of plugin.json; a malformed value throws, as a malformed hooks file does. */

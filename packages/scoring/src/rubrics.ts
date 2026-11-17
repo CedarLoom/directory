@@ -1,13 +1,17 @@
 import { contentHash, type Rubric, rubricFile } from '@directory/contracts';
 import { z } from 'zod';
 import agent from '../../../rubrics/agent/1.0.0.json' with { type: 'json' };
+import agent110 from '../../../rubrics/agent/1.1.0.json' with { type: 'json' };
 import hook from '../../../rubrics/hook/1.0.0.json' with { type: 'json' };
 import lockFile from '../../../rubrics/lock.json' with { type: 'json' };
 import marketplace from '../../../rubrics/marketplace/1.0.0.json' with { type: 'json' };
 import mcpServer from '../../../rubrics/mcp-server/1.0.0.json' with { type: 'json' };
 import outputStyle from '../../../rubrics/output-style/1.0.0.json' with { type: 'json' };
+import outputStyle110 from '../../../rubrics/output-style/1.1.0.json' with { type: 'json' };
 import plugin from '../../../rubrics/plugin/1.0.0.json' with { type: 'json' };
+import plugin110 from '../../../rubrics/plugin/1.1.0.json' with { type: 'json' };
 import skill from '../../../rubrics/skill/1.0.0.json' with { type: 'json' };
+import skill110 from '../../../rubrics/skill/1.1.0.json' with { type: 'json' };
 
 /** `rubrics/lock.json`: the content hash of each released rubric file by its path under `rubrics/`. */
 const lock = z.record(z.string(), z.string().regex(/^[0-9a-f]{64}$/));
@@ -32,12 +36,16 @@ export function lockedRubrics(files: Readonly<Record<string, unknown>>, lockValu
 const released = lockedRubrics(
   {
     'agent/1.0.0.json': agent,
+    'agent/1.1.0.json': agent110,
     'hook/1.0.0.json': hook,
     'marketplace/1.0.0.json': marketplace,
     'mcp-server/1.0.0.json': mcpServer,
     'output-style/1.0.0.json': outputStyle,
+    'output-style/1.1.0.json': outputStyle110,
     'plugin/1.0.0.json': plugin,
+    'plugin/1.1.0.json': plugin110,
     'skill/1.0.0.json': skill,
+    'skill/1.1.0.json': skill110,
   },
   lockFile,
 );

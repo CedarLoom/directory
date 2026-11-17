@@ -1,7 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Table, Title } from '@mantine/core';
 import type { ItemRecord } from '../data-types.ts';
-import { flagLabels, signalLabels } from '../labels.ts';
+import { flagLabels, signalName } from '../labels.ts';
 import { type Measured, measuredValue } from './measured-value.ts';
 import { ScrollTable } from '../layout/ScrollTable.tsx';
 
@@ -33,12 +33,11 @@ function MeasuredCell({ measured }: { measured: Measured }) {
 
 function PartRow({ record, part }: { record: ItemRecord; part: Score['parts'][number] }) {
   const { i18n } = useLingui();
-  const label = signalLabels[part.signal];
   const points = i18n.number(part.points);
   const max = i18n.number(part.max);
   return (
     <Table.Tr>
-      <Table.Th scope="row">{label === undefined ? part.signal : i18n._(label)}</Table.Th>
+      <Table.Th scope="row">{signalName(i18n, part.signal)}</Table.Th>
       <Table.Td>
         <MeasuredCell measured={measuredValue(record, part.signal)} />
       </Table.Td>

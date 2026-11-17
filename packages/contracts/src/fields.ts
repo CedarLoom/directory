@@ -92,6 +92,8 @@ const flags = [
   'hook-match-all',
   'hook-http',
   'monitor-background-command',
+  'lsp-server-command',
+  'mod-module',
   'bin-executables',
   'scripts-present',
   'network-indicator',

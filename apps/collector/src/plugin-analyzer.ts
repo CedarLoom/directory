@@ -1,6 +1,6 @@
 import { pluginRecord, versionLabel } from '@directory/contracts';
 import { z } from 'zod';
-import { type HookEvents, hookEvents, hookFacts, inlineHookEvents } from './hook-analyzer.ts';
+import { type HookEvents, hookEvents, hookFacts, hookModules, inlineHookEvents } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
 import { unpinnedPackage } from './package-pin.ts';
 import type { Entry, Inspection } from './repository-tree.ts';
@@ -20,6 +20,16 @@ const manifest = z.object({
   hooks: z.unknown().optional(),
   mcpServers: z.unknown().optional(),
   lspServers: z.unknown().optional(),
+  // `monitors` is read at the top level and under `experimental`, where newer manifests declare it.
+  monitors: z.unknown().optional(),
+  experimental: z.unknown().optional(),
+  commands: z.unknown().optional(),
+  agents: z.unknown().optional(),
+  skills: z.unknown().optional(),
+  outputStyles: z.unknown().optional(),
+  workflows: z.unknown().optional(),
+  // `themes` is read at the top level and under `experimental`, like `monitors`.
+  themes: z.unknown().optional(),
   userConfig,
   channels: z.array(z.object({ userConfig })).optional(),
 });
@@ -36,6 +46,9 @@ type Server = z.infer<typeof server>;
 const serverMap = z.record(z.string(), server);
 const wrappedServers = z.object({ mcpServers: serverMap });
 const lspConfig = z.record(z.string(), z.unknown());
+const monitorList = z.array(z.unknown());
+// `experimental` holds other settings too; a value that is no object holds no monitors or themes.
+const experimental = z.object({ monitors: z.unknown().optional(), themes: z.unknown().optional() });
 
 // A Set, so a type such as `constructor` reads no inherited property.
 const transports: ReadonlySet<string> = new Set(['stdio', 'http', 'sse'] as const);
@@ -60,9 +73,12 @@ function secretReferences({ userConfig: options = {}, channels = [] }: z.infer<t
   );
 }
 
-/** A manifest value that is an object holds the configuration inline; a path or a list of paths is not followed. */
-function inline(value: unknown): unknown {
-  return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : undefined;
+const isObject = (value: unknown): value is object =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** The configurations a manifest value holds inline: the object, or the objects of a list; a path is not followed. */
+function inline(value: unknown): object[] {
+  return (Array.isArray(value) ? value : [value]).filter(isObject);
 }
 
 const components = pluginRecord.shape.components.pick({ hooksByEvent: true });
@@ -96,6 +112,61 @@ function lspServers(configs: readonly unknown[]): number {
     (sum, config) => sum + (config === undefined ? 0 : Object.keys(lspConfig.parse(config)).length),
     0,
   );
+}
+
+/**
+ * The monitor objects of the manifest's lists, or of the default file when the manifest declares none, as a declared
+ * value replaces it; a path, alone or in a list, is not followed.
+ */
+function monitors(text: string | undefined, manifestValues: readonly unknown[]): number {
+  const declared = manifestValues.filter((value) => value !== undefined);
+  const values = declared.length > 0 || text === undefined ? declared : [monitorList.parse(jsonText.parse(text))];
+  return values.flatMap((value) => (Array.isArray(value) ? value : [])).filter(isObject).length;
+}
+
+const isPath = (value: unknown): boolean => typeof value === 'string';
+
+/**
+ * The manifest names a component path, commands or agents sit in subfolders, or the plugin holds themes or workflows:
+ * components the counts leave out.
+ */
+function uncountedComponents(
+  plugin: z.infer<typeof manifest>,
+  experimentalValues: readonly unknown[],
+  { root, commands, agents }: Inspection['directories'],
+): boolean {
+  const values = [
+    plugin.commands,
+    plugin.agents,
+    plugin.skills,
+    plugin.outputStyles,
+    plugin.hooks,
+    plugin.mcpServers,
+    plugin.lspServers,
+    plugin.monitors,
+    plugin.workflows,
+    plugin.themes,
+    ...experimentalValues,
+  ];
+  return (
+    values.some((value) => isPath(value) || (Array.isArray(value) && value.some(isPath))) ||
+    countEntries(commands, false, 'tree') + countEntries(agents, false, 'tree') > 0 ||
+    (root?.some((entry) => entry.type === 'tree' && (entry.name === 'themes' || entry.name === 'workflows')) ?? false)
+  );
+}
+
+/** The skill folders; a plugin with SKILL.md at its root, no `skills/` folder and no `skills` key loads as one skill. */
+function skillCount(plugin: z.infer<typeof manifest>, { root, skills }: Inspection['directories']): number {
+  const rootSkill =
+    plugin.skills === undefined &&
+    skills === undefined &&
+    (root?.some((entry) => entry.type === 'blob' && entry.name === 'SKILL.md') ?? false);
+  return rootSkill ? 1 : countEntries(skills, false, 'tree');
+}
+
+/** The command files, or the commands of an object map, which replaces the `commands/` folder. */
+function commandCount(plugin: z.infer<typeof manifest>, { commands }: Inspection['directories']): number {
+  return isObject(plugin.commands) ? Object.keys(plugin.commands).length : countEntries(commands, true);
 }
 
 function countEntries(
@@ -133,25 +204,31 @@ export function analyzePlugin({ directories, files }: Inspection) {
   // Hooks in plugin.json run like those in hooks/hooks.json; a malformed one throws, so the plugin gets no record.
   const hookConfigs = [
     files.hooks === undefined ? undefined : hookEvents(files.hooks),
-    inlineHooks === undefined ? undefined : inlineHookEvents(inlineHooks),
+    ...inlineHooks.map(inlineHookEvents),
   ].filter((config) => config !== undefined);
-  const serverList = mcpServers([parseFile(files.mcp), inline(plugin.mcpServers)]);
+  const serverList = mcpServers([parseFile(files.mcp), ...inline(plugin.mcpServers)]);
   const stdio = serverList.filter(({ type = 'stdio' }) => type === 'stdio');
   const secrets = secretReferences(plugin);
+  const experimentalValues = experimental.safeParse(plugin.experimental).data ?? {};
   return {
     ...(version.success ? { version: version.data } : {}),
     components: {
-      skills: countEntries(directories.skills, false, 'tree'),
+      skills: skillCount(plugin, directories),
       agents: countEntries(directories.agents, true),
-      commands: countEntries(directories.commands, true),
+      commands: commandCount(plugin, directories),
       hooksByEvent: hooksByEvent(hookConfigs),
       mcpServersByTransport: mcpServersByTransport(serverList),
-      lspServers: lspServers([parseFile(files.lsp), inline(plugin.lspServers)]),
+      lspServers: lspServers([parseFile(files.lsp), ...inline(plugin.lspServers)]),
       outputStyles: countEntries(directories.outputStyles, true),
-      // The monitor format is not read yet.
-      monitors: 0,
+      monitors: monitors(files.monitors, [plugin.monitors, experimentalValues.monitors]),
       binFiles: countEntries(directories.bin, false),
     },
+    modules: hookModules([parseFile(files.hooks), ...inlineHooks]),
+    uncountedComponents: uncountedComponents(
+      plugin,
+      [experimentalValues.monitors, experimentalValues.themes],
+      directories,
+    ),
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
     manifestFields: manifestFields(plugin, version.success),

