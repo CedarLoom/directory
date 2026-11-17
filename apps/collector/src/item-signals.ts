@@ -124,7 +124,7 @@ export interface PluginFacts {
   };
   /** The mod modules the hooks configurations list. */
   modules: number;
-  /** Components at manifest paths or in subfolders, which the counts leave out. */
+  /** Components at manifest paths or in subfolders, and themes or workflows, which the counts leave out. */
   uncountedComponents: boolean;
   hasEvals: boolean;
   /** The facts of each hook configuration: hooks/hooks.json and hooks inline in plugin.json. */

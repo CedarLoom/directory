@@ -706,7 +706,7 @@ msgstr "Plugin"
 #. js-lingui-explicit-id
 #: src/method/MethodPage.tsx:103
 msgid "method.notMeasured.componentPaths"
-msgstr "Plugin components that the manifest names by path, and commands or agents in subfolders: they are not counted and raise no flag, and only keep the plugin from counting as empty."
+msgstr "Plugin components that the manifest names by path, commands or agents in subfolders, and themes and workflows: they are not counted and raise no flag, and only keep the plugin from counting as empty."
 
 #. js-lingui-explicit-id
 #: src/labels.ts:18

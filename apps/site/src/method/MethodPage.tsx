@@ -101,8 +101,8 @@ function NotMeasured() {
         </List.Item>
         <List.Item>
           <Trans id="method.notMeasured.componentPaths">
-            Plugin components that the manifest names by path, and commands or agents in subfolders: they are not
-            counted and raise no flag, and only keep the plugin from counting as empty.
+            Plugin components that the manifest names by path, commands or agents in subfolders, and themes and
+            workflows: they are not counted and raise no flag, and only keep the plugin from counting as empty.
           </Trans>
         </List.Item>
       </List>
