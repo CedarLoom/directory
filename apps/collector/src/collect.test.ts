@@ -1109,6 +1109,11 @@ function registryPage(nextCursor?: string) {
 }
 
 it('reads no further registry page once another source has failed', async () => {
+  // Fake timers let the crawl run to rest, whatever timers and promise turns lie between its pages.
+  vi.useFakeTimers();
+  onTestFinished(() => {
+    vi.useRealTimers();
+  });
   const firstPage = Promise.withResolvers<string>();
   const urls: string[] = [];
   const getText = async (url: string) => {
@@ -1133,11 +1138,6 @@ it('reads no further registry page once another source has failed', async () => 
     log: () => undefined,
   });
   await expect(collecting).rejects.toThrow('source failed');
-  // Fake timers let the crawl settle whatever promise turns and timers lie between its pages.
-  vi.useFakeTimers();
-  onTestFinished(() => {
-    vi.useRealTimers();
-  });
   firstPage.resolve(registryPage('next'));
   await vi.runAllTimersAsync();
   expect(urls).toEqual(['https://registry.modelcontextprotocol.io/v0.1/servers?version=latest&limit=100']);

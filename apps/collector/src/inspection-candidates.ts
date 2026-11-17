@@ -95,15 +95,11 @@ function marketplaceCandidate(place: InspectedPlace, text: string): Candidate {
   };
 }
 
-/**
- * The hooks file of the place as one item, named after the plugin folder or repository that holds it; facts the record
- * does not hold are refused under its id.
- */
-function hookCandidate(place: InspectedPlace, text: string, refuse: Refuse): Candidate | undefined {
-  const { location } = place;
-  const id = locationId({ ...location, path: joinPath(location.path, 'hooks') });
-  const [hooks] = attempt(id, refuse, () => analyzeHooks(text));
+/** The hooks file of the place as one item, named after the plugin folder or repository that holds it. */
+function hookCandidate(place: InspectedPlace, id: string, text: string): Candidate | undefined {
+  const hooks = analyzeHooks(text);
   if (hooks === undefined) return undefined;
+  const { location } = place;
   return {
     kind: 'hook',
     id,
@@ -128,6 +124,15 @@ function attempt<T>(id: string, refuse: Refuse, build: () => T | undefined): T[]
   }
 }
 
+/** The hooks file as an item, refused under its id, or under its repository when the id does not fit one. */
+function hookCandidates(place: InspectedPlace, text: string, refuse: Refuse): Candidate[] {
+  const { location } = place;
+  const [id] = attempt(`${repositoryId(location)} hook`, refuse, () =>
+    locationId({ ...location, path: joinPath(location.path, 'hooks') }),
+  );
+  return id === undefined ? [] : attempt(id, refuse, () => hookCandidate(place, id, text));
+}
+
 /** The skills, agents, output styles, hooks file and, at a topic repository's root, the marketplace an inspection found. */
 export function inspectionCandidates(place: InspectedPlace, inspection: Inspection, refuse: Refuse): Candidate[] {
   const { marketplace, hooks } = inspection.files;
@@ -135,9 +140,7 @@ export function inspectionCandidates(place: InspectedPlace, inspection: Inspecti
     ...itemPaths(place, inspection).flatMap(({ kind, path, name }) =>
       attempt(`${repositoryId(place.location)} ${kind}`, refuse, () => itemCandidate(place, kind, path, name)),
     ),
-    ...(hooks === undefined
-      ? []
-      : attempt(`${repositoryId(place.location)} hook`, refuse, () => hookCandidate(place, hooks, refuse))),
+    ...(hooks === undefined ? [] : hookCandidates(place, hooks, refuse)),
   ];
   if (marketplace === undefined || place.container !== undefined) return items;
   return [...attempt(repositoryId(place.location), refuse, () => marketplaceCandidate(place, marketplace)), ...items];
