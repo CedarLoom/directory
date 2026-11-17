@@ -281,11 +281,25 @@ function withheldByContainer(
     : { source: 'manifest', class: 'none', withheld: true };
 }
 
+// GitHub's detected license, else a manifest value, else a license file in the item's folder.
+function detectedOrStated(
+  detected: string | undefined,
+  manifest: string | undefined,
+  folderLicenseFile: boolean,
+): License {
+  // NOASSERTION: GitHub found a license file it could not name, so a manifest value says more and applies first.
+  if ((detected === undefined || detected === 'NOASSERTION') && given(manifest)) return stated(manifest, 'manifest');
+  if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
+  if (detected === undefined) return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
+  return { spdx: detected, source: 'github-detected', class: classOf(detected) };
+}
+
 /**
  * The item's license: a frontmatter value first, else a manifest value that withholds the license, else, when the
  * containing plugin's manifest value (`container`) withholds it, a license file in the item's folder unless that is the
  * plugin's folder (`containerFolder`), or that withheld value, else GitHub's detected one, else a manifest value, else a
- * license file in the item's folder, which GitHub does not name, as it reads the root only.
+ * license file in the item's folder, which GitHub does not name, as it reads the root only. A root license file GitHub
+ * cannot name (NOASSERTION) comes after the manifest value.
  */
 export function licenseOf(
   detected: string | undefined,
@@ -310,9 +324,5 @@ export function licenseOf(
   }
   const inherited = withheldByContainer(container, folderLicenseFile, containerFolder);
   if (inherited !== undefined) return inherited;
-  const inFolder: License = folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
-  if (detected === undefined) return given(manifest) ? stated(manifest, 'manifest') : inFolder;
-  // NOASSERTION: GitHub found a license file it could not name.
-  if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
-  return { spdx: detected, source: 'github-detected', class: classOf(detected) };
+  return detectedOrStated(detected, manifest, folderLicenseFile);
 }
