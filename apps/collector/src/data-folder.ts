@@ -42,10 +42,7 @@ export async function updateDataFolder(folder: string, files: DataFiles, removed
   await writeDataFolder(folder, files);
 }
 
-/**
- * Writes each file into the folder through a temporary file beside it, renamed over the file, so a stop or a failed
- * write never leaves a cut file; a file not given stays as it is.
- */
+/** Writes each file into the folder, never leaving a cut one on a stop or a failed write; a file not given stays as it is. */
 export async function writeDataFolder(
   folder: string,
   files: DataFiles,
