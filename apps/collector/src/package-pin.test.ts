@@ -273,6 +273,41 @@ it('reads a runner that another command, the operands of a shell or the first op
   expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, true, true, true, true, false]);
 });
 
+it('flags a runner that a line pipes or writes into a shell reading stdin or a script', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'echo npx -y evil-server | sh']],
+    ['sh', ['-c', 'printf "npx -y evil-server" | bash']],
+    ['sh', ['-c', 'echo npx -y evil-server | sh -s']],
+    ['sh', ['-c', 'echo npx -y evil-server > r.sh; sh r.sh']],
+    ['cmd', ['/c', 'echo npx -y evil-server | cmd']],
+    ['sh', ['-c', "sh -c 'echo npx -y evil-server' | sh"]],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, true, true, true, true, true]);
+});
+
+it('reads an unknown command a server or a prefix starts as local code that fetches nothing', () => {
+  const cases: [string, string[]][] = [
+    ['node', ['server.js', '--runtime', 'docker']],
+    ['python', ['-m', 'server', '--manager', 'uvx']],
+    ['mcp-proxy', ['--', 'npx', '-y', 'docs-mcp@1.2.3']],
+    ['node', ['server.js', '--docker-path', '/usr/bin/docker']],
+    ['env', ['PORT=1', 'node', 'server.js', '--runtime', 'docker']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([false, false, false, false, false]);
+});
+
+it('reads pwsh switches in order, with commandwithargs only as its full name or cwa', () => {
+  const cases: [string, string[]][] = [
+    // -wd takes -f as its value, so -c runs the line.
+    ['pwsh', ['-wd', '-f', '-c', 'npx -y evil-server']],
+    // pwsh reads -commandw as a script name and starts nothing.
+    ['pwsh', ['-commandw', 'npx -y evil-server']],
+    // pwsh runs run.ps1 and passes -c and the line to it as arguments.
+    ['pwsh', ['./run.ps1', '-c', 'npx -y evil-server']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, false, false]);
+});
+
 it('reads a pinned runner after a line continuation, beside a word holding ! or after an assignment of a variable', () => {
   const cases: [string, string[]][] = [
     ['sh', ['-c', 'npx \\\n  -y docs-mcp@1.2.3']],
