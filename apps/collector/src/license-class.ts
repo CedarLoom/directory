@@ -206,15 +206,21 @@ function classOf(id: string): LicenseClass {
   return found;
 }
 
-const permissiveness: readonly LicenseClass[] = ['none', 'source-available', 'copyleft', 'permissive'];
+const permissiveness: Readonly<Record<LicenseClass, number>> = {
+  none: 0,
+  'source-available': 1,
+  copyleft: 2,
+  permissive: 3,
+};
 
 // An OR lets the user pick a part, so its most permissive part counts; an AND binds every part, so its least.
 function expressionClass(expression: SpdxExpression): LicenseClass {
   if ('license' in expression) return knownClass(expression.license) ?? 'none';
-  const rank = (licenseClass: LicenseClass) => permissiveness.indexOf(licenseClass);
-  return expression.parts
-    .map(expressionClass)
-    .reduce((kept, part) => (rank(part) > rank(kept) === (expression.operator === 'OR') ? part : kept));
+  const kept =
+    expression.operator === 'OR'
+      ? (a: LicenseClass, b: LicenseClass) => (permissiveness[a] >= permissiveness[b] ? a : b)
+      : (a: LicenseClass, b: LicenseClass) => (permissiveness[a] <= permissiveness[b] ? a : b);
+  return expression.parts.map(expressionClass).reduce(kept);
 }
 
 // A stated value that is no SPDX expression, such as a sentence, states terms of its own: class `none` without its text.
@@ -231,6 +237,8 @@ function stated(value: string, source: 'manifest' | 'frontmatter'): License {
 
 // Blank, npm's UNLICENSED, SPDX's NONE or NOASSERTION, or proprietary grants no license.
 const grantsNoLicense = /^\s*(?:unlicensed|proprietary|none|noassertion)?\s*$/i;
+// Of these, only UNLICENSED, proprietary and NONE state that no license is granted; a blank or NOASSERTION states nothing.
+const withholdsLicense = /^\s*(?:unlicensed|proprietary|none)\s*$/i;
 
 /**
  * The item's license: a frontmatter value first, even one that grants no license, else GitHub's detected one, else a
@@ -247,7 +255,7 @@ export function licenseOf(
 ): License {
   // The record has no value for a license withheld, so a frontmatter that grants none reads as none detected.
   if (declared !== undefined)
-    return grantsNoLicense.test(declared) ? { class: 'none' } : stated(declared, 'frontmatter');
+    return withholdsLicense.test(declared) ? { class: 'none' } : stated(declared, 'frontmatter');
   if (detected === undefined) {
     if (manifest !== undefined && !grantsNoLicense.test(manifest)) return stated(manifest, 'manifest');
     return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
