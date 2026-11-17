@@ -9,7 +9,8 @@ import { type HttpClient, RequestCapError, RequestError } from './http-client.ts
 import { issueSummary } from './issue-summary.ts';
 import { jsonText } from './json-text.ts';
 import { analyzeMcpServer, type McpServerFacts, registryServer } from './mcp-server-analyzer.ts';
-import type { SourceAdapter, SourceRead } from './source-adapter.ts';
+import type { SourceRead } from './run-report.ts';
+import type { SourceAdapter } from './source-adapter.ts';
 
 /** Headers of every MCP Registry request; its read API needs no authorization. */
 export const registryHeaders: Readonly<Record<string, string>> = { 'user-agent': userAgent };

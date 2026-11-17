@@ -13,24 +13,9 @@ import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
 import { type Inspection, inspectLocations } from './repository-tree.ts';
-import type { SourceAdapter, SourceRead } from './source-adapter.ts';
+import type { RunReport } from './run-report.ts';
+import type { SourceAdapter } from './source-adapter.ts';
 import { searchTopics } from './topic-search.ts';
-
-/** The run report the `collect` command prints as JSON. */
-export interface RunReport {
-  format: 'directory-run-report';
-  schemaVersion: 3;
-  /** Requests to GitHub and the MCP Registry, retries included. */
-  requests: number;
-  refused: number;
-  excluded: number;
-  /** Candidates the sources and inspections named, after exclusions. */
-  discovered: Record<ItemKind, number>;
-  /** Records built. */
-  items: Record<ItemKind, number>;
-  /** How each source with a checkpoint was read; the publishing step keeps `readAt` in `meta.json`. */
-  sources: SourceRead[];
-}
 
 export interface CollectOptions {
   /** The adapters that read GitHub through the run's client. */
@@ -368,7 +353,8 @@ export async function collect(
   const records = buildAll(recordInputs(selection), runDate, refuse);
   const report: RunReport = {
     format: 'directory-run-report',
-    schemaVersion: 3,
+    schemaVersion: 4,
+    runAt,
     requests: client.requests + options.registryClient.requests,
     refused: counter.refused,
     excluded: all.length - kept.length,
