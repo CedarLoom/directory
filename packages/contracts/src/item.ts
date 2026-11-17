@@ -53,7 +53,7 @@ const common = {
   listedIn: z.array(itemId),
   license: z.strictObject({
     spdx: spdxId.optional(),
-    source: z.enum(['github-detected', 'manifest', 'frontmatter']).optional(),
+    source: z.enum(['github-detected', 'manifest', 'frontmatter', 'license-file']).optional(),
     class: licenseClass,
   }),
   maintenance: maintenance.optional(),

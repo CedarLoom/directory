@@ -28,7 +28,7 @@ import {
   pluginAssessment,
   skillAssessment,
 } from './item-signals.ts';
-import { licenseOf } from './license-class.ts';
+import { holdsLicenseFile, licenseOf } from './license-class.ts';
 import { analyzeMarketplace, type MarketplaceEntries } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
 import { analyzeOutputStyle } from './output-style-analyzer.ts';
@@ -52,7 +52,7 @@ export interface ItemRecord {
 export type RecordInput = { candidate: Located; facts: RepositoryFacts } & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
   | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin } }
-  | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean }
+  | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean; licenseFile: boolean }
   | { kind: 'agent'; text: string }
   | { kind: 'hook'; hooks: HookFacts }
   | { kind: 'mcp-server'; mcpServer: McpServerFacts }
@@ -74,7 +74,7 @@ function baseFields(
   { candidate, facts }: RecordInput,
   runDate: string,
   { signals, flags, version }: Assessment & { version?: string | undefined },
-  declaredLicense?: string,
+  license: Parameters<typeof licenseOf>[1] = {},
 ) {
   const repository = repositoryId(candidate.location);
   const pointer = { ref: repository, scope: 'repository', source: 'github' } as const;
@@ -87,7 +87,7 @@ function baseFields(
     links: candidate.links,
     ...(candidate.container === undefined ? {} : { container: candidate.container }),
     listedIn: candidate.listedIn,
-    license: licenseOf(facts.license, declaredLicense),
+    license: licenseOf(facts.license, license),
     ...(facts.maintenance === undefined ? {} : { maintenance: facts.maintenance }),
     popularity: [
       { signal: 'stars', ...pointer },
@@ -126,9 +126,17 @@ function marketplace(input: InputOf<'marketplace'>, runDate: string) {
 }
 
 function plugin(input: InputOf<'plugin'>, runDate: string) {
-  // The scoring-only facts stay out of the record.
-  const { manifestName, manifestFields, rootClaudeMd, hooks, mcpUnpinnedPackage, mcpSecretsRequired, ...facts } =
-    analyzePlugin(input.inspection);
+  // The scoring-only facts stay out of the record; the manifest license feeds the record's license.
+  const {
+    manifestName,
+    manifestFields,
+    manifestLicense,
+    rootClaudeMd,
+    hooks,
+    mcpUnpinnedPackage,
+    mcpSecretsRequired,
+    ...facts
+  } = analyzePlugin(input.inspection);
   const assessment = pluginAssessment({
     ...facts,
     name: manifestName ?? input.candidate.name,
@@ -143,7 +151,12 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
   return scored(
     pluginRecord,
     {
-      ...baseFields(input, runDate, { ...assessment, version: facts.version }),
+      ...baseFields(
+        input,
+        runDate,
+        { ...assessment, version: facts.version },
+        { manifest: manifestLicense, folderLicenseFile: holdsLicenseFile(input.inspection.directories.root) },
+      ),
       kind: 'plugin',
       ...facts,
       // The dependency format is not read yet.
@@ -174,7 +187,7 @@ function skill(input: InputOf<'skill'>, runDate: string) {
   return scored(
     skillRecord,
     {
-      ...baseFields(input, runDate, assessment, declaredLicense),
+      ...baseFields(input, runDate, assessment, { declared: declaredLicense, folderLicenseFile: input.licenseFile }),
       ...(name === undefined ? {} : { name }),
       kind: 'skill',
       ...facts,

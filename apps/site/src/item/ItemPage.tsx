@@ -38,6 +38,11 @@ function Flags({ flags }: { flags: ItemRecord['flags'] }) {
       <Title order={2} id="flags-heading">
         <Trans id="item.flagsHeading">Safety flags</Trans>
       </Title>
+      <Text size="sm" c="dimmed">
+        <Trans id="item.flagsNote">
+          Flags point at patterns that need care. They are no audit: an item without flags is not proven safe.
+        </Trans>
+      </Text>
       {flags.length === 0 ? (
         <Text>
           <Trans id="item.noFlags">The collector raised no safety flag.</Trans>
