@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import departuresFixture from '../fixtures/departures.json' with { type: 'json' };
 import exclusionsFixture from '../fixtures/exclusions.json' with { type: 'json' };
 import historyFixture from '../fixtures/history.json' with { type: 'json' };
 import indexFixture from '../fixtures/index.json' with { type: 'json' };
@@ -15,6 +16,7 @@ import skill from '../fixtures/records/skill.json' with { type: 'json' };
 import rubricFixture from '../fixtures/rubric.json' with { type: 'json' };
 import {
   agentRecord,
+  departuresFile,
   exclusionsFile,
   historyFile,
   hookRecord,
@@ -45,6 +47,7 @@ const files = [
   ['meta', metaFile, metaFixture],
   ['rubric', rubricFile, rubricFixture],
   ['exclusions', exclusionsFile, exclusionsFixture],
+  ['departures', departuresFile, departuresFixture],
   ['history', historyFile, historyFixture],
   ['popularity', popularityFile, popularityFixture],
 ] as const;

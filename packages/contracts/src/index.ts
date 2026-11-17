@@ -1,5 +1,6 @@
 export { canonicalJson, contentHash } from './content-hash.ts';
 export { dataFileContract, recordContracts } from './data-file.ts';
+export { departuresFile } from './departures.ts';
 export { exclusionsFile } from './exclusions.ts';
 export {
   count,

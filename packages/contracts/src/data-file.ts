@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { departuresFile } from './departures.ts';
 import { itemId, kind } from './fields.ts';
 import { historyFile } from './history.ts';
 import {
@@ -34,6 +35,7 @@ const layoutPath = /^(?:(records|history)\/([^/]+)|popularity)\/([^/]+)\.json$/;
 export function dataFileContract(path: string): z.ZodType | undefined {
   if (path === 'index.json') return indexFile;
   if (path === 'meta.json') return metaFile;
+  if (path === 'departures.json') return departuresFile;
   const [, folder, folderKind, id] = layoutPath.exec(path) ?? [];
   if (!itemId.safeParse(id).success) return undefined;
   if (folder === undefined) return popularityFile;

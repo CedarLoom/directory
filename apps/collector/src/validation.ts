@@ -27,6 +27,8 @@ const fileCap = 64 * 1024;
 const indexCap = 2 * 1024 * 1024;
 // More vanished items than this share of the published ones of a kind points to a broken source, not to upstream removals.
 const vanishedShare = 0.2;
+// Files that only publish writes, from the run and the published data.
+const publishedOnly = new Set(['meta.json', 'departures.json']);
 
 const scoredRecord = z.looseObject({
   score: z.looseObject({ rubric: z.looseObject({ kind, version: semver }) }).optional(),
@@ -63,7 +65,7 @@ function fileRefusal(path: string, text: string, released: ReadonlySet<string> |
   const bytes = Buffer.byteLength(text);
   const cap = path === 'index.json' ? indexCap : fileCap;
   if (bytes > cap) return `${path}: ${bytes} bytes, over the cap of ${cap}`;
-  if (path === 'meta.json') return `${path}: written by publish, never by a run`;
+  if (publishedOnly.has(path)) return `${path}: written by publish, never by a run`;
   const contract = dataFileContract(path);
   if (contract === undefined) return `${path}: not a file of the data layout`;
   const parsed = jsonText.pipe(contract).safeParse(text);

@@ -153,7 +153,9 @@ function Policies() {
       </Text>
       <Text>
         <Trans id="method.takedown">
-          To correct an entry or to have your item removed, open an issue. A removed item stays out of later runs.
+          To correct an entry or to have your item removed, open an issue with the correction or removal form. No reason
+          is needed for a removal, and every request is answered within one month. A removed item stays out of later
+          runs.
         </Trans>{' '}
         <ExternalLink href={newIssueUrl}>
           <Trans id="method.openIssue">Open an issue</Trans>

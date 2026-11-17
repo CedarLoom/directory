@@ -1,0 +1,31 @@
+name: Correct an entry
+description: Report a value on an item's page that is wrong.
+title: "Correct: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        The Directory records published facts and scores them with the rubric of the item's kind. A wrong value is
+        corrected in the collector or in the data; a score that follows the rubric is not changed by hand. Every request
+        is answered within one month. This issue is public.
+  - type: input
+    id: item
+    attributes:
+      label: Item
+      description: The address of the item's Directory page.
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What is wrong
+      description: The value as the page shows it.
+    validations:
+      required: true
+  - type: textarea
+    id: correct
+    attributes:
+      label: What is correct
+      description: The right value and where it can be checked, such as a file in the item's repository.
+    validations:
+      required: true

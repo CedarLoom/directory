@@ -63,7 +63,7 @@ msgid "commits.5-or-more"
 msgstr "5 or more"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:176
+#: src/method/MethodPage.tsx:178
 msgid "method.intro"
 msgstr "A collector reads public sources once a week, records published facts about each item and scores it with the open rubric of its kind. The last run was on {runDate}. The CedarLoom Directory is not affiliated with or endorsed by Anthropic."
 
@@ -513,7 +513,7 @@ msgid "item.measured"
 msgstr "Measured"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:173
+#: src/method/MethodPage.tsx:175
 msgid "method.heading"
 msgstr "Method"
 
@@ -654,7 +654,7 @@ msgid "filter.noFlags"
 msgstr "Only items without safety flags"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:159
+#: src/method/MethodPage.tsx:161
 msgid "method.openIssue"
 msgstr "Open an issue"
 
@@ -744,7 +744,7 @@ msgid "item.historyRubric"
 msgstr "Rubric"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:185
+#: src/method/MethodPage.tsx:187
 msgid "method.rubricsHeading"
 msgstr "Rubrics"
 
@@ -984,7 +984,7 @@ msgid "licenseSource.frontmatter"
 msgstr "the license field of the frontmatter"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:188
+#: src/method/MethodPage.tsx:190
 msgid "method.licenseFacts"
 msgstr "The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's own folder. A field that holds no SPDX id and a license file in the item's folder are recorded without an SPDX id. \"No license detected\" means that none of these was found, not that the item has no license."
 

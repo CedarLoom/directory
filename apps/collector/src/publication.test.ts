@@ -2,6 +2,7 @@ import { expect, it } from 'vitest';
 import { publication } from './publication.ts';
 import type { RunReport } from './run-report.ts';
 
+const license = 'CC0 1.0 Universal';
 const none = { marketplace: 0, plugin: 0, skill: 0, agent: 0, hook: 0, 'mcp-server': 0, 'output-style': 0 };
 const report: RunReport = {
   format: 'directory-run-report',
@@ -40,7 +41,10 @@ const published = new Map([
   ...itemFiles('agent', 'gh.acme.helper', 'gh.acme.helper'),
   popularity('gh.acme.helper'),
 ]);
-const { removed } = publication(candidate, published, report, new Set(['gh.acme.skills.dropped', 'gh.acme.tool']));
+const { removed } = publication(candidate, published, report, {
+  excluded: new Set(['gh.acme.skills.dropped', 'gh.acme.tool']),
+  license,
+});
 
 it('removes the record, history and popularity file of an excluded item', () =>
   expect(removed.filter((path) => path.includes('gh.acme.tool'))).toEqual([
@@ -60,7 +64,7 @@ it('keeps the popularity file of an excluded item while an item that stays point
 
 it('removes the history and popularity file of an item in an excluded repository', () => {
   const files = new Map([...itemFiles('skill', 'gh.acme.tool.lint', 'gh.acme.tool'), popularity('gh.acme.tool')]);
-  expect(publication(candidate, files, report, new Set(['gh.acme.tool'])).removed).toEqual([
+  expect(publication(candidate, files, report, { excluded: new Set(['gh.acme.tool']), license }).removed).toEqual([
     'records/skill/gh.acme.tool.lint.json',
     'history/skill/gh.acme.tool.lint.json',
     'popularity/gh.acme.tool.json',
@@ -69,12 +73,53 @@ it('removes the history and popularity file of an item in an excluded repository
 
 it('removes the history an item kept after it left the index once its repository is excluded', () => {
   const files = new Map([['history/skill/gh.acme.tool.lint.json', '{}']]);
-  expect(publication(candidate, files, report, new Set(['gh.acme.tool'])).removed).toEqual([
+  expect(publication(candidate, files, report, { excluded: new Set(['gh.acme.tool']), license }).removed).toEqual([
     'history/skill/gh.acme.tool.lint.json',
   ]);
 });
 
 it('keeps a file outside the data layout whose name is an excluded id', () => {
   const files = new Map([['notes/gh.acme.tool.json', '{}']]);
-  expect(publication(candidate, files, report, new Set(['gh.acme.tool'])).removed).toEqual([]);
+  expect(publication(candidate, files, report, { excluded: new Set(['gh.acme.tool']), license }).removed).toEqual([]);
+});
+
+const departuresText = (files: Record<string, string>) => JSON.stringify({ schemaVersion: 1, files });
+
+it('dates the files kept for an item that left the index and forgets an item that returned', () => {
+  const before = departuresText({ 'history/skill/gh.acme.skills.kept.json': '2026-11-01' });
+  const { files } = publication(candidate, new Map([...published, ['departures.json', before]]), report, {
+    excluded: new Set(),
+    license,
+  });
+  expect(JSON.parse(files.get('departures.json') ?? '')).toEqual({
+    schemaVersion: 1,
+    files: {
+      'history/agent/gh.acme.helper.json': '2026-11-23',
+      'history/plugin/gh.acme.tool.json': '2026-11-23',
+      'history/skill/gh.acme.skills.dropped.json': '2026-11-23',
+      'popularity/gh.acme.helper.json': '2026-11-23',
+      'popularity/gh.acme.tool.json': '2026-11-23',
+    },
+  });
+});
+
+it('removes the history and popularity file of an item 90 days after it left the index', () => {
+  const files = new Map([
+    ['history/agent/gh.acme.old.json', '{}'],
+    ['popularity/gh.acme.old.json', '{}'],
+    ['history/agent/gh.acme.recent.json', '{}'],
+    [
+      'departures.json',
+      departuresText({
+        'history/agent/gh.acme.old.json': '2026-08-25',
+        'popularity/gh.acme.old.json': '2026-08-25',
+        'history/agent/gh.acme.recent.json': '2026-08-26',
+      }),
+    ],
+  ]);
+  const { files: written, removed: expired } = publication(candidate, files, report, { excluded: new Set(), license });
+  expect({ expired, departures: JSON.parse(written.get('departures.json') ?? '').files }).toEqual({
+    expired: ['history/agent/gh.acme.old.json', 'popularity/gh.acme.old.json'],
+    departures: { 'history/agent/gh.acme.recent.json': '2026-08-26' },
+  });
 });

@@ -1,4 +1,7 @@
 {
-  "schemaVersion": 1,
-  "ids": ["gh.example-org.plugins.code-review", "gh.example-org.skills"]
+  "schemaVersion": 2,
+  "hashes": [
+    "b0c07dfcc4a6d50513f8c7c25aac3c9eac019ac6f00cc0e1a6ccbe34f4de87b7",
+    "14a15768010a45bdc53e0d4c520b14c095bca121d98a7543e6c7ae3e4fddb129"
+  ]
 }

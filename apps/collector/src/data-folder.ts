@@ -14,7 +14,7 @@ export async function readDataFile(folder: string, path: string): Promise<string
   }
 }
 
-/** The JSON files of the data folder by relative path with `/` separators; a folder not yet created holds none. */
+/** The JSON files and the `LICENSE` of the data folder by relative path with `/` separators; a folder not yet created holds none. */
 export async function readDataFolder(folder: string): Promise<Map<string, string>> {
   let paths: string[];
   try {
@@ -23,9 +23,9 @@ export async function readDataFolder(folder: string): Promise<Map<string, string
     if (missing(error)) return new Map();
     throw error;
   }
-  const json = paths.filter((path) => path.endsWith('.json'));
-  const texts = await Promise.all(json.map((path) => readFile(join(folder, path), 'utf8')));
-  return new Map(json.map((path, index) => [path.split(sep).join('/'), texts[index] ?? '']));
+  const files = paths.filter((path) => path.endsWith('.json') || path === 'LICENSE');
+  const texts = await Promise.all(files.map((path) => readFile(join(folder, path), 'utf8')));
+  return new Map(files.map((path, index) => [path.split(sep).join('/'), texts[index] ?? '']));
 }
 
 /** Removes each file, by relative path with `/` separators, from the folder. */
