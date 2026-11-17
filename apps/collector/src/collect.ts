@@ -1,7 +1,7 @@
 import { ZodError } from 'zod';
 import { type Candidate, type Located, mergeCandidates } from './candidate.ts';
 import { type DataFiles, dataFiles } from './data-files.ts';
-import { applyExclusions } from './exclusions.ts';
+import { applyExclusions, type Exclusions } from './exclusions.ts';
 import type { Repository } from './github-contents.ts';
 import { repositoryId } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
@@ -23,7 +23,7 @@ export interface CollectOptions {
   /** The MCP Registry's own client, which sends no GitHub token. */
   registryClient: HttpClient;
   topics: readonly string[];
-  excluded: ReadonlySet<string>;
+  excluded: Exclusions;
   /** The data files of the last run, so unchanged files keep their bytes. */
   previous: DataFiles;
   /** The run's start as an ISO date-time; its date is the run date. */

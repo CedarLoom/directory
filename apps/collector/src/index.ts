@@ -6,8 +6,8 @@ import { ZodError } from 'zod';
 import { systemClock } from './clock.ts';
 import { collect, summaryLine } from './collect.ts';
 import { commitDataFolder } from './data-commit.ts';
-import { readDataFile, readDataFolder, removeDataFiles, writeDataFolder } from './data-folder.ts';
-import { parseExclusions } from './exclusions.ts';
+import { readDataFile, readDataFolder, updateDataFolder, writeDataFolder } from './data-folder.ts';
+import { ExclusionsKeyError, exclusionsKeyVariable, parseExclusions } from './exclusions.ts';
 import { gitHubHeaders } from './github-contents.ts';
 import { createHttpClient, RequestError } from './http-client.ts';
 import { registryHeaders } from './mcp-registry-adapter.ts';
@@ -20,6 +20,7 @@ import { checkRun } from './validation.ts';
 
 const defaultExclusions = fileURLToPath(new URL('../../../curation/exclusions.json', import.meta.url));
 const rubricsFolder = fileURLToPath(new URL('../../../rubrics', import.meta.url));
+const dataLicense = fileURLToPath(new URL('../../../LICENSES/CC0-1.0.txt', import.meta.url));
 // A hard cap well under the 1,000 requests per hour of the workflow token; repository facts take one request per 50 registry servers.
 const requestCap = 600;
 // GitHub's secondary limit allows 900 REST points per minute; one request per second stays far below it.
@@ -31,12 +32,17 @@ const registryRequestCap = 2000;
 /** sysexits codes: usage 64, bad data 65, missing input 66, internal error 70; 1 when a source stopped the run. */
 function exitCode(error: unknown): number {
   if (error instanceof CommanderError) return error.exitCode === 0 ? 0 : 64;
+  if (error instanceof ExclusionsKeyError) return 64;
   if (error instanceof ZodError || error instanceof SyntaxError) return 65;
   if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return 66;
   return error instanceof RequestError ? 1 : 70;
 }
 
 const log = (line: string) => console.error(line);
+
+async function readExclusions(file: string) {
+  return parseExclusions(await readFile(file, 'utf8'), process.env[exclusionsKeyVariable] ?? '');
+}
 
 async function readReport(file: string) {
   return runReport.parse(JSON.parse(await readFile(file, 'utf8')));
@@ -78,7 +84,7 @@ program
     const token = process.env['GITHUB_TOKEN'] ?? '';
     // GitHub's GraphQL API refuses anonymous requests.
     if (token === '') program.error('collect: set GITHUB_TOKEN');
-    const excluded = parseExclusions(await readFile(exclusions, 'utf8'));
+    const excluded = await readExclusions(exclusions);
     const previous = previousFolder === undefined ? new Map<string, string>() : await readDataFolder(previousFolder);
     const limits = {
       fetch,
@@ -149,7 +155,7 @@ program
 program
   .command('publish')
   .description(
-    'Writes the changed files of a validated run and meta.json into the published data folder, removes the files of items that left or are excluded, and commits them.',
+    'Writes the changed files of a validated run, meta.json, departures.json and LICENSE into the published data folder, removes the files of items that left or are excluded and the kept files past their retention period, and commits them.',
   )
   .requiredOption('--candidate <folder>', 'the data folder of the validated run')
   .requiredOption('--report <file>', 'the run report `collect` printed')
@@ -157,15 +163,15 @@ program
   .option('--exclusions <file>', 'the exclusions file', defaultExclusions)
   .action(async ({ candidate, report: reportFile, data, exclusions }) => {
     const report = await readReport(reportFile);
-    const [candidateFiles, published, excluded] = await Promise.all([
+    const [candidateFiles, published, excluded, license] = await Promise.all([
       readDataFolder(candidate),
       readDataFolder(data),
-      readFile(exclusions, 'utf8').then(parseExclusions),
+      readExclusions(exclusions),
+      readFile(dataLicense, 'utf8'),
     ]);
     if (!candidateFiles.has('index.json')) program.error(`publish: ${candidate} holds no index.json`);
-    const { files, removed } = publication(candidateFiles, published, report, excluded);
-    await writeDataFolder(data, files);
-    await removeDataFiles(data, removed);
+    const { files, removed } = publication(candidateFiles, published, report, { excluded, license });
+    await updateDataFolder(data, files, removed);
     // Also commits what an earlier publish wrote but failed to commit.
     const committed = await commitDataFolder(data, `chore(data): refresh of ${report.runAt}`);
     log(
@@ -177,6 +183,7 @@ try {
   await program.parseAsync();
 } catch (error) {
   process.exitCode = exitCode(error);
-  // Commander has printed its own message.
-  if (!(error instanceof CommanderError)) console.error(error);
+  // Commander has printed its own message; a key error is a setup mistake, so its message is enough.
+  if (error instanceof ExclusionsKeyError) console.error(error.message);
+  else if (!(error instanceof CommanderError)) console.error(error);
 }

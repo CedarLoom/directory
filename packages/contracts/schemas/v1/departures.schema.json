@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "files": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "description": "The date of the first run without the item."
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 200,
+              "pattern": "^[a-z0-9][a-z0-9._-]*$"
+            },
+            "description": "The ids besides the one in the file name whose exclusion removes the file, taken from the records of the items that left: for a history file the container and repository of its item, for a popularity file the items that pointed to it and their containers."
+          }
+        },
+        "required": [
+          "since",
+          "ids"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Each kept file by its path in the data folder."
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "files"
+  ],
+  "additionalProperties": false
+}

@@ -14,7 +14,7 @@ export async function readDataFile(folder: string, path: string): Promise<string
   }
 }
 
-/** The JSON files of the data folder by relative path with `/` separators; a folder not yet created holds none. */
+/** The JSON files and the `LICENSE` of the data folder by relative path with `/` separators; a folder not yet created holds none. */
 export async function readDataFolder(folder: string): Promise<Map<string, string>> {
   let paths: string[];
   try {
@@ -23,14 +23,23 @@ export async function readDataFolder(folder: string): Promise<Map<string, string
     if (missing(error)) return new Map();
     throw error;
   }
-  const json = paths.filter((path) => path.endsWith('.json'));
-  const texts = await Promise.all(json.map((path) => readFile(join(folder, path), 'utf8')));
-  return new Map(json.map((path, index) => [path.split(sep).join('/'), texts[index] ?? '']));
+  const files = paths.filter((path) => path.endsWith('.json') || path === 'LICENSE');
+  const texts = await Promise.all(files.map((path) => readFile(join(folder, path), 'utf8')));
+  return new Map(files.map((path, index) => [path.split(sep).join('/'), texts[index] ?? '']));
 }
 
 /** Removes each file, by relative path with `/` separators, from the folder. */
-export async function removeDataFiles(folder: string, paths: readonly string[]): Promise<void> {
+async function removeDataFiles(folder: string, paths: readonly string[]): Promise<void> {
   await Promise.all(paths.map((path) => rm(join(folder, ...path.split('/')))));
+}
+
+/**
+ * Removes the files a publish drops, then writes its files: a stop in between leaves the earlier `departures.json`, so
+ * no file still on disk loses its date.
+ */
+export async function updateDataFolder(folder: string, files: DataFiles, removed: readonly string[]): Promise<void> {
+  await removeDataFiles(folder, removed);
+  await writeDataFolder(folder, files);
 }
 
 /** Writes each file into the folder; a file not given stays as it is. */

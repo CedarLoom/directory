@@ -1,0 +1,32 @@
+name: Remove an item
+description: Ask for an item to be removed from the Directory. No reason is needed.
+title: "Remove: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        A removed item stays out of every later run, and its record, score history and popularity data are removed from
+        the current published data; earlier commits of the published data may still hold them. Every request is answered
+        within one month. This issue is public.
+  - type: input
+    id: item
+    attributes:
+      label: Item
+      description: The address of the item's Directory page or of its repository.
+      placeholder: https://github.com/owner/repository
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: What to remove
+      options:
+        - This item only
+        - Every item in its repository
+    validations:
+      required: true
+  - type: textarea
+    id: note
+    attributes:
+      label: Note
+      description: Anything else the removal needs to know. Optional.
