@@ -13,7 +13,7 @@ import {
 } from '@directory/contracts';
 import { currentRubric, type Scorable, type Score, score } from '@directory/scoring';
 import type { z } from 'zod';
-import type { AgentAnalysis } from './agent-analyzer.ts';
+import { analyzeAgent } from './agent-analyzer.ts';
 import type { Candidate, Located } from './candidate.ts';
 import { repositoryId } from './github-location.ts';
 import type { HookFacts } from './hook-analyzer.ts';
@@ -31,11 +31,11 @@ import {
 import { holdsLicenseFile, licenseOf } from './license-class.ts';
 import { analyzeMarketplace, type MarketplaceEntries } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
-import type { OutputStyleAnalysis } from './output-style-analyzer.ts';
-import type { PluginAnalysis } from './plugin-analyzer.ts';
+import { analyzeOutputStyle } from './output-style-analyzer.ts';
+import { analyzePlugin } from './plugin-analyzer.ts';
 import type { RepositoryFacts } from './repository-facts.ts';
 import type { Inspection } from './repository-tree.ts';
-import type { SkillAnalysis } from './skill-analyzer.ts';
+import { analyzeSkill } from './skill-analyzer.ts';
 
 export type ItemKind = Candidate['kind'];
 
@@ -48,15 +48,15 @@ export interface ItemRecord {
   value: RecordValue & { score: Score };
 }
 
-/** What a record is built from: the candidate, its repository's facts and what was read and analyzed for its kind. */
+/** What a record is built from: the candidate, its repository's facts and what was read for its kind. */
 export type RecordInput = { candidate: Located; facts: RepositoryFacts } & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
-  | { kind: 'plugin'; inspection: Inspection; analysis: PluginAnalysis; source: { kind: SourceKind; pin: Pin } }
-  | { kind: 'skill'; analysis: SkillAnalysis; folders: SkillFolders; tests: boolean; licenseFile: boolean }
-  | { kind: 'agent'; analysis: AgentAnalysis }
+  | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin } }
+  | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean; licenseFile: boolean }
+  | { kind: 'agent'; text: string }
   | { kind: 'hook'; hooks: HookFacts }
   | { kind: 'mcp-server'; mcpServer: McpServerFacts }
-  | { kind: 'output-style'; analysis: OutputStyleAnalysis }
+  | { kind: 'output-style'; text: string }
 );
 type InputOf<K extends ItemKind> = Extract<RecordInput, { kind: K }>;
 
@@ -136,7 +136,7 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
     mcpUnpinnedPackage,
     mcpSecretsRequired,
     ...facts
-  } = input.analysis;
+  } = analyzePlugin(input.inspection);
   const assessment = pluginAssessment({
     ...facts,
     name: manifestName ?? input.candidate.name,
@@ -169,7 +169,7 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
 }
 
 function skill(input: InputOf<'skill'>, runDate: string) {
-  const { analysis } = input;
+  const analysis = analyzeSkill(input.text);
   // The scoring-only facts stay out of the record.
   const {
     name,
@@ -198,7 +198,7 @@ function skill(input: InputOf<'skill'>, runDate: string) {
 }
 
 function agent(input: InputOf<'agent'>, runDate: string) {
-  const { analysis } = input;
+  const analysis = analyzeAgent(input.text);
   const {
     name,
     declaredName: _declaredName,
@@ -239,7 +239,7 @@ function mcpServer(input: InputOf<'mcp-server'>, runDate: string) {
 }
 
 function outputStyle(input: InputOf<'output-style'>, runDate: string) {
-  const { named, described, bodyLines, ...facts } = input.analysis;
+  const { named, described, bodyLines, ...facts } = analyzeOutputStyle(input.text);
   const assessment = outputStyleAssessment({ named, described, bodyLines, tokens: facts.tokens });
   return scored(
     outputStyleRecord,

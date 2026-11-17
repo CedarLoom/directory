@@ -2,10 +2,7 @@ import { itemName } from '@directory/contracts';
 import { bodyLines, frontmatterFields, readFrontmatter, textField, tokenEstimate } from './frontmatter.ts';
 import { toolClasses, unrestrictedBash } from './tool-classes.ts';
 
-/**
- * The facts of a SKILL.md; its name and license are read, its description and body are only counted. More frontmatter
- * fields than the record holds throw a ZodError.
- */
+/** The facts of a SKILL.md; its name and license are read, its description and body are only counted. */
 export function analyzeSkill(text: string) {
   const frontmatter = readFrontmatter(text);
   const declaredName = textField(frontmatter, 'name');
@@ -22,5 +19,3 @@ export function analyzeSkill(text: string) {
     unrestrictedBash: unrestrictedBash(frontmatter.fields.get('allowed-tools')),
   };
 }
-
-export type SkillAnalysis = ReturnType<typeof analyzeSkill>;

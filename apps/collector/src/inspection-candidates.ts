@@ -16,7 +16,7 @@ export interface InspectedPlace {
 
 type Refuse = (id: string, error: ZodError) => void;
 
-type FileKind = 'skill' | 'agent' | 'output-style';
+export type FileKind = 'skill' | 'agent' | 'output-style';
 
 function itemCandidate(place: InspectedPlace, kind: FileKind, path: string, name: string): Candidate {
   const location = { ...place.location, path };

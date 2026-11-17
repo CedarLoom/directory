@@ -159,5 +159,3 @@ export function analyzePlugin({ directories, files }: Inspection) {
     ),
   };
 }
-
-export type PluginAnalysis = ReturnType<typeof analyzePlugin>;

@@ -1,9 +1,6 @@
 import { bodyLines, frontmatterFields, readFrontmatter, textField } from './frontmatter.ts';
 
-/**
- * The facts of an output style file; the whole text joins the system prompt, so its token estimate covers all of it.
- * More frontmatter fields than the record holds throw a ZodError.
- */
+/** The facts of an output style file; the whole text joins the system prompt, so its token estimate covers all of it. */
 export function analyzeOutputStyle(text: string) {
   const frontmatter = readFrontmatter(text);
   return {
@@ -15,5 +12,3 @@ export function analyzeOutputStyle(text: string) {
     bodyLines: bodyLines(frontmatter),
   };
 }
-
-export type OutputStyleAnalysis = ReturnType<typeof analyzeOutputStyle>;

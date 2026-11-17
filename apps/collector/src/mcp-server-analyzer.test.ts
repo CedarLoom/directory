@@ -72,7 +72,7 @@ it('counts the required secret variables of a header and of a remote URL', () =>
   expect(facts.requiredSecrets).toBe(2);
 });
 
-it('counts the variables of a templated secret header, not the header as well', () => {
+it('counts the secret variables of a templated header, or the header when it has none', () => {
   const secret = { isRequired: true, isSecret: true };
   const facts = analyzeMcpServer(
     {
@@ -82,7 +82,10 @@ it('counts the variables of a templated secret header, not the header as well', 
         {
           type: 'streamable-http',
           url: 'https://example.test/mcp',
-          headers: [{ ...secret, variables: { token: secret } }, secret],
+          headers: [
+            { ...secret, variables: { token: secret } },
+            { ...secret, variables: { team: { isRequired: true } } },
+          ],
         },
       ],
     },

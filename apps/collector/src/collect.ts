@@ -1,23 +1,19 @@
 import { ZodError } from 'zod';
-import { analyzeAgent } from './agent-analyzer.ts';
 import { type Candidate, type Located, mergeCandidates } from './candidate.ts';
 import { type DataFiles, dataFiles } from './data-files.ts';
 import { applyExclusions, type Exclusions } from './exclusions.ts';
 import type { Repository } from './github-contents.ts';
 import { repositoryId } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
-import { type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
+import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
 import { UnknownLicenseError } from './license-class.ts';
 import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
-import { analyzeOutputStyle } from './output-style-analyzer.ts';
-import { analyzePlugin } from './plugin-analyzer.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
 import { inspectLocations } from './repository-tree.ts';
 import type { RunReport } from './run-report.ts';
-import { analyzeSkill } from './skill-analyzer.ts';
 import type { SourceAdapter } from './source-adapter.ts';
 import { searchTopics } from './topic-search.ts';
 
@@ -78,31 +74,24 @@ function ranked(candidates: readonly Located[], kind: ItemKind, facts: ReadonlyM
     );
 }
 
-/** What was read for a selected item: its record input, nothing (it keeps its place without a record) or a refusal. */
-type Read = RecordInput | undefined | 'refused';
+/** What was read for a selected item: its record, nothing (it keeps its place without a record) or a refusal. */
+type Read = ItemRecord | undefined | 'refused';
+
+// A refill reads as many items as the round before refused; the bound keeps a run of refusals within the request cap.
+const refills = 2;
 
 /** Reads the ranked items in batches until `limit` of them are not refused; a refused item frees its place for the next. */
 async function fill(
   items: readonly Ranked[],
   limit: number,
   read: (batch: readonly Ranked[]) => Promise<Read[]>,
-): Promise<RecordInput[]> {
-  if (limit === 0 || items.length === 0) return [];
+  rounds = refills,
+): Promise<ItemRecord[]> {
   const batch = items.slice(0, limit);
+  if (batch.length === 0) return [];
   const kept = (await read(batch)).filter((one) => one !== 'refused');
-  const rest = await fill(items.slice(batch.length), limit - kept.length, read);
+  const rest = rounds === 0 ? [] : await fill(items.slice(batch.length), limit - kept.length, read, rounds - 1);
   return [...kept.filter((one) => one !== undefined), ...rest];
-}
-
-/** The analyzed item, or a logged refusal when its facts do not fit its record. */
-function analyzed(id: string, refuse: Refuse, analyze: () => RecordInput): Read {
-  try {
-    return analyze();
-  } catch (error) {
-    if (!(error instanceof ZodError)) throw error;
-    refuse(id, error);
-    return 'refused';
-  }
 }
 
 function countByKind(items: readonly { kind: ItemKind }[]): Record<ItemKind, number> {
@@ -128,6 +117,28 @@ function refusalLogger(log: (line: string) => void, counter: { refused: number }
     const detail = error instanceof ZodError ? issueSummary(error, 'value') : error.message;
     log(`${id}: refused: ${detail}`);
   };
+}
+
+type Build = (input: RecordInput) => ItemRecord | 'refused';
+
+/** Builds a record, or logs a refusal when its facts do not fit the record or its license is unknown. */
+function recordBuilder(runDate: string, refuse: Refuse): Build {
+  return (input) => {
+    try {
+      return buildRecord(input, runDate);
+    } catch (error) {
+      if (!(error instanceof ZodError || error instanceof UnknownLicenseError)) throw error;
+      refuse(input.candidate.id, error);
+      return 'refused';
+    }
+  };
+}
+
+/** What every reader of selected items uses. */
+interface Reading {
+  client: HttpClient;
+  refuse: Refuse;
+  build: Build;
 }
 
 const tooLarge = 'a file is cut by GitHub or over the size cap';
@@ -162,7 +173,7 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
 }
 
 /** Inspects a batch of plugins and adds the items they hold to `found`, also those of a plugin refused for its own facts. */
-function pluginReader(client: HttpClient, refuse: Refuse, found: Candidate[]) {
+function pluginReader({ client, refuse, build }: Reading, found: Candidate[]) {
   return async (batch: readonly Ranked[]): Promise<Read[]> => {
     const places = batch.map(
       ({ candidate: { location, id, provenance } }): InspectedPlace => ({ location, container: id, provenance }),
@@ -173,84 +184,61 @@ function pluginReader(client: HttpClient, refuse: Refuse, found: Candidate[]) {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
       if (inspection === 'too-large') return 'refused';
       if (inspection === undefined || source === undefined) return undefined;
-      return analyzed(candidate.id, refuse, () => ({
-        kind: 'plugin',
-        candidate,
-        facts,
-        inspection,
-        source,
-        analysis: analyzePlugin(inspection),
-      }));
+      return build({ kind: 'plugin', candidate, facts, inspection, source });
     });
   };
 }
 
-type FileKind = 'skill' | 'agent' | 'output-style';
-
-function fileInput(kind: FileKind, { candidate, facts }: Ranked, read: ItemFile | undefined, refuse: Refuse): Read {
+function fileRecord(kind: FileKind, { candidate, facts }: Ranked, read: ItemFile | undefined, reading: Reading): Read {
   if (read?.file === 'too-large') {
-    refuse(candidate.id, new Error(tooLarge));
+    reading.refuse(candidate.id, new Error(tooLarge));
     return 'refused';
   }
   const text = read?.file.text;
   if (read === undefined || text === undefined) return undefined;
   const { folders, tests, licenseFile } = read;
-  return analyzed(candidate.id, refuse, (): RecordInput => {
-    if (kind === 'skill') return { kind, candidate, facts, analysis: analyzeSkill(text), folders, tests, licenseFile };
-    if (kind === 'agent') return { kind, candidate, facts, analysis: analyzeAgent(text) };
-    return { kind, candidate, facts, analysis: analyzeOutputStyle(text) };
-  });
+  return reading.build(
+    kind === 'skill' ? { kind, candidate, facts, text, folders, tests, licenseFile } : { kind, candidate, facts, text },
+  );
 }
 
-/** Reads a batch of skills' SKILL.md and folders, or of agents' or output styles' own files, and analyzes them. */
-function fileReader(client: HttpClient, refuse: Refuse, kind: FileKind) {
+/** Reads a batch of skills' SKILL.md and folders, or of agents' or output styles' own files, and builds their records. */
+function fileReader(reading: Reading, kind: FileKind) {
   return async (batch: readonly Ranked[]): Promise<Read[]> => {
     const skill = kind === 'skill';
     const files = await readItemFiles(
-      client,
+      reading.client,
       batch.map(({ candidate: { location } }) => ({ location, file: skill ? 'SKILL.md' : '' })),
       skill,
     );
-    return batch.map((item, index) => fileInput(kind, item, files[index], refuse));
+    return batch.map((item, index) => fileRecord(kind, item, files[index], reading));
   };
 }
 
-function buildAll(inputs: readonly RecordInput[], runDate: string, refuse: Refuse) {
-  return inputs.flatMap((input): ItemRecord[] => {
-    try {
-      return [buildRecord(input, runDate)];
-    } catch (error) {
-      if (!(error instanceof ZodError || error instanceof UnknownLicenseError)) throw error;
-      refuse(input.candidate.id, error);
-      return [];
-    }
-  });
-}
-
-function marketplaceInputs(candidates: readonly Located[], facts: ReadonlyMap<string, RepositoryFacts>): RecordInput[] {
-  return candidates.flatMap((candidate): RecordInput[] => {
+function marketplaceRecords(
+  candidates: readonly Located[],
+  facts: ReadonlyMap<string, RepositoryFacts>,
+  build: Build,
+): ItemRecord[] {
+  return candidates.flatMap((candidate): ItemRecord[] => {
     const found = facts.get(repositoryId(candidate.location));
-    return candidate.kind === 'marketplace' && candidate.entries !== undefined && found !== undefined
-      ? [{ kind: 'marketplace', candidate, facts: found, entries: candidate.entries }]
-      : [];
+    if (candidate.kind !== 'marketplace' || candidate.entries === undefined || found === undefined) return [];
+    const record = build({ kind: 'marketplace', candidate, facts: found, entries: candidate.entries });
+    return record === 'refused' ? [] : [record];
   });
 }
 
-/** The most starred hooks and MCP servers, whose facts were read with their candidates. */
-function listedInputs(candidates: readonly Located[], facts: ReadonlyMap<string, RepositoryFacts>): RecordInput[] {
-  const hooks = ranked(candidates, 'hook', facts)
-    .slice(0, perSmallKind)
-    .flatMap(({ candidate, facts: found }): RecordInput[] => {
-      const { hooks: read } = candidate;
-      return read === undefined ? [] : [{ kind: 'hook', candidate, facts: found, hooks: read }];
-    });
-  const mcpServers = ranked(candidates, 'mcp-server', facts)
-    .slice(0, perKind)
-    .flatMap(({ candidate, facts: found }): RecordInput[] => {
-      const { mcpServer } = candidate;
-      return mcpServer === undefined ? [] : [{ kind: 'mcp-server', candidate, facts: found, mcpServer }];
-    });
-  return [...hooks, ...mcpServers];
+/** Builds the records of a batch of hooks or MCP servers, whose facts were read with their candidates. */
+function listedReader({ build }: Reading) {
+  return (batch: readonly Ranked[]): Promise<Read[]> =>
+    Promise.resolve(
+      batch.map(({ candidate, facts }): Read => {
+        const { hooks, mcpServer } = candidate;
+        if (candidate.kind === 'hook')
+          return hooks === undefined ? undefined : build({ kind: 'hook', candidate, facts, hooks });
+        return mcpServer === undefined ? undefined : build({ kind: 'mcp-server', candidate, facts, mcpServer });
+      }),
+    );
 }
 
 /**
@@ -283,31 +271,39 @@ function topicPlaces(topicRepositories: readonly Repository[], facts: ReadonlyMa
 }
 
 /**
- * The inputs of the run's records: every marketplace, the selected plugins and the most starred items of the other
- * kinds; a skill, agent or output style that is refused frees its place.
+ * The run's records: every marketplace, the selected plugins and the most starred items of the other kinds; a refused
+ * item frees its place.
  */
-async function recordInputs(
-  client: HttpClient,
+async function itemRecords(
+  reading: Reading,
   {
     candidates,
     facts,
     plugins,
-  }: { candidates: readonly Located[]; facts: ReadonlyMap<string, RepositoryFacts>; plugins: readonly RecordInput[] },
-  refuse: Refuse,
-): Promise<RecordInput[]> {
-  const kindInputs = (kind: FileKind, limit: number) =>
-    fill(ranked(candidates, kind, facts), limit, fileReader(client, refuse, kind));
-  const [skills, agents, outputStyles] = await Promise.all([
-    kindInputs('skill', perKind),
-    kindInputs('agent', perKind),
-    kindInputs('output-style', perSmallKind),
+  }: { candidates: readonly Located[]; facts: ReadonlyMap<string, RepositoryFacts>; plugins: readonly ItemRecord[] },
+): Promise<ItemRecord[]> {
+  const select = (kind: ItemKind, limit: number) =>
+    fill(
+      ranked(candidates, kind, facts),
+      limit,
+      kind === 'skill' || kind === 'agent' || kind === 'output-style'
+        ? fileReader(reading, kind)
+        : listedReader(reading),
+    );
+  const [skills, agents, hooks, mcpServers, outputStyles] = await Promise.all([
+    select('skill', perKind),
+    select('agent', perKind),
+    select('hook', perSmallKind),
+    select('mcp-server', perKind),
+    select('output-style', perSmallKind),
   ]);
   return [
-    ...marketplaceInputs(candidates, facts),
+    ...marketplaceRecords(candidates, facts, reading.build),
     ...plugins,
     ...skills,
     ...agents,
-    ...listedInputs(candidates, facts),
+    ...hooks,
+    ...mcpServers,
     ...outputStyles,
   ];
 }
@@ -339,15 +335,15 @@ export async function collect(
     (repository) => !excluded.has(repositoryId(repository)),
   );
   const facts = await readFacts(client, factsRepositories(listed, topicRepositories, log), runDate);
+  const reading: Reading = { client, refuse, build: recordBuilder(runDate, refuse) };
   const found: Candidate[] = [];
   const [plugins, topics] = await Promise.all([
-    fill(ranked(listed, 'plugin', facts), perKind, pluginReader(client, refuse, found)),
+    fill(ranked(listed, 'plugin', facts), perKind, pluginReader(reading, found)),
     inspectPlaces(client, topicPlaces(topicRepositories, facts), refuse),
   ]);
   const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found, ...topics.found]);
   const kept = applyExclusions(all, excluded);
-  const inputs = await recordInputs(client, { candidates: kept.filter(isLocated), facts, plugins }, refuse);
-  const records = buildAll(inputs, runDate, refuse);
+  const records = await itemRecords(reading, { candidates: kept.filter(isLocated), facts, plugins });
   const report: RunReport = {
     format: 'directory-run-report',
     schemaVersion: 4,
