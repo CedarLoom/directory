@@ -23,19 +23,20 @@ const server = z.object({
   type: z.string().optional(),
   command: z.string().optional(),
   args: z.array(z.string()).optional(),
+  url: z.string().optional(),
   env: strings,
   headers: strings,
 });
 type Server = z.infer<typeof server>;
 const serverMap = z.record(z.string(), server);
-const mcpConfig = z.union([z.object({ mcpServers: serverMap }), serverMap.transform((map) => ({ mcpServers: map }))]);
+const wrappedServers = z.object({ mcpServers: serverMap });
 const lspConfig = z.record(z.string(), z.unknown());
 
 // A Set, so a type such as `constructor` reads no inherited property.
 const transports: ReadonlySet<string> = new Set(['stdio', 'http', 'sse'] as const);
 const isTransport = (type: string): type is 'stdio' | 'http' | 'sse' => transports.has(type);
-// `${NAME}` without a `:-default` is a value the user must set; the plugin's own paths are filled by Claude Code.
-const userVariable = /\$\{(?!CLAUDE_PLUGIN_)[A-Za-z_]\w*\}/;
+// `${NAME}` without a default, or with an empty one, is a value the user must set; Claude Code fills the plugin's paths.
+const userVariable = /\$\{(?!CLAUDE_PLUGIN_)[A-Za-z_]\w*(?::-)?\}/;
 
 /** A manifest value that is an object holds the configuration inline; a path or a list of paths is not followed. */
 function inline(value: unknown): unknown {
@@ -51,7 +52,12 @@ function hooksByEvent(configs: readonly HookEvents[]): Record<string, number> {
 }
 
 function mcpServers(configs: readonly unknown[]): Server[] {
-  return configs.flatMap((config) => (config === undefined ? [] : Object.values(mcpConfig.parse(config).mcpServers)));
+  return configs.flatMap((config) => {
+    if (config === undefined) return [];
+    // With the `mcpServers` key the map is read from it alone, so one malformed server refuses the record.
+    const wrapped = typeof config === 'object' && config !== null && 'mcpServers' in config;
+    return Object.values(wrapped ? wrappedServers.parse(config).mcpServers : serverMap.parse(config));
+  });
 }
 
 function mcpServersByTransport(list: readonly Server[]): Partial<Record<'stdio' | 'http' | 'sse', number>> {
@@ -126,8 +132,8 @@ export function analyzePlugin({ directories, files }: Inspection) {
     rootClaudeMd: directories.root?.some((entry) => entry.name === 'CLAUDE.md') ?? false,
     hooks: hookConfigs.map(hookFacts),
     mcpUnpinnedPackage: stdio.some(({ command, args = [] }) => command !== undefined && unpinnedPackage(command, args)),
-    mcpSecretsRequired: serverList.some(({ env = {}, headers = {} }) =>
-      [...Object.values(env), ...Object.values(headers)].some((value) => userVariable.test(value)),
+    mcpSecretsRequired: serverList.some(({ args = [], url = '', env = {}, headers = {} }) =>
+      [...args, url, ...Object.values(env), ...Object.values(headers)].some((value) => userVariable.test(value)),
     ),
   };
 }
