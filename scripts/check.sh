@@ -25,6 +25,7 @@ step test pnpm run test
 step knip pnpm run knip
 step jscpd pnpm run jscpd
 step licenses pnpm run licenses
+step rubric-lock pnpm run rubric-lock
 step audit pnpm audit --audit-level high
 # One process: a process pool needs semaphores that some sandboxes do not grant.
 step reuse tool --from reuse --with charset-normalizer reuse --no-multiprocessing lint
