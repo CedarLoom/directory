@@ -66,7 +66,7 @@ it('reads a user variable in arguments, a URL or with an empty default as a requ
   ]);
 });
 
-it('reads a user_config reference as a required secret only when its option is marked sensitive', () => {
+it('reads a user_config reference as a required secret only when its option is sensitive without a default', () => {
   const api = { type: 'http', url: 'https://x.test', headers: { Authorization: 'Bearer ${user_config.api_token}' } };
   const option = { type: 'string', title: 'API token', description: 'Token of the API' };
   const bot = { command: 'node', args: ['server.js'], env: { BOT_TOKEN: '${user_config.bot_token}' } };
@@ -74,6 +74,9 @@ it('reads a user_config reference as a required secret only when its option is m
     facts({ api }, { userConfig: { api_token: { ...option, sensitive: true } } }),
     facts({ api }, { userConfig: { api_token: { ...option, sensitive: false } } }),
     facts({ api }, { userConfig: { api_token: option } }),
+    facts({ api }, { userConfig: { api_token: { ...option, sensitive: true, default: 'public-demo-token' } } }),
+    facts({ api }, { userConfig: { api_token: { ...option, sensitive: true, default: '' } } }),
+    facts({ api }, { userConfig: { api_token: { ...option, sensitive: true, default: null } } }),
     facts({ api }, { userConfig: { other_token: { ...option, sensitive: true } } }),
     facts({ api }),
     facts({ bot }, { channels: [{ server: 'bot', userConfig: { bot_token: { ...option, sensitive: true } } }] }),
@@ -81,6 +84,9 @@ it('reads a user_config reference as a required secret only when its option is m
     [false, true],
     [false, false],
     [false, false],
+    [false, false],
+    [false, true],
+    [false, true],
     [false, false],
     [false, false],
     [false, true],

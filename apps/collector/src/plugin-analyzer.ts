@@ -5,7 +5,9 @@ import { jsonText } from './json-text.ts';
 import { unpinnedPackage } from './package-pin.ts';
 import type { Entry, Inspection } from './repository-tree.ts';
 
-const userConfig = z.record(z.string(), z.object({ sensitive: z.boolean().optional() })).optional();
+const userConfig = z
+  .record(z.string(), z.object({ sensitive: z.boolean().optional(), default: z.unknown().optional() }))
+  .optional();
 // Upstream files carry more keys than these; only the keys a fact needs are read, the rest is stripped.
 const manifest = z.object({
   name: z.unknown().optional(),
@@ -41,13 +43,18 @@ const isTransport = (type: string): type is 'stdio' | 'http' | 'sse' => transpor
 // A `${NAME}` without a default, or with an empty one, is set by the user; the path variables and HOME always hold a value.
 const userVariable = /\$\{(?!CLAUDE_PLUGIN_|CLAUDE_PROJECT_DIR\b|HOME\b)[A-Za-z_]\w*(?::-)?\}/;
 const configReference = /\$\{user_config\.\w+\}/g;
+// A default of null or an empty text leaves the value to the user like a missing one.
+const noDefault: ReadonlySet<unknown> = new Set([undefined, null, '']);
 
-/** The `${user_config.KEY}` references whose option, of the plugin or of a channel, stores its value as a secret. */
+/**
+ * The `${user_config.KEY}` references whose option, of the plugin or of a channel, stores its value as a secret and
+ * gives no default, so the user sets it.
+ */
 function secretReferences({ userConfig: options = {}, channels = [] }: z.infer<typeof manifest>): Set<string> {
   return new Set(
     [options, ...channels.map((channel) => channel.userConfig ?? {})].flatMap((config) =>
       Object.entries(config)
-        .filter(([, option]) => option.sensitive === true)
+        .filter(([, option]) => option.sensitive === true && noDefault.has(option.default))
         .map(([key]) => `\${user_config.${key}}`),
     ),
   );
