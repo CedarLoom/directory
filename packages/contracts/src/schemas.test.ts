@@ -78,7 +78,27 @@ describe.each(records)('%s record', (_kind, schema, fixture) => {
   it('refuses an unknown SPDX id', () =>
     expect(
       schema.safeParse({ ...fixture, license: { ...fixture.license, spdx: 'Apache-3.0' } }).error?.issues,
-    ).toMatchObject([{ code: 'invalid_value', path: ['license', 'spdx'] }]));
+    ).toMatchObject([{ code: 'custom', path: ['license', 'spdx'] }]));
+
+  it('accepts an SPDX expression of listed ids', () =>
+    expect(
+      ['MIT OR Apache-2.0', '(GPL-2.0+ AND MIT) OR ISC'].filter(
+        (spdx) => !schema.safeParse({ ...fixture, license: { ...fixture.license, spdx } }).success,
+      ),
+    ).toEqual([]));
+
+  it('refuses a malformed SPDX expression and one with a LicenseRef or an exception', () =>
+    expect(
+      [
+        'MIT OR',
+        'MIT or Apache-2.0',
+        '(MIT',
+        ' MIT',
+        'MIT\nOR ISC',
+        'MIT OR LicenseRef-Call-555-0100',
+        'GPL-2.0-only WITH Visit-example.com',
+      ].filter((spdx) => schema.safeParse({ ...fixture, license: { ...fixture.license, spdx } }).success),
+    ).toEqual([]));
 });
 
 type Path = readonly (string | number)[];

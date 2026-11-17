@@ -58,11 +58,11 @@ it('counts neither third-party inventories nor scripts named after licenses', ()
 
 it('keeps a stated SPDX id the class table lacks as class none, in a manifest and a frontmatter', () => {
   expect([
-    licenseOf(undefined, { manifest: 'Artistic-1.0' }),
-    licenseOf(undefined, { declared: 'Artistic-1.0' }),
+    licenseOf(undefined, { manifest: 'Unicode-3.0' }),
+    licenseOf(undefined, { declared: 'Unicode-3.0' }),
   ]).toEqual([
-    { spdx: 'Artistic-1.0', source: 'manifest', class: 'none' },
-    { spdx: 'Artistic-1.0', source: 'frontmatter', class: 'none' },
+    { spdx: 'Unicode-3.0', source: 'manifest', class: 'none' },
+    { spdx: 'Unicode-3.0', source: 'frontmatter', class: 'none' },
   ]);
 });
 
@@ -71,10 +71,18 @@ it('classes an earlier version of a license like the version GitHub detects', ()
     licenseOf(undefined, { manifest: 'Apache-1.1' }),
     licenseOf(undefined, { declared: 'LGPL-2.0-only' }),
     licenseOf(undefined, { declared: 'CC-BY-NC-3.0' }),
+    licenseOf(undefined, { manifest: 'Artistic-1.0' }),
+    licenseOf(undefined, { manifest: 'AFL-2.1' }),
+    licenseOf(undefined, { declared: 'OSL-2.0' }),
+    licenseOf(undefined, { declared: 'GFDL-1.3-invariants-or-later' }),
   ]).toEqual([
     { spdx: 'Apache-1.1', source: 'manifest', class: 'permissive' },
     { spdx: 'LGPL-2.0-only', source: 'frontmatter', class: 'copyleft' },
     { spdx: 'CC-BY-NC-3.0', source: 'frontmatter', class: 'source-available' },
+    { spdx: 'Artistic-1.0', source: 'manifest', class: 'permissive' },
+    { spdx: 'AFL-2.1', source: 'manifest', class: 'permissive' },
+    { spdx: 'OSL-2.0', source: 'frontmatter', class: 'copyleft' },
+    { spdx: 'GFDL-1.3-invariants-or-later', source: 'frontmatter', class: 'copyleft' },
   ]);
 });
 
@@ -139,8 +147,8 @@ it('counts LICENSE-<suffix> for a full SPDX id, a license family with an optiona
       'LICENSE-ZLIB',
       'LICENSE-UNLICENSE',
       'license-bsd-3-clause.txt',
-      'LICENSE-openssl',
-      'license-json.txt',
+      'LICENSE-GPL-3.0-or-later',
+      'LICENSE-Python-2.0.txt',
     ].filter((name) => !holds(name)),
   ).toEqual([]);
 });
@@ -158,4 +166,49 @@ it('counts no LICENSE-<suffix> whose suffix is a generic word', () => {
       'LICENSE-THIRDPARTY',
     ].filter((name) => holds(name)),
   ).toEqual([]);
+});
+
+it('counts no LICENSE-<suffix> whose suffix is an SPDX id the class table lacks, such as a vendored notice', () => {
+  expect(
+    ['LICENSE-openssl', 'license-json.txt', 'LICENSE-curl', 'LICENSE-ICU', 'LICENSE-Unicode-3.0'].filter((name) =>
+      holds(name),
+    ),
+  ).toEqual([]);
+});
+
+it('classes the Python and PSF licenses as permissive', () => {
+  expect([licenseOf(undefined, { manifest: 'Python-2.0' }), licenseOf(undefined, { declared: 'PSF-2.0' })]).toEqual([
+    { spdx: 'Python-2.0', source: 'manifest', class: 'permissive' },
+    { spdx: 'PSF-2.0', source: 'frontmatter', class: 'permissive' },
+  ]);
+});
+
+it('stores a deprecated plus id as its -or-later id', () => {
+  expect([licenseOf(undefined, { manifest: 'GPL-2.0+' }), licenseOf(undefined, { declared: 'LGPL-2.1+' })]).toEqual([
+    { spdx: 'GPL-2.0-or-later', source: 'manifest', class: 'copyleft' },
+    { spdx: 'LGPL-2.1-or-later', source: 'frontmatter', class: 'copyleft' },
+  ]);
+});
+
+it('classes an SPDX expression by its most permissive OR part and its least permissive AND part', () => {
+  expect([
+    licenseOf(undefined, { manifest: 'MIT OR Apache-2.0' }),
+    licenseOf(undefined, { manifest: 'GPL-3.0-only OR LicenseRef-Commercial' }),
+    licenseOf(undefined, { declared: 'MIT AND (GPL-2.0+ OR BUSL-1.1)' }),
+    licenseOf(undefined, { declared: 'MIT AND LicenseRef-Custom' }),
+    licenseOf(undefined, { declared: 'GPL-2.0-only WITH Classpath-exception-2.0' }),
+  ]).toEqual([
+    { spdx: 'MIT OR Apache-2.0', source: 'manifest', class: 'permissive' },
+    { source: 'manifest', class: 'copyleft' },
+    { spdx: 'MIT AND (GPL-2.0+ OR BUSL-1.1)', source: 'frontmatter', class: 'copyleft' },
+    { source: 'frontmatter', class: 'none' },
+    { source: 'frontmatter', class: 'copyleft' },
+  ]);
+});
+
+it('reads an UNLICENSED or proprietary frontmatter value as no license, not as the repository license', () => {
+  expect([licenseOf('MIT', { declared: 'UNLICENSED' }), licenseOf('MIT', { declared: 'proprietary' })]).toEqual([
+    { class: 'none' },
+    { class: 'none' },
+  ]);
 });
