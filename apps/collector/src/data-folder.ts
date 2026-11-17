@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, sep } from 'node:path';
 import type { DataFiles } from './data-files.ts';
 
@@ -36,12 +36,21 @@ async function removeDataFiles(folder: string, paths: readonly string[]): Promis
   await Promise.all(paths.map((path) => rm(join(folder, ...path.split('/')))));
 }
 
-/** The temporary files an earlier stopped write left, which no later step may stage; git's own folder is not touched. */
+/**
+ * The temporary files an earlier stopped write left, which no later step may stage; git's own folder is not touched, nor
+ * a file the listing reached through a symbolic link to a folder outside the data folder.
+ */
 async function staleTemporaries(folder: string): Promise<string[]> {
-  const paths = await listFolder(folder);
-  return paths
-    .filter((path) => path.endsWith('.tmp') && !path.startsWith(`.git${sep}`))
-    .map((path) => path.split(sep).join('/'));
+  const paths = (await listFolder(folder)).filter((path) => path.endsWith('.tmp') && !path.startsWith(`.git${sep}`));
+  if (paths.length === 0) return [];
+  const root = await realpath(folder);
+  const inside = await Promise.all(
+    paths.map(async (path) => {
+      const parent = await realpath(dirname(join(folder, path)));
+      return parent === root || parent.startsWith(`${root}${sep}`);
+    }),
+  );
+  return paths.filter((_, index) => inside[index]).map((path) => path.split(sep).join('/'));
 }
 
 /**
@@ -53,11 +62,33 @@ export async function updateDataFolder(folder: string, files: DataFiles, removed
   await writeDataFolder(folder, files);
 }
 
+/**
+ * The files in the two stages to write one after another: every other file, then `index.json`, so a stop never leaves a
+ * new index listing a file not yet written.
+ */
+export function writeStages(files: DataFiles): [DataFiles, DataFiles] {
+  const entries = [...files];
+  return [
+    new Map(entries.filter(([path]) => path !== 'index.json')),
+    new Map(entries.filter(([path]) => path === 'index.json')),
+  ];
+}
+
 /** Writes each file into the folder, never leaving a cut one on a stop or a failed write; a file not given stays as it is. */
 export async function writeDataFolder(
   folder: string,
   files: DataFiles,
   write: (path: string, text: string) => Promise<void> = writeFile,
+): Promise<void> {
+  const [listed, index] = writeStages(files);
+  await writeStage(folder, listed, write);
+  await writeStage(folder, index, write);
+}
+
+async function writeStage(
+  folder: string,
+  files: DataFiles,
+  write: (path: string, text: string) => Promise<void>,
 ): Promise<void> {
   await Promise.all(
     [...files].map(async ([path, text]) => {

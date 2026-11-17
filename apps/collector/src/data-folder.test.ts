@@ -1,8 +1,8 @@
-import { mkdir, mkdtempDisposable, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtempDisposable, readdir, readFile, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
-import { updateDataFolder, writeDataFolder } from './data-folder.ts';
+import { updateDataFolder, writeDataFolder, writeStages } from './data-folder.ts';
 
 /** A write that stops after part of the text, as on a full disk. */
 async function cutWrite(path: string, text: string): Promise<void> {
@@ -36,7 +36,28 @@ it('removes the temporary files of a stopped write when a publish writes', async
   await mkdir(join(folder.path, 'history'));
   await writeFile(join(folder.path, 'history', 'old.json.tmp'), 'cut');
   await updateDataFolder(folder.path, new Map([['index.json', 'after']]), []);
-  expect(await readdir(folder.path, { recursive: true })).toEqual(['history', 'index.json']);
+  expect((await readdir(folder.path, { recursive: true })).toSorted()).toEqual(['history', 'index.json']);
+});
+
+it('keeps the temporary files a symbolic link inside the data folder points to', async () => {
+  await using outside = await mkdtempDisposable(join(tmpdir(), 'data-folder-outside-'));
+  await using folder = await mkdtempDisposable(join(tmpdir(), 'data-folder-'));
+  await writeFile(join(outside.path, 'other.tmp'), 'not data');
+  await symlink(outside.path, join(folder.path, 'link'));
+  await updateDataFolder(folder.path, new Map([['index.json', 'after']]), []);
+  expect(await readdir(outside.path)).toEqual(['other.tmp']);
+});
+
+it('writes index.json after every file it lists', () => {
+  const files = new Map([
+    ['index.json', 'index'],
+    ['records/skill/a.json', 'record'],
+    ['history/skill/a.json', 'history'],
+  ]);
+  expect(writeStages(files).map((stage) => Array.from(stage.keys()))).toEqual([
+    ['records/skill/a.json', 'history/skill/a.json'],
+    ['index.json'],
+  ]);
 });
 
 it('keeps departures.json as it was when a removal fails', async () => {
