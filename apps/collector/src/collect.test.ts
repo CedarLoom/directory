@@ -773,6 +773,7 @@ const expectedScores = [
       nameValid: true,
       noRootClaudeMd: true,
       alwaysOnComponents: 3,
+      componentCount: 7,
       hasEvals: true,
     },
     // The hook command holds `curl`; the stdio server runs `npx` without a package version.
@@ -983,7 +984,15 @@ it('publishes meta.json with the run time, the versions, the sources read and th
     runAt: '2026-11-16T06:00:00Z',
     license: 'CC0-1.0',
     schemaVersions: versions(1),
-    rubricVersions: versions('1.0.0'),
+    rubricVersions: {
+      marketplace: '1.0.0',
+      plugin: '1.1.0',
+      skill: '1.1.0',
+      agent: '1.1.0',
+      hook: '1.0.0',
+      'mcp-server': '1.0.0',
+      'output-style': '1.1.0',
+    },
     sources: [
       { id: 'official-marketplace', readAt: '2026-11-16T06:00:00Z' },
       { id: 'community-marketplace', readAt: '2026-11-16T06:00:00Z' },

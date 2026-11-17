@@ -255,6 +255,11 @@
                 "description": "A number in `signals`: the maximum between `min` and `max`, both included, else 0."
               }
             ]
+          },
+          "gate": {
+            "description": "A signal of the record that must be true or above 0, else the signal gives 0.",
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
           }
         },
         "required": [
@@ -279,6 +284,8 @@
               "hook-match-all",
               "hook-http",
               "monitor-background-command",
+              "lsp-server-command",
+              "mod-module",
               "bin-executables",
               "scripts-present",
               "network-indicator",

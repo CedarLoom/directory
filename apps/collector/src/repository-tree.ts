@@ -24,6 +24,7 @@ const files = {
   hooks: 'hooks/hooks.json',
   mcp: '.mcp.json',
   lsp: '.lsp.json',
+  monitors: 'monitors/monitors.json',
 } as const;
 
 export type DirectoryKey = keyof typeof directoryPaths;

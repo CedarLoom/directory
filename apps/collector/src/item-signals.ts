@@ -115,9 +115,15 @@ export interface PluginFacts {
     skills: number;
     agents: number;
     commands: number;
+    hooksByEvent: Readonly<Record<string, number>>;
     mcpServersByTransport: Partial<Record<'stdio' | 'http' | 'sse', number>>;
+    lspServers: number;
+    outputStyles: number;
+    monitors: number;
     binFiles: number;
   };
+  /** The mod modules the hooks file lists. */
+  modules: number;
   hasEvals: boolean;
   /** The facts of each hook configuration: hooks/hooks.json and hooks inline in plugin.json. */
   hooks: readonly HookFacts[];
@@ -126,6 +132,9 @@ export interface PluginFacts {
   source: { kind: SourceKind; pin: Pin };
   listedIn: readonly string[];
 }
+
+const sum = (counts: Readonly<Record<string, number>>): number =>
+  Object.values(counts).reduce((total, count) => total + count, 0);
 
 export function pluginAssessment(facts: PluginFacts): Assessment {
   const { components, hooks } = facts;
@@ -136,10 +145,25 @@ export function pluginAssessment(facts: PluginFacts): Assessment {
       nameValid: validName(facts.name),
       noRootClaudeMd: !facts.rootClaudeMd,
       alwaysOnComponents: components.skills + components.agents + components.commands,
+      // Every component of the default layout and each mod module; a plugin without any is empty.
+      componentCount:
+        components.skills +
+        components.agents +
+        components.commands +
+        sum(components.hooksByEvent) +
+        sum(components.mcpServersByTransport) +
+        components.lspServers +
+        components.outputStyles +
+        components.monitors +
+        components.binFiles +
+        facts.modules,
       hasEvals: facts.hasEvals,
     },
     flags: raised([
       ...hookFlags(hooks),
+      ['monitor-background-command', components.monitors > 0],
+      ['lsp-server-command', components.lspServers > 0],
+      ['mod-module', facts.modules > 0],
       ['bin-executables', components.binFiles > 0],
       ['network-indicator', hooks.some(({ networkIndicator }) => networkIndicator)],
       ['mcp-stdio-unpinned-package', facts.mcpUnpinnedPackage],

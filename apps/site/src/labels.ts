@@ -87,6 +87,11 @@ export const flagLabels = {
     id: 'flag.monitor-background-command',
     message: 'Runs a command in the background as a monitor.',
   }),
+  'lsp-server-command': msg({
+    id: 'flag.lsp-server-command',
+    message: 'Starts a language server program.',
+  }),
+  'mod-module': msg({ id: 'flag.mod-module', message: 'Loads code modules into Claude Code as a mod.' }),
   'bin-executables': msg({ id: 'flag.bin-executables', message: 'Ships executables that are added to the path.' }),
   'scripts-present': msg({ id: 'flag.scripts-present', message: 'Ships scripts that the model may run.' }),
   'network-indicator': msg({
@@ -149,6 +154,7 @@ export const signalLabels: Readonly<Record<string, MessageDescriptor>> = {
   manifestFields: msg({ id: 'signal.manifestFields', message: 'Manifest fields' }),
   noRootClaudeMd: msg({ id: 'signal.noRootClaudeMd', message: 'No CLAUDE.md at the plugin root' }),
   alwaysOnComponents: msg({ id: 'signal.alwaysOnComponents', message: 'Always-on components' }),
+  componentCount: msg({ id: 'signal.componentCount', message: 'Components' }),
   hasEvals: msg({ id: 'signal.hasEvals', message: 'Ships evals' }),
   licenseField: msg({ id: 'signal.licenseField', message: 'Has a license field that is neither blank nor withheld' }),
   testsShipped: msg({ id: 'signal.testsShipped', message: 'Ships tests' }),

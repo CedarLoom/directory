@@ -135,10 +135,12 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
     hooks,
     mcpUnpinnedPackage,
     mcpSecretsRequired,
+    modules,
     ...facts
   } = analyzePlugin(input.inspection);
   const assessment = pluginAssessment({
     ...facts,
+    modules,
     name: manifestName ?? input.candidate.name,
     manifestFields,
     rootClaudeMd,

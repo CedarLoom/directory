@@ -99,6 +99,12 @@ function NotMeasured() {
         <List.Item>
           <Trans id="method.notMeasured.tokens">Token counts are estimates: characters divided by four.</Trans>
         </List.Item>
+        <List.Item>
+          <Trans id="method.notMeasured.componentPaths">
+            Plugin components that the manifest names by path instead of the default layout or an inline value: their
+            hooks, MCP servers, LSP servers, monitors and mod modules are not counted and raise no flag.
+          </Trans>
+        </List.Item>
       </List>
     </section>
   );

@@ -23,6 +23,19 @@ it('reads hooks given inline in plugin.json like a hooks file', () => {
   ]);
 });
 
+it('counts monitors in the default file and inline in the manifest, and the mod modules of the hooks file', () => {
+  const monitor = { name: 'deploys', command: '${CLAUDE_PLUGIN_ROOT}/watch.sh', description: 'Deploy status' };
+  const { components, modules } = analyzePlugin({
+    directories: {},
+    files: {
+      monitors: JSON.stringify([monitor, { ...monitor, name: 'errors', when: 'on-skill-invoke:debug' }]),
+      manifest: JSON.stringify({ monitors: [monitor], experimental: { monitors: './more-monitors.json' } }),
+      hooks: JSON.stringify({ modules: ['./mod.mjs'] }),
+    },
+  });
+  expect([components.monitors, modules]).toEqual([3, 1]);
+});
+
 const manifestFields = (fields: object) =>
   analyzePlugin({ directories: {}, files: { manifest: JSON.stringify(fields) } }).manifestFields;
 

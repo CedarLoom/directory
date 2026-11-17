@@ -1,6 +1,6 @@
 import { pluginRecord, versionLabel } from '@directory/contracts';
 import { z } from 'zod';
-import { type HookEvents, hookEvents, hookFacts, inlineHookEvents } from './hook-analyzer.ts';
+import { type HookEvents, hookEvents, hookFacts, hookModules, inlineHookEvents } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
 import { unpinnedPackage } from './package-pin.ts';
 import type { Entry, Inspection } from './repository-tree.ts';
@@ -20,6 +20,9 @@ const manifest = z.object({
   hooks: z.unknown().optional(),
   mcpServers: z.unknown().optional(),
   lspServers: z.unknown().optional(),
+  // `monitors` is read at the top level and under `experimental`, where newer manifests declare it.
+  monitors: z.unknown().optional(),
+  experimental: z.object({ monitors: z.unknown().optional() }).optional(),
   userConfig,
   channels: z.array(z.object({ userConfig })).optional(),
 });
@@ -36,6 +39,7 @@ type Server = z.infer<typeof server>;
 const serverMap = z.record(z.string(), server);
 const wrappedServers = z.object({ mcpServers: serverMap });
 const lspConfig = z.record(z.string(), z.unknown());
+const monitorList = z.array(z.unknown());
 
 // A Set, so a type such as `constructor` reads no inherited property.
 const transports: ReadonlySet<string> = new Set(['stdio', 'http', 'sse'] as const);
@@ -98,6 +102,13 @@ function lspServers(configs: readonly unknown[]): number {
   );
 }
 
+/** The monitors of the default file and those inline in the manifest; a manifest value that is a path is not followed. */
+function monitors(text: string | undefined, plugin: z.infer<typeof manifest>): number {
+  const lists = [plugin.monitors, plugin.experimental?.monitors].filter((value) => Array.isArray(value));
+  if (text !== undefined) lists.push(monitorList.parse(jsonText.parse(text)));
+  return lists.reduce((sum, list) => sum + list.length, 0);
+}
+
 function countEntries(
   entries: readonly Entry[] | undefined,
   markdownOnly: boolean,
@@ -148,10 +159,10 @@ export function analyzePlugin({ directories, files }: Inspection) {
       mcpServersByTransport: mcpServersByTransport(serverList),
       lspServers: lspServers([parseFile(files.lsp), inline(plugin.lspServers)]),
       outputStyles: countEntries(directories.outputStyles, true),
-      // The monitor format is not read yet.
-      monitors: 0,
+      monitors: monitors(files.monitors, plugin),
       binFiles: countEntries(directories.bin, false),
     },
+    modules: hookModules(files.hooks),
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
     manifestFields: manifestFields(plugin, version.success),
