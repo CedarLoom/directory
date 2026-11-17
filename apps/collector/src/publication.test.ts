@@ -47,7 +47,7 @@ const { removed } = publication(candidate, published, report, {
   license,
 });
 
-it('removes the record, history and popularity file of an excluded item', () =>
+it('removes the record, history and popularity file of an excluded item whose id is its repository', () =>
   expect(removed.filter((path) => path.includes('gh.acme.tool'))).toEqual([
     'records/plugin/gh.acme.tool.json',
     'history/plugin/gh.acme.tool.json',

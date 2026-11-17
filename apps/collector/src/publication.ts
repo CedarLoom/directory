@@ -96,7 +96,7 @@ function removals(candidate: DataFiles, published: DataFiles, excluded: Exclusio
   });
 }
 
-/** Days a history or popularity file stays after its item left the index; a return within them continues it. */
+/** Days a history or popularity file stays once no item in the index uses it; a return within them continues it. */
 const retentionDays = 90;
 
 /** The popularity files the run's records point to, including one the run lacks as it read no star count for it. */
@@ -134,8 +134,8 @@ function leavingIds(candidate: DataFiles, published: DataFiles): Map<string, str
 }
 
 /**
- * The history and popularity files kept for items that left the index, each with the date of the first run without its
- * item and the ids that exclude it, and the kept files whose retention period ended by the run date.
+ * The history and popularity files that no item in the index uses, each with the date of the first run in which none
+ * used it and the ids that exclude it, and the kept files whose retention period ended by the run date.
  */
 function departures(
   candidate: DataFiles,
