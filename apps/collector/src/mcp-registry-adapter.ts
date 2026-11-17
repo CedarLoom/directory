@@ -73,7 +73,7 @@ function lastRun(previous: DataFiles): { checkpoint?: string; known: Map<string,
     meta === undefined
       ? undefined
       : checkpointFile.parse(JSON.parse(meta)).sources.find(({ id }) => id === 'mcp-registry')?.readAt;
-  // The record of a server a later run dropped stays in the folder; only the index names the last run's servers.
+  // Only the index names the last run's servers: a folder an older publish wrote still holds the records of dropped ones.
   const indexed = indexedServers(previous);
   const known = new Map<string, KnownServer>();
   for (const [path, text] of previous) {

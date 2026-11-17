@@ -12,17 +12,25 @@ function readJson(path: string): unknown {
   return JSON.parse(readFileSync(join(dataFolder, path), 'utf8'));
 }
 
-/** Parses every data file with its contract at build time, so the bundle ships only valid data and no schema code. */
+/** Parses the index and its items' data files at build time, so the pages show only valid data and ship no schema code. */
 function validatedData() {
-  const paths = readdirSync(dataFolder, { recursive: true, encoding: 'utf8' }).filter((path) => path.endsWith('.json'));
-  for (const path of paths) {
-    // Parsed below with its typed contract, which the page list needs.
-    if (path === 'index.json') continue;
-    const contract = dataFileContract(path.split(sep).join('/'));
-    if (contract === undefined) throw new Error(`${path} is not a file of the data layout`);
-    contract.parse(readJson(path));
+  const paths = readdirSync(dataFolder, { recursive: true, encoding: 'utf8' })
+    .filter((path) => path.endsWith('.json'))
+    .map((path) => path.split(sep).join('/'));
+  const index = indexFile.parse(readJson('index.json'));
+  // An item that left the index keeps its history and popularity file, which no page loads: the build checks only its path.
+  const used = new Set<string>();
+  for (const { kind, id } of index.items) {
+    const record = recordContracts[kind].parse(readJson(`records/${kind}/${id}.json`));
+    used.add(`history/${kind}/${id}.json`);
+    for (const entry of record.popularity) if ('ref' in entry) used.add(`popularity/${entry.ref}.json`);
   }
-  return indexFile.parse(readJson('index.json'));
+  for (const path of paths) {
+    const contract = dataFileContract(path);
+    if (contract === undefined) throw new Error(`${path} is not a file of the data layout`);
+    if (path === 'meta.json' || used.has(path)) contract.parse(readJson(path));
+  }
+  return index;
 }
 
 const index = validatedData();

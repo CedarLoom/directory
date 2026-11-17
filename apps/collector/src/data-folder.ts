@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, sep } from 'node:path';
 import type { DataFiles } from './data-files.ts';
 
@@ -26,6 +26,11 @@ export async function readDataFolder(folder: string): Promise<Map<string, string
   const json = paths.filter((path) => path.endsWith('.json'));
   const texts = await Promise.all(json.map((path) => readFile(join(folder, path), 'utf8')));
   return new Map(json.map((path, index) => [path.split(sep).join('/'), texts[index] ?? '']));
+}
+
+/** Removes each file, by relative path with `/` separators, from the folder. */
+export async function removeDataFiles(folder: string, paths: readonly string[]): Promise<void> {
+  await Promise.all(paths.map((path) => rm(join(folder, ...path.split('/')))));
 }
 
 /** Writes each file into the folder; a file not given stays as it is. */
