@@ -237,11 +237,15 @@ function program(command: string): string {
     .toLowerCase();
 }
 
-// The characters a POSIX shell reads literally, as Python's `shlex.quote` leaves them; cmd also reads `\` literally.
+// The characters a POSIX shell reads literally, as Python's `shlex.quote` leaves them.
 const shellPlain = /^[\w@%+=:,./-]+$/;
-const cmdPlain = /^[\w@+=:,./\\-]+$/;
+// cmd reads all but its operators, quotes and variable expansions literally.
+const cmdPlain = /^[^\s"%!&|<>^()]+$/;
 const assignment = /^[A-Za-z_]\w*=/;
 const envOptions = roles([], [], ['-u', '--unset', '-C', '--chdir'], ['-i', '--ignore-environment']);
+const shellValueOptions: ReadonlySet<string> = new Set(['--rcfile', '--init-file']);
+// Deeper nesting reads as unreadable, so a crafted command line costs bounded work.
+const maxWrappers = 8;
 
 /** The words of a command line of plain words between spaces; undefined when it holds anything a shell would read. */
 function plainWords(line: string, plain: RegExp): string[] | undefined {
@@ -260,24 +264,30 @@ function cmdCommand(words: readonly string[]): readonly string[] | undefined {
   const args = words.slice(1);
   const run = args.findIndex((arg) => !arg.startsWith('/') || /^\/[ck]$/i.test(arg));
   if (!/^\/[ck]$/i.test(args[run] ?? '')) return words;
-  const line = plainWords(args.slice(run + 1).join(' '), cmdPlain);
-  return line === undefined ? undefined : unwrapped(line);
+  return plainWords(args.slice(run + 1).join(' '), cmdPlain);
 }
 
-const commandOption = (arg: string): boolean => /^-[A-Za-z]*c/.test(arg);
+/** Where the operands of sh or bash start, after their options, and whether one of these is `-c`. */
+function shellOptions(args: readonly string[]): { operand: number; command: boolean } {
+  let index = 0;
+  let command = false;
+  for (let option = args[0] ?? ''; /^[-+]./.test(option) && option !== '--'; option = args[index] ?? '') {
+    command ||= /^-[A-Za-z]*c/.test(option);
+    // `-o`, `-O` and a cluster ending in them, such as `-euo pipefail`, take the next argument as their value.
+    index += /^[-+][A-Za-z]*[oO]$/.test(option) || shellValueOptions.has(option) ? 2 : 1;
+  }
+  return { operand: args[index] === '--' ? index + 1 : index, command };
+}
 
 /** `sh -c` and `bash -c` run their first operand as a command line; without `-c` they run a local script. */
 function shellCommand(words: readonly string[]): readonly string[] | undefined {
   const args = words.slice(1);
-  const end = args.findIndex((arg) => arg === '--' || !/^[-+]./.test(arg));
-  const options = end === -1 ? args : args.slice(0, end);
-  // `-o` and `-O` take a value, and a long option may as well, so where the options end is not known.
-  if (!options.every((option) => /^-[A-NP-Za-np-z]+$/.test(option)))
-    return args.some(commandOption) ? undefined : words;
-  if (!options.some(commandOption)) return words;
-  const line = args[options.length] === '--' ? args[options.length + 1] : args[options.length];
-  const plain = plainWords(line ?? '', shellPlain);
-  return plain === undefined ? undefined : unwrapped(withoutAssignments(plain));
+  const { operand, command } = shellOptions(args);
+  if (!command) return words;
+  const line = plainWords(args[operand] ?? '', shellPlain);
+  if (line === undefined) return undefined;
+  const run = withoutAssignments(line);
+  return run[0] === 'exec' ? run.slice(1) : run;
 }
 
 /** `env` runs the command after its options and assignments. */
@@ -289,9 +299,10 @@ function envCommand(words: readonly string[]): readonly string[] | undefined {
     if (role === undefined) return undefined;
     index = next;
   }
-  return unwrapped(withoutAssignments(args.slice(args[index] === '--' ? index + 1 : index)));
+  return withoutAssignments(args.slice(args[index] === '--' ? index + 1 : index));
 }
 
+/** What a wrapper starts: the command words, the given words when it wraps nothing, undefined when unreadable. */
 const wrappers: ReadonlyMap<string, (words: readonly string[]) => readonly string[] | undefined> = new Map([
   ['cmd', cmdCommand],
   ['sh', shellCommand],
@@ -301,8 +312,14 @@ const wrappers: ReadonlyMap<string, (words: readonly string[]) => readonly strin
 
 /** The command and arguments a shell wrapper starts, through nested wrappers; undefined when they cannot be read. */
 function unwrapped(words: readonly string[]): readonly string[] | undefined {
-  const unwrap = wrappers.get(program(words[0] ?? ''));
-  return unwrap === undefined ? words : unwrap(words);
+  let current = words;
+  for (let depth = 0; depth <= maxWrappers; depth += 1) {
+    const unwrap = wrappers.get(program(current[0] ?? ''));
+    const inner = unwrap === undefined ? current : unwrap(current);
+    if (inner === undefined || inner === current) return inner;
+    current = inner;
+  }
+  return undefined;
 }
 
 /**
