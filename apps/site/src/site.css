@@ -1,0 +1,89 @@
+body {
+  background: var(--page);
+  color: var(--ink);
+}
+
+/* Tabular figures keep the digits of a score column aligned. */
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--space-sm);
+  inset-block-start: -10rem;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--page);
+  color: var(--link);
+}
+
+.skip-link:focus {
+  inset-block-start: var(--space-sm);
+}
+
+.site-header,
+.site-footer {
+  background: var(--surface);
+  border-block: 1px solid var(--line);
+}
+
+.site-header a,
+.disclosure summary,
+.sort-button,
+.link-row a,
+.mantine-Table-td a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--size-target);
+  min-inline-size: var(--size-target);
+}
+
+.page-link {
+  min-block-size: var(--size-control-bar);
+  min-inline-size: var(--size-control-bar);
+}
+
+/* The label toggles its checkbox, so the label is the tap target. */
+.mantine-Checkbox-body {
+  align-items: center;
+}
+
+.mantine-Checkbox-label {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--size-control-row);
+}
+
+.disclosure summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.disclosure[open] summary {
+  margin-block-end: var(--space-sm);
+}
+
+.sort-button {
+  gap: var(--space-2xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+[data-numeric] .sort-button {
+  flex-direction: row-reverse;
+}
+
+/* Mantine's default input size reads this variable. */
+.mantine-Input-wrapper {
+  --input-height-sm: max(2.25rem, var(--size-field));
+}
+
+/* Fields of 16 px stop phone browsers from zooming in on focus. */
+.mantine-Input-input {
+  font-size: var(--font-size-field);
+}
+
+.history-change {
+  font-weight: 600;
+}

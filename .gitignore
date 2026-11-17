@@ -1,1 +1,8 @@
 node_modules/
+# Build output and test reports of the site.
+apps/site/data/
+apps/site/dist/
+apps/site/storybook-static/
+apps/site/test-results/
+apps/site/playwright-report/
+apps/site/.tanstack/

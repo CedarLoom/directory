@@ -3,3 +3,6 @@ rules:
   dependabot-cooldown:
     config:
       days: 3
+  # actionlint does not read the `$/` form of a local action yet.
+  self-repository:
+    disable: true

@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2025", "dom"],
+    "types": ["node"],
+    // The declarations of the Storybook and Vite plugins name bundlers and TypeScript APIs this workspace does not install.
+    "skipLibCheck": true
+  },
+  "include": ["*.ts", "scripts", "e2e", ".storybook/main.ts", ".storybook/vite.config.ts"]
+}

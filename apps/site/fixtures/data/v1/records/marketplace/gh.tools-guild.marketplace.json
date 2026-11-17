@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.tools-guild.marketplace",
+  "kind": "marketplace",
+  "name": "guild-marketplace",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/tools-guild/marketplace",
+    "install": "https://github.com/tools-guild/marketplace/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-09T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.tools-guild.marketplace",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.tools-guild.marketplace",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 0.5,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": ["testing", "docs"],
+  "cedarloomFit": {
+    "label": "complements",
+    "tags": ["testing", "docs"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 95,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 5,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "pluginCount": 12,
+  "sourceKinds": {
+    "path": 6,
+    "github": 2,
+    "url": 1,
+    "git-subdir": 1,
+    "npm": 1,
+    "archive": 0,
+    "command": 0,
+    "other": 1
+  },
+  "pinnedShare": 0.75,
+  "ownerType": "organization"
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.format-on-save",
+  "kind": "hook",
+  "entries": [
+    {
+      "date": "2026-11-09",
+      "rubric": "1.0.0",
+      "total": 85
+    }
+  ]
+}

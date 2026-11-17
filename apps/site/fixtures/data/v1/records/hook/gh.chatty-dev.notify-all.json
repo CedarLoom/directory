@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.chatty-dev.notify-all",
+  "kind": "hook",
+  "name": "notify-all",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/chatty-dev/notify-all",
+    "install": "https://github.com/chatty-dev/notify-all/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "GPL-3.0-only",
+    "source": "github-detected",
+    "class": "copyleft"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-09T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.chatty-dev.notify-all",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.chatty-dev.notify-all",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "matchersSpecific": false
+  },
+  "flags": ["hook-match-all", "hook-http", "network-indicator"],
+  "tags": ["notifications"],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.0.0"
+    },
+    "total": 50,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 0,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 20,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "events": ["PostToolUse"],
+  "handlerTypes": ["command"],
+  "commandForms": ["shell"],
+  "matcherBreadth": "specific"
+}

@@ -4,5 +4,9 @@ locale = "en-us"
 # ND is the no-derivatives part of Creative Commons SPDX ids.
 extend-ignore-re = ["CC-BY(-NC)?-ND-[0-9.]+"]
 
+# axe is the name of the accessibility test engine.
+[default.extend-words]
+axe = "axe"
+
 [files]
 extend-exclude = ["pnpm-lock.yaml", "LICENSES/", "LICENSE", "packages/contracts/schemas/"]

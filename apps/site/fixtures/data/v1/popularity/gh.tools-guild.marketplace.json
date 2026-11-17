@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.tools-guild.marketplace",
+  "snapshots": [
+    {
+      "date": "2026-10-12",
+      "stars": 3730
+    },
+    {
+      "date": "2026-11-16",
+      "stars": 5210
+    }
+  ]
+}

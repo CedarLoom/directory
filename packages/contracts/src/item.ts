@@ -172,3 +172,14 @@ export const outputStyleRecord = z.strictObject({
   tokens: count,
   frontmatterFields: z.array(keyword).max(64),
 });
+
+/** A record of any kind. */
+export type ItemRecord = z.infer<
+  | typeof marketplaceRecord
+  | typeof pluginRecord
+  | typeof skillRecord
+  | typeof agentRecord
+  | typeof hookRecord
+  | typeof mcpServerRecord
+  | typeof outputStyleRecord
+>;

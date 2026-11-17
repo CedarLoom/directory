@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.teach-ai.socratic-style.socratic",
+  "kind": "output-style",
+  "name": "socratic",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/teach-ai/socratic-style/tree/main/socratic",
+    "install": "https://github.com/teach-ai/socratic-style/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-07-02T12:00:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [],
+  "signals": {
+    "release": true,
+    "nameField": true,
+    "descriptionField": true,
+    "bodyLines": 12,
+    "tokens": 340
+  },
+  "flags": [],
+  "tags": ["writing"],
+  "cedarloomFit": {
+    "label": "overlaps",
+    "tags": ["writing"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "output-style",
+      "version": "1.0.0"
+    },
+    "total": 97.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 7.5,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameField",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "descriptionField",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "bodyLines",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "tokens",
+        "points": 25,
+        "max": 25
+      },
+      {
+        "signal": "safety",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "tokens": 340,
+  "frontmatterFields": ["name", "description"]
+}

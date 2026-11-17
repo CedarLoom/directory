@@ -15,6 +15,7 @@ export { type HistoryFile, historyFile } from './history.ts';
 export {
   agentRecord,
   hookRecord,
+  type ItemRecord,
   marketplaceRecord,
   mcpServerRecord,
   outputStyleRecord,

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.nightly-build.ci-helper",
+  "kind": "plugin",
+  "entries": [
+    {
+      "date": "2026-11-09",
+      "rubric": "1.0.0",
+      "total": 83
+    }
+  ]
+}

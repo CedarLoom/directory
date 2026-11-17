@@ -2,7 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["es2025", "dom", "dom.iterable"],
-    "types": []
+    "types": ["vite/client"],
+    "jsx": "react-jsx",
+    // The declarations of Mantine 9 and TanStack Router fail the library check under exactOptionalPropertyTypes.
+    "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src", "fixtures", ".storybook/preview.tsx"]
 }
