@@ -9,13 +9,21 @@ export const exclusionsKeyVariable = 'EXCLUSIONS_KEY';
 /** Answers whether an id is excluded. */
 export type Exclusions = Pick<ReadonlySet<string>, 'has'>;
 
+/** The text whose hash under the key the file keeps as `keyCheck`; no id has this form. */
+const keyCheckText = 'exclusions';
+
 /** The exclusions of the file, matched by the HMAC-SHA-256 of an id under the key; a file without entries needs no key. */
 export function parseExclusions(text: string, key: string): Exclusions {
-  const hashes = new Set(exclusionsFile.parse(JSON.parse(text)).hashes);
+  const file = exclusionsFile.parse(JSON.parse(text));
+  const hashes = new Set(file.hashes);
   if (hashes.size === 0) return hashes;
-  // Without the key no id matches, so every excluded item would be published again.
+  // Without the right key no id matches, so every excluded item would be published again.
   if (key === '') throw new Error(`exclusions: the file holds entries; set ${exclusionsKeyVariable} to their key`);
-  return { has: (id) => hashes.has(createHmac('sha256', key).update(id).digest('hex')) };
+  const hash = (value: string) => createHmac('sha256', key).update(value).digest('hex');
+  if (file.keyCheck !== hash(keyCheckText)) {
+    throw new Error(`exclusions: ${exclusionsKeyVariable} does not match the keyCheck of the file`);
+  }
+  return { has: (id) => hashes.has(hash(id)) };
 }
 
 /** An excluded id, or an item whose container is one, such as a skill of an excluded plugin. */

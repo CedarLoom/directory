@@ -1,6 +1,6 @@
 import type { PopularityFile } from '@directory/contracts';
 
-const dayMs = 86_400_000;
+export const dayMs = 86_400_000;
 
 function isoDate(time: number): string {
   return new Date(time).toISOString().slice(0, 10);

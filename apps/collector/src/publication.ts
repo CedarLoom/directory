@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { byCodeUnits } from './code-unit-order.ts';
 import { type DataFiles, jsonFile } from './data-files.ts';
 import { type Exclusions, isExcluded } from './exclusions.ts';
+import { dayMs } from './popularity-file.ts';
 import type { RunReport } from './run-report.ts';
 
 const recordFacts = z.looseObject({
@@ -93,7 +94,6 @@ function removals(candidate: DataFiles, published: DataFiles, excluded: Exclusio
 
 /** Days a history or popularity file stays after its item left the index; a return within them continues it. */
 const retentionDays = 90;
-const dayMs = 24 * 60 * 60 * 1000;
 
 /** The popularity files the run's records point to, including one the run lacks as it read no star count for it. */
 function listedPopularity(candidate: DataFiles): Set<string> {

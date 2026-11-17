@@ -6,6 +6,13 @@ import { z } from 'zod';
  */
 export const exclusionsFile = z.strictObject({
   schemaVersion: z.literal(2),
+  keyCheck: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .optional()
+    .describe(
+      'The HMAC-SHA-256 of the text `exclusions` under the key, which tells a wrong key; required with the first hash.',
+    ),
   hashes: z
     .array(z.string().regex(/^[0-9a-f]{64}$/))
     .describe('The HMAC-SHA-256 of each excluded id under the secret exclusions key, as lowercase hex.'),

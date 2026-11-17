@@ -3,7 +3,9 @@ import type { Candidate } from './candidate.ts';
 import { applyExclusions, parseExclusions } from './exclusions.ts';
 
 const key = 'test-key';
-const exclusionsText = (...hashes: string[]) => JSON.stringify({ schemaVersion: 2, hashes });
+// The keyed hash of the text `exclusions`.
+const keyCheck = '0912b4b95623ce82c1cfc7a8b3f5ad7637cf63050510e775d39f46eaf7db94e7';
+const exclusionsText = (...hashes: string[]) => JSON.stringify({ schemaVersion: 2, keyCheck, hashes });
 
 function candidate(kind: Candidate['kind'], id: string, container?: string): Candidate {
   return {
@@ -60,6 +62,11 @@ it('refuses exclusions without a key', () =>
   expect(() =>
     parseExclusions(exclusionsText('14a15768010a45bdc53e0d4c520b14c095bca121d98a7543e6c7ae3e4fddb129'), ''),
   ).toThrow(/EXCLUSIONS_KEY/));
+
+it('refuses exclusions under another key', () =>
+  expect(() =>
+    parseExclusions(exclusionsText('14a15768010a45bdc53e0d4c520b14c095bca121d98a7543e6c7ae3e4fddb129'), 'other-key'),
+  ).toThrow(/does not match/));
 
 it('reads an exclusions file without entries without a key', () =>
   expect(parseExclusions(exclusionsText(), '').has('gh.acme.market')).toBe(false));

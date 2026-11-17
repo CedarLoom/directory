@@ -28,7 +28,7 @@ const indexCap = 2 * 1024 * 1024;
 // More vanished items than this share of the published ones of a kind points to a broken source, not to upstream removals.
 const vanishedShare = 0.2;
 // Files that only publish writes, from the run and the published data.
-const publishedOnly = new Set(['meta.json', 'departures.json']);
+const publishedOnly = new Set(['meta.json', 'departures.json', 'LICENSE']);
 
 const scoredRecord = z.looseObject({
   score: z.looseObject({ rubric: z.looseObject({ kind, version: semver }) }).optional(),
