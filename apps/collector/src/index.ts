@@ -40,8 +40,10 @@ function exitCode(error: unknown): number {
 
 const log = (line: string) => console.error(line);
 
+const exclusionsKey = () => process.env[exclusionsKeyVariable] ?? '';
+
 async function readExclusions(file: string) {
-  return parseExclusions(await readFile(file, 'utf8'), process.env[exclusionsKeyVariable] ?? '');
+  return parseExclusions(await readFile(file, 'utf8'), exclusionsKey());
 }
 
 async function readReport(file: string) {
@@ -50,7 +52,7 @@ async function readReport(file: string) {
 
 /** An item id as given, untrimmed: a trailing newline or an address would hash to an entry that matches nothing. */
 function exclusionId(value: string): string {
-  if (!itemId.safeParse(value).success) throw new InvalidArgumentError('not an item id such as gh.<owner>.<repo>');
+  if (!itemId.safeParse(value).success) throw new InvalidArgumentError('not an item id');
   return value;
 }
 
@@ -76,9 +78,14 @@ program
   .description(
     `Prints the hash of an item id as curation/exclusions.json holds it and the keyCheck, both under ${exclusionsKeyVariable}.`,
   )
-  .argument('<id>', 'the id of the item, container or repository to exclude, such as gh.<owner>.<repo>', exclusionId)
+  // Copied, not composed: ids escape `_`, `.` and `/` in owner, repository and path, as `_5f`, `_2e` and `_2f`.
+  .argument(
+    '<id>',
+    'the id of the item, container or repository to exclude, exactly as its record holds it',
+    exclusionId,
+  )
   .action((id) => {
-    const entry = exclusionEntry(id, process.env[exclusionsKeyVariable] ?? '');
+    const entry = exclusionEntry(id, exclusionsKey());
     process.stdout.write(`${JSON.stringify(entry, null, 2)}\n`);
   });
 

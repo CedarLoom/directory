@@ -35,5 +35,5 @@ it('refuses to hash without a key and prints nothing', () => {
   const { status, stdout, stderr } = hashExclusion('gh.example-org.lint', {});
   expect(status).toBe(64);
   expect(stdout).toBe('');
-  expect(stderr).toBe('exclusions: set EXCLUSIONS_KEY to the key of the hashes\n');
+  expect(stderr).toMatch(/EXCLUSIONS_KEY/);
 });

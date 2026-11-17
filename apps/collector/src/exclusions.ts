@@ -39,6 +39,9 @@ export function parseExclusions(text: string, key: string): Exclusions {
   const hashes = new Set(file.hashes);
   if (hashes.size === 0) return hashes;
   // Without the right key no id matches, so every excluded item would be published again.
+  if (key === '') {
+    throw new ExclusionsKeyError(`exclusions: the file holds entries; set ${exclusionsKeyVariable} to their key`);
+  }
   const hash = keyedHash(key);
   if (file.keyCheck === undefined) {
     throw new ExclusionsKeyError(
