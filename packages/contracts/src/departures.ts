@@ -12,7 +12,7 @@ export const departuresFile = z.strictObject({
         ids: z
           .array(itemId)
           .describe(
-            'The ids besides the one in the file name whose exclusion removes the file, taken from the records of the items that left: for a history file the container and repository of its item, for a popularity file the items that pointed to it and their containers.',
+            'The ids besides the one in the file name whose exclusion removes the file: for a history file the container and repository of its item, taken from its record; none for a popularity file, which only the exclusion of its repository removes.',
           ),
       }),
     )
