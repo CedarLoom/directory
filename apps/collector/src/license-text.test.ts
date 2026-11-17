@@ -4,8 +4,10 @@ import { licenseTextId } from './license-text.ts';
 
 const variablePart = /<<var;name="([^"]*)";original="((?:[^"]|"(?!;match="))*)";match="(?:[^"]|"(?!>>))*">>/g;
 
-// The Creative Commons 4.0 templates give an empty original for parts their patterns require.
+// The Creative Commons 4.0 templates give an empty original for parts their patterns require; a license file has its
+// copyright notice on a line of its own.
 function filled(name: string, original: string): string {
+  if (/^(?:copyright|©|\(c\))/i.test(original)) return `${original}\n`;
   if (name === 'ccLicensed') return 'CC-licensed';
   if (/^section\dTitleHyphens$/.test(name)) return '–';
   return original;
@@ -68,5 +70,32 @@ it('names no license for a text that adds terms before it or on its copyright li
     licenseTextId(`Non-commercial use only. Commercial use is prohibited.\n\n${mit('Copyright (c) 2024 Jane Doe')}`),
     licenseTextId(mit('Copyright (c) 2024 Jane Doe. Not for commercial use.')),
     licenseTextId(`No military use.\n${mit('')}`),
+  ]).toEqual([undefined, undefined, undefined]);
+});
+
+it('names no license for a copyright line that adds terms after its holder', () => {
+  expect(
+    [
+      'Copyright (c) 2024 Jane Doe, for non-commercial use only',
+      'Copyright (c) 2024 Jane Doe, Non-Commercial Use Only',
+      'Copyright 2024 Jane Doe - commercial use is prohibited',
+      '© 2024 Jane Doe (personal use only)',
+      'Copyright 2024 X; no commercial use',
+      '(c) 2024 Commercial use requires a paid license from Jane Doe',
+    ].map((notice) => licenseTextId(mit(notice))),
+  ).toEqual([undefined, undefined, undefined, undefined, undefined, undefined]);
+});
+
+it('names no license for a title line that adds terms to the name', () => {
+  const text = mit('Copyright (c) 2024 Jane Doe');
+  expect([
+    licenseTextId(text.replace('MIT License', 'MIT License (non-commercial use only)')),
+    licenseTextId(text.replace('MIT License', 'Non-Commercial License')),
+    licenseTextId(
+      text.replace(
+        'MIT License',
+        'This license forbids commercial use\nThis license forbids military use\nThis license ends in 2027',
+      ),
+    ),
   ]).toEqual([undefined, undefined, undefined]);
 });

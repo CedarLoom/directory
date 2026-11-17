@@ -186,13 +186,16 @@ function LicenseFacts() {
         license field does not count as filled, neither for a skill's license field nor among a plugin's manifest
         fields. A field that holds no SPDX expression of listed license and exception ids, such as one with a
         LicenseRef, is recorded without an SPDX id. A license file in the item's folder is recorded with the SPDX id of
-        the license whose template in the SPDX License List 3.29 its text matches once whitespace, case, punctuation, a
-        title and copyright lines are set aside as the SPDX matching guidelines describe; the templates are those of the
-        licenses GitHub detects, their earlier versions and other licenses items state. A license file that matches none
-        of them, and one of several license files in the folder, is recorded without an SPDX id. SPDX ids match in any
-        case and are recorded as the SPDX License List writes them. An expression takes the class of its most permissive
-        part when OR joins its parts and of its least permissive part when AND joins them. "No license detected" means
-        that none of these was found, not that the item has no license.
+        the license whose template in the SPDX License List 3.29 its text matches once whitespace, case, dash and quote
+        styles, the spaces next to punctuation, title lines that hold only words of the license's name or id and a
+        version, and lines that hold only copyright notices are set aside as the SPDX matching guidelines describe; the
+        templates are those of the licenses GitHub detects, their earlier versions and other licenses items state. A
+        part that a template leaves free, such as the copyright holders in MIT's warranty disclaimer, takes any text, so
+        terms added there do not change the match. A license file that matches none of the templates, and one of several
+        license files in the folder, is recorded without an SPDX id. SPDX ids match in any case and are recorded as the
+        SPDX License List writes them. An expression takes the class of its most permissive part when OR joins its parts
+        and of its least permissive part when AND joins them. "No license detected" means that none of these was found,
+        not that the item has no license.
       </Trans>
     </Text>
   );

@@ -7,16 +7,45 @@ const copyrightNotice = /^(?:copyright ?(?:©|\(c\))|(?:copyright|©|\(c\)) ?(?:
 // A sentence break, but not after an initial such as the "A." of "A. Person".
 const sentenceBreak = /(?<=\p{L}{2}|\d|\))[.!?;] +(?=\p{L})/u;
 
-// SPDX matching guidelines B.10 and B.11: a line of copyright notices is ignored, but not one that adds other terms.
-function isNotice(line: string): boolean {
-  return line
-    .split(sentenceBreak)
-    .every((part) => copyrightNotice.test(part) || /^all rights reserved\.?$/i.test(part));
+const noticeMarks = /^(?:(?:copyright|©|\(c\)) ?)+/i;
+const rightsReserved = /,? ?all rights reserved\.?$/i;
+const placeholder = /<[^<>]{1,40}>|\[[^[\]]{1,40}\]|\{[^{}]{1,40}\}/g;
+const holderSeparator = / *, *| +[-‐-―] +/;
+// A word of a holder's name: a capitalized word or initial, a year or a number of an address, a contact, a joining word
+// or a word of the GNU licenses' sample notice "year name of author".
+const holderWord =
+  /^(?:\p{Lu}[\p{L}\p{M}\p{N}'’.&-]*|\d[\p{N}.,‐-―-]*(?:present)?|\([^\s()]+\)|\S+@\S+|(?:https?:\/\/|www\.)\S+|and|and\/or|&|by|of|the|with|its|their|affiliates|contributors|authors|developers|maintainers|de|da|der|du|la|le|van|von|year|name|author)$/u;
+// A holder named by one lowercase word, such as a user name.
+const handle = /^@?[\p{Ll}\p{N}][\p{L}\p{N}_.-]*$/u;
+// Words of terms, which a name in Title Case would otherwise hide.
+const noticeTerm =
+  /\b(?:use[ds]?|only|(?:non-?)?commercial(?:ly)?|licen[cs]\w*|permi\w*|prohibit\w*|forbid\w*|restrict\w*|sell\w*|resale|military|personal|except\w*|without|not|no|must|shall|require\w*|requiring)\b/i;
+
+function isHolder(holder: string): boolean {
+  const words = holder.split(' ').filter((word) => word !== '');
+  const name = words.filter((word) => !/^\d/.test(word));
+  return (name.length === 1 && handle.test(name[0] ?? '')) || words.every((word) => holderWord.test(word));
 }
 
-// B.12: a title is ignored; a title line is short, names a license and is no sentence.
-const isTitle = (line: string) =>
-  line.length <= 120 && /\b(?:un)?licen[cs]e\b/i.test(line) && !sentenceBreak.test(line) && !/[.!?;:]$/.test(line);
+/** Whether all of a part is a copyright notice: its marks, years, holder names and contacts, and no terms. */
+function isWholeNotice(part: string): boolean {
+  if (!copyrightNotice.test(part) || noticeTerm.test(part)) return false;
+  const rest = part.replace(noticeMarks, '').replace(rightsReserved, '').replace(/\.$/, '').replace(placeholder, 'X');
+  return rest.split(holderSeparator).every(isHolder);
+}
+
+// SPDX matching guidelines B.10 and B.11: a line of copyright notices is ignored, but not one that adds other terms.
+function isNotice(line: string): boolean {
+  return line.split(sentenceBreak).every((part) => isWholeNotice(part) || /^all rights reserved\.?$/i.test(part));
+}
+
+// B.12: a title is ignored; a title line is short and holds only words of the license's id and name, or a version.
+const titleWord = /[\p{L}\p{N}]+(?:\.[\p{L}\p{N}]+)*/gu;
+const version = /^v?\d+(?:\.\d+)*$/;
+const licenseWord = /^licen[cs]e$/;
+const headingWords = ['the', 'version', 'v'];
+
+const titleWords = (text: string) => normalize(text).match(titleWord) ?? [];
 // B.7 and B.8: comment marks, rules and boxes around the text are ignored.
 const commentMark = /^(?:#{1,6} |\/\/|\/\*|\*\/|\*(?= |$)) ?| ?(?:\*\/|(?<= |^)\*)$/g;
 const rule = /^[-=*_#~]{3,}$/;
@@ -33,7 +62,8 @@ function cleanLine(raw: string, template: boolean): string {
   const line = raw.replace(/\s+/g, ' ').trim();
   const marks = template ? (leadingOptionalMarks.exec(line)?.[0] ?? '') : '';
   const cleaned = marks + line.slice(marks.length).replace(commentMark, '').trim();
-  const bare = template ? cleaned.replace(optionalMark, '') : cleaned;
+  // A template's variable part reads as a placeholder, as an unfilled notice has.
+  const bare = template ? cleaned.replace(optionalMark, '').replace(templateToken, '[X]') : cleaned;
   if (!rule.test(bare) && !isNotice(bare)) return cleaned;
   // A template keeps the optional marks of a dropped line, so that its optional parts stay balanced.
   return template ? (cleaned.match(optionalMark) ?? []).join('') : '';
@@ -88,11 +118,11 @@ type Step =
   | { kind: 'open'; close: number }
   | { kind: 'close' };
 
-/** A template as steps, the text outside its optional parts, which a match holds, and the length of all its text. */
+/** A template as steps, the text outside its optional parts, which a match holds, and the words its title may hold. */
 interface Template {
   steps: Step[];
   required: string[];
-  weight: number;
+  title: ReadonlySet<string>;
 }
 
 // A variable part longer than its pattern states, or than 1000 characters, is no license's: the longest is a notice.
@@ -171,23 +201,35 @@ function linkVariables(steps: Step[]): void {
   }
 }
 
-function compile(template: string): Template {
+// A template's optional opening part, which holds its title, with each variable part's original.
+function opening(template: string): string {
+  if (!template.startsWith('<<beginOptional>>')) return '';
+  let depth = 0;
+  for (const mark of template.matchAll(/<<(begin|end)Optional>>/g)) {
+    depth += mark[1] === 'begin' ? 1 : -1;
+    if (depth === 0) return template.slice(0, mark.index).replace(templateToken, (_token, original = '') => original);
+  }
+  throw new Error('a license template leaves an optional part open');
+}
+
+function compile(id: string, template: string): Template {
+  const title = new Set([...headingWords, ...titleWords(id.replaceAll('-', ' ')), ...titleWords(opening(template))]);
   const steps = parse(template);
   linkOptionals(steps);
   linkVariables(steps);
   const required: string[] = [];
   let depth = 0;
-  let weight = 0;
   for (const step of steps) {
     if (step.kind === 'open') depth += 1;
     else if (step.kind === 'close') depth -= 1;
-    else if (step.kind === 'text') {
-      weight += step.text.length;
-      if (depth === 0) required.push(step.text);
-    }
+    else if (step.kind === 'text' && depth === 0) required.push(step.text);
   }
-  return { steps, required, weight };
+  return { steps, required, title };
 }
+
+const isTitleOf = ({ title }: Template, line: string) =>
+  line.length <= 120 &&
+  titleWords(line).every((word) => title.has(word) || licenseWord.test(word) || version.test(word));
 
 // Where a word or a punctuation mark ends, from `from` to `limit`, for a variable part another one follows.
 function boundaries(text: string, from: number, limit: number): number[] {
@@ -257,34 +299,46 @@ function matches({ steps, required }: Template, { spaced, text, at }: Compact): 
 let compiled: ReadonlyMap<string, Template> | undefined;
 
 function compiledTemplates(): ReadonlyMap<string, Template> {
-  compiled ??= new Map(Object.entries(templateTexts).map(([id, template]) => [id, compile(template)]));
+  compiled ??= new Map(Object.entries(templateTexts).map(([id, template]) => [id, compile(id, template)]));
   return compiled;
 }
 
+/** A text without its first lines, which a template's license must take as its title. */
+interface Reading {
+  titles: string[];
+  text: Compact;
+}
+
 // A text may open with up to three title lines that the template words differently.
-function readings(text: string): Compact[] {
+function readings(text: string): Reading[] {
   const lines = textLines(text, false);
-  const found = [compact(normalize(lines.join('\n')))];
+  const found: Reading[] = [{ titles: [], text: compact(normalize(lines.join('\n'))) }];
+  const titles: string[] = [];
   let skipped = 0;
   for (let title = 0; title < 3; title += 1) {
     while (lines[skipped] === '') skipped += 1;
-    if (!isTitle(lines[skipped] ?? '')) break;
+    const line = lines[skipped];
+    if (line === undefined || ![...compiledTemplates().values()].some((template) => isTitleOf(template, line))) break;
+    titles.push(line);
     skipped += 1;
-    found.push(compact(normalize(lines.slice(skipped).join('\n'))));
+    found.push({ titles: [...titles], text: compact(normalize(lines.slice(skipped).join('\n'))) });
   }
   return found;
 }
 
 /**
  * The SPDX id of the license whose template the text matches, by the SPDX matching guidelines, without fuzzy scoring;
- * of several, the one with the most template text, as a longer license can hold a shorter one.
+ * no text matches two of the templates.
  */
 export function licenseTextId(text: string): string | undefined {
   const texts = readings(text);
-  let best: { id: string; weight: number } | undefined;
   for (const [id, template] of compiledTemplates()) {
-    if ((best === undefined || template.weight > best.weight) && texts.some((reading) => matches(template, reading)))
-      best = { id, weight: template.weight };
+    if (
+      texts.some(
+        (reading) => reading.titles.every((line) => isTitleOf(template, line)) && matches(template, reading.text),
+      )
+    )
+      return id;
   }
-  return best?.id;
+  return undefined;
 }
