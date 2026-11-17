@@ -112,6 +112,7 @@ declare module '@lingui/core' {
       | 'kinds.output-style'
       | 'kinds.plugin'
       | 'kinds.skill'
+      | 'license.classNotKnown'
       | 'license.copyleft'
       | 'license.custom'
       | 'license.none'

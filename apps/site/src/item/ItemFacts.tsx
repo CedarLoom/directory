@@ -5,7 +5,7 @@ import type { ItemRecord, PopularityFile } from '../data-types.ts';
 import {
   fitLabels,
   kindLabels,
-  licenseClassLabels,
+  licenseClassOfId,
   licenseSourceLabels,
   licenseWithoutId,
   recentCommitsLabels,
@@ -73,7 +73,7 @@ export function ItemFacts({ record, popularity }: { record: ItemRecord; populari
         <Fact label={<Trans id="item.license">License</Trans>}>
           {spdx === undefined
             ? i18n._(licenseWithoutId(record.license))
-            : `${spdx} (${i18n._(licenseClassLabels[record.license.class])})`}
+            : `${spdx} (${i18n._(licenseClassOfId(record.license.class))})`}
           <Text size="sm" c="dimmed">
             <Trans id="item.licenseSource">Source: {licenseSource}</Trans>
           </Text>

@@ -57,10 +57,52 @@ it('counts neither third-party inventories nor scripts named after licenses', ()
 });
 
 it('keeps a stated SPDX id the class table lacks as class none, in a manifest and a frontmatter', () => {
-  expect([licenseOf(undefined, { manifest: 'Apache-1.1' }), licenseOf(undefined, { declared: 'Apache-1.1' })]).toEqual([
-    { spdx: 'Apache-1.1', source: 'manifest', class: 'none' },
-    { spdx: 'Apache-1.1', source: 'frontmatter', class: 'none' },
+  expect([
+    licenseOf(undefined, { manifest: 'Artistic-1.0' }),
+    licenseOf(undefined, { declared: 'Artistic-1.0' }),
+  ]).toEqual([
+    { spdx: 'Artistic-1.0', source: 'manifest', class: 'none' },
+    { spdx: 'Artistic-1.0', source: 'frontmatter', class: 'none' },
   ]);
+});
+
+it('classes an earlier version of a license like the version GitHub detects', () => {
+  expect([
+    licenseOf(undefined, { manifest: 'Apache-1.1' }),
+    licenseOf(undefined, { declared: 'LGPL-2.0-only' }),
+    licenseOf(undefined, { declared: 'CC-BY-NC-3.0' }),
+  ]).toEqual([
+    { spdx: 'Apache-1.1', source: 'manifest', class: 'permissive' },
+    { spdx: 'LGPL-2.0-only', source: 'frontmatter', class: 'copyleft' },
+    { spdx: 'CC-BY-NC-3.0', source: 'frontmatter', class: 'source-available' },
+  ]);
+});
+
+it('reads a NONE or NOASSERTION manifest value as no manifest license', () => {
+  expect([
+    licenseOf(undefined, { manifest: 'NONE' }),
+    licenseOf(undefined, { manifest: 'NOASSERTION', folderLicenseFile: true }),
+  ]).toEqual([{ class: 'none' }, { source: 'license-file', class: 'none' }]);
+});
+
+it('counts LICENSE-<suffix> for a license family the class table holds, without a version', () => {
+  expect(
+    [
+      'LICENSE-BUSL',
+      'LICENSE-SSPL',
+      'LICENSE-ELASTIC',
+      'LICENSE-EUPL',
+      'LICENSE-ARTISTIC',
+      'LICENSE-OFL',
+      'LICENSE-CDDL',
+      'LICENSE-UPL',
+      'LICENSE-AFL',
+      'LICENSE-BSL',
+      'LICENSE-CC-BY-SA',
+      'LICENSE-CC-BY-NC.md',
+      'LICENSE-ODBL',
+    ].filter((name) => !holds(name)),
+  ).toEqual([]);
 });
 
 it('reads a blank, UNLICENSED or proprietary manifest value as no manifest license', () => {

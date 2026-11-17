@@ -27,9 +27,16 @@ export const licenseClassLabels = {
   permissive: msg({ id: 'license.permissive', message: 'Permissive' }),
   copyleft: msg({ id: 'license.copyleft', message: 'Copyleft' }),
   'source-available': msg({ id: 'license.source-available', message: 'Source available' }),
-  // The class also holds licenses found without an SPDX id, so the label does not assert that there is none.
-  none: msg({ id: 'license.none', message: 'None detected or no SPDX id' }),
+  // The class also holds licenses without an SPDX id or a known class, so the label does not assert that there is none.
+  none: msg({ id: 'license.none', message: 'None detected or class not known' }),
 } satisfies Record<LicenseClass, MessageDescriptor>;
+
+/** The class next to an SPDX id: an id of class `none` names a license, so only its class is missing. */
+export function licenseClassOfId(licenseClass: LicenseClass): MessageDescriptor {
+  return licenseClass === 'none'
+    ? msg({ id: 'license.classNotKnown', message: 'Class not known' })
+    : licenseClassLabels[licenseClass];
+}
 
 /** A license with no SPDX id: one found without an id, none detected, or its class. */
 export function licenseWithoutId({ class: licenseClass, source }: ItemRecord['license']): MessageDescriptor {
