@@ -188,25 +188,181 @@ it('reads the runner a shell wrapper starts from plain words', () => {
 
 it('reads a wrapped line it cannot read as unpinned only when it names a runner', () => {
   const cases: [string, string[]][] = [
-    ['cmd', ['/c', 'npx -y docs-mcp@1.2.3 & calc']],
-    ['bash', ['-c', 'cd app && node server.js']],
-    ['sh', ['-c', 'cd ${CLAUDE_PLUGIN_ROOT} && node server.js']],
-    ['bash', ['-c', 'cd "${CLAUDE_PLUGIN_ROOT}" && npx -y evil-server']],
+    ['sh', ['-c', 'npx -y docs-mcp@1.2.3 $(cat args)']],
+    ['bash', ['-c', '(cd app && node server.js)']],
     ['sh', ['-c', 'cd app && uv run --with "mcp>=1.0" server.py']],
     ['sh', ['-c', 'cd app && uv run --no-project server.py']],
     ['env', ['-S', 'npx docs-mcp@1.2.3']],
-    ['env', [...Array.from({ length: 10_000 }, () => 'env'), 'npx', 'evil-server']],
+    ['env', [...Array.from({ length: 10_000 }, () => 'env'), 'npx', 'docs-mcp@1.2.3']],
   ];
   expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
     true,
     false,
-    false,
-    true,
     true,
     false,
     true,
     true,
   ]);
+});
+
+it('reads each command of a compound line, with the plugin paths of Claude Code as local paths', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'cd ${CLAUDE_PLUGIN_ROOT}/docker && ./start.sh']],
+    ['bash', ['-c', 'echo "install via npx" >&2; exec node s.js']],
+    ['sh', ['-c', 'cd app && uv run server.py | grep -w ERROR']],
+    ['sh', ['-c', 'cd app && npx -y docs-mcp@1.2.3']],
+    ['sh', ['-c', 'cd $HOME && npx -y docs-mcp@1.2.3']],
+    ['cmd', ['/c', 'npx -y docs-mcp@1.2.3 & calc']],
+    ['sh', ['-c', 'node s.js 2>/dev/null || npx -y evil-server']],
+    ['bash', ['-c', `cd "\${CLAUDE_PLUGIN_DATA}" && npx -y 'evil-server'`]],
+    ['sh', ['-c', 'npx -y docs-mcp@$VERSION']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+  ]);
+});
+
+it('reads the command that other shells and command prefixes start', () => {
+  const cases: [string, string[]][] = [
+    ['zsh', ['-c', 'npx -y evil-server']],
+    ['dash', ['-c', 'npx -y evil-server']],
+    ['/bin/ksh', ['-c', 'npx -y evil-server']],
+    ['pwsh', ['-NoProfile', '-Command', 'npx', '-y', 'evil-server']],
+    ['powershell.exe', ['-c', String.raw`& 'C:\Program Files\nodejs\npx.cmd' -y evil-server`]],
+    ['cmd', ['/c', '@npx -y evil-server']],
+    ['cmd', ['/c', 'call npx -y evil-server']],
+    ['nohup', ['npx', '-y', 'evil-server']],
+    ['sh', ['-c', 'command npx -y evil-server']],
+    ['sh', ['-c', 'exec -a docs npx -y evil-server']],
+    ['sh', ['-c', 'command -v npx && node server.js']],
+    ['pwsh', ['-File', 'server.ps1']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    false,
+    false,
+  ]);
+});
+
+it('reads a runner that another command, the operands of a shell or the first operand of Windows PowerShell start', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'if true; then npx -y evil-server; fi']],
+    ['sh', ['-c', 'eval "npx -y evil-server"']],
+    ['sh', ['-c', 'exec "$0" "$@"', 'npx', '-y', 'evil-server']],
+    ['powershell', ['-NoProfile', 'npx', '-y', 'evil-server']],
+    ['pwsh', ['-Comm', 'npx -y evil-server']],
+    ['pwsh', ['-File', 'server.ps1', '-c', 'npx -y evil-server']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, true, true, true, true, false]);
+});
+
+it('flags a runner that a line pipes or writes into a shell reading stdin or a script', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'echo npx -y evil-server | sh']],
+    ['sh', ['-c', 'printf "npx -y evil-server" | bash']],
+    ['sh', ['-c', 'echo npx -y evil-server | sh -s']],
+    ['sh', ['-c', 'echo npx -y evil-server > r.sh; sh r.sh']],
+    ['cmd', ['/c', 'echo npx -y evil-server | cmd']],
+    ['sh', ['-c', "sh -c 'echo npx -y evil-server' | sh"]],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, true, true, true, true, true]);
+});
+
+it('reads an unknown command a server or a prefix starts as local code that fetches nothing', () => {
+  const cases: [string, string[]][] = [
+    ['node', ['server.js', '--runtime', 'docker']],
+    ['python', ['-m', 'server', '--manager', 'uvx']],
+    ['mcp-proxy', ['--', 'npx', '-y', 'docs-mcp@1.2.3']],
+    ['node', ['server.js', '--docker-path', '/usr/bin/docker']],
+    ['env', ['PORT=1', 'node', 'server.js', '--runtime', 'docker']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([false, false, false, false, false]);
+});
+
+it('flags a line that stores a runner for another command or reopens its descriptors', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'X="npx -y evil-server"; $X']],
+    ['sh', ['-c', 'CMD="npx -y evil-server"; exec $CMD']],
+    ['sh', ['-c', 'export X="npx -y evil-server"; $X']],
+    ['sh', ['-c', "R='npx' && $R -y evil-server"]],
+    ['bash', ['-c', 'printf -v c "npx -y evil-server"; eval "$c"']],
+    ['sh', ['-c', 'alias r="npx -y evil-server"; r']],
+    ['sh', ['-c', 'alias echo=eval; echo npx -y evil-server']],
+    ['sh', ['-c', 'exec 3>r.sh; echo npx -y evil-server >&3; sh r.sh']],
+    ['sh', ['-c', 'exec >r.sh; echo npx -y evil-server; sh r.sh']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+  ]);
+});
+
+it('reads the only command of a wrapped line of plain words as the server command, and time as a prefix', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'node server.js --runtime docker']],
+    ['bash', ['-c', 'exec node dist/index.js --docker-path /usr/bin/docker']],
+    ['cmd', ['/c', 'node server.js --runtime docker']],
+    ['pwsh', ['-c', 'node server.js --runtime docker']],
+    ['sh', ['-c', 'time npx -y docs-mcp@1.2.3']],
+    ['sh', ['-c', 'time npx -y evil-server']],
+    ['sh', ['-c', 'timeout 30 npx -y evil-server']],
+    ['sh', ['-c', 'cd app && node server.js --runtime docker']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+  ]);
+});
+
+it('reads pwsh switches in order, with commandwithargs only as its full name or cwa', () => {
+  const cases: [string, string[]][] = [
+    // -wd takes -f as its value, so -c runs the line.
+    ['pwsh', ['-wd', '-f', '-c', 'npx -y evil-server']],
+    // pwsh reads -commandw as a script name and starts nothing.
+    ['pwsh', ['-commandw', 'npx -y evil-server']],
+    // pwsh runs run.ps1 and passes -c and the line to it as arguments.
+    ['pwsh', ['./run.ps1', '-c', 'npx -y evil-server']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, false, false]);
+});
+
+it('reads a pinned runner after a line continuation, beside a word holding ! or after an assignment of a variable', () => {
+  const cases: [string, string[]][] = [
+    ['sh', ['-c', 'npx \\\n  -y docs-mcp@1.2.3']],
+    ['sh', ['-c', 'npx -y docs-mcp@1.2.3 && echo ready!']],
+    ['sh', ['-c', 'PATH=$PATH:/opt/bin npx -y docs-mcp@1.2.3']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([false, false, false]);
 });
 
 it('reads uv run as local code unless it installs a package without an exact version or runs a script from a URL', () => {
@@ -229,6 +385,29 @@ it('reads uv run as local code unless it installs a package without an exact ver
     true,
     false,
     false,
+    false,
+    true,
+  ]);
+});
+
+it('reads --with behind the hidden value options of uv run and in single-letter options given together', () => {
+  const cases: [string, string[]][] = [
+    ['uv', ['run', '--trusted-host', 'pypi.test', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '--config-settings', 'key=value', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '--python-preference', 'managed', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '--preview-features', 'pylock', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '-wrequests', 'server.py']],
+    ['uv', ['run', '-qw', 'requests', 'server.py']],
+    ['npx', ['-yp', 'docs-mcp@1.2.3', 'docs']],
+    ['npx', ['-pdocs-mcp@1.2.3', 'docs']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
     false,
     true,
   ]);
