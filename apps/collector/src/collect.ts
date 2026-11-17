@@ -88,11 +88,15 @@ async function fill(
   read: (batch: readonly Ranked[]) => Promise<Read[]>,
   rounds = refills,
 ): Promise<ItemRecord[]> {
-  const batch = items.slice(0, limit);
-  if (batch.length === 0) return [];
-  const kept = (await read(batch)).filter((one) => one !== 'refused');
-  const rest = rounds === 0 ? [] : await fill(items.slice(batch.length), limit - kept.length, read, rounds - 1);
-  return [...kept.filter((one) => one !== undefined), ...rest];
+  // A round starts at an index rather than a copy of the rest, as an unbounded fill can run one round per item.
+  const round = async (start: number, open: number, left: number): Promise<ItemRecord[]> => {
+    const batch = items.slice(start, start + open);
+    if (batch.length === 0) return [];
+    const kept = (await read(batch)).filter((one) => one !== 'refused');
+    const rest = left === 0 ? [] : await round(start + batch.length, open - kept.length, left - 1);
+    return [...kept.filter((one) => one !== undefined), ...rest];
+  };
+  return round(0, limit, rounds);
 }
 
 function countByKind(items: readonly { kind: ItemKind }[]): Record<ItemKind, number> {
@@ -397,13 +401,10 @@ async function itemRecords(
   }: { candidates: readonly Located[]; facts: ReadonlyMap<string, RepositoryFacts>; plugins: readonly ItemRecord[] },
 ): Promise<ItemRecord[]> {
   const select = (kind: ItemKind, limit: number) =>
-    fill(
-      ranked(candidates, kind, facts),
-      limit,
-      kind === 'skill' || kind === 'agent' || kind === 'output-style'
-        ? fileReader(reading, kind)
-        : listedReader(reading),
-    );
+    kind === 'skill' || kind === 'agent' || kind === 'output-style'
+      ? fill(ranked(candidates, kind, facts), limit, fileReader(reading, kind))
+      : // Hooks and MCP servers were read with their candidates, so a refill makes no request and needs no bound.
+        fill(ranked(candidates, kind, facts), limit, listedReader(reading), Number.POSITIVE_INFINITY);
   const [skills, agents, hooks, mcpServers, outputStyles] = await Promise.all([
     select('skill', perKind),
     select('agent', perKind),

@@ -290,12 +290,26 @@ function withheldByContainer(
   );
 }
 
+function detectedOrStated(
+  detected: string | undefined,
+  manifest: string | undefined,
+  folderLicense: () => License | undefined,
+): License {
+  if (detected !== undefined && detected !== 'NOASSERTION')
+    return { spdx: detected, source: 'github-detected', class: classOf(detected) };
+  if (given(manifest)) return stated(manifest, 'manifest');
+  // NOASSERTION: GitHub found a license file it could not name, which says less than a manifest value.
+  if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
+  return folderLicense() ?? { class: 'none' };
+}
+
 /**
  * The item's license: a frontmatter value first, else a manifest value that withholds the license, else, when the
  * containing plugin's manifest value (`container`) withholds it, a license file in the item's folder unless that is the
  * plugin's folder (`containerFolder`), or that withheld value, else GitHub's detected one, else a manifest value, else a
  * license file in the item's folder, which GitHub does not name, as it reads the root only: by its text
- * (`folderLicenseText`) when that matches an SPDX license.
+ * (`folderLicenseText`) when that matches an SPDX license. A root license file GitHub cannot name (NOASSERTION) comes
+ * after the manifest value.
  */
 export function licenseOf(
   detected: string | undefined,
@@ -324,9 +338,5 @@ export function licenseOf(
   const folderLicense = () => (folderLicenseFile ? fileLicense(folderLicenseText) : undefined);
   const inherited = withheldByContainer(container, folderLicense, containerFolder);
   if (inherited !== undefined) return inherited;
-  if (detected === undefined)
-    return given(manifest) ? stated(manifest, 'manifest') : (folderLicense() ?? { class: 'none' });
-  // NOASSERTION: GitHub found a license file it could not name.
-  if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
-  return { spdx: detected, source: 'github-detected', class: classOf(detected) };
+  return detectedOrStated(detected, manifest, folderLicense);
 }
