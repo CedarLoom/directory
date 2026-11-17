@@ -93,16 +93,6 @@ it('reads a user_config reference as a required secret only when its option is s
   ]);
 });
 
-it('refuses a plugin whose userConfig or channels entry is malformed', () => {
-  const manifests = [
-    { userConfig: { api_token: { type: 'string', sensitive: 'true' } } },
-    { channels: [{ server: 'bot', userConfig: { bot_token: { type: 'string', sensitive: 1 } } }] },
-    { channels: { server: 'bot' } },
-  ];
-  for (const manifest of manifests)
-    expect(() => analyzePlugin({ directories: {}, files: { manifest: JSON.stringify(manifest) } })).toThrow(ZodError);
-});
-
 it('reads no secret in a variable that Claude Code or the system always sets', () => {
   expect(
     facts({

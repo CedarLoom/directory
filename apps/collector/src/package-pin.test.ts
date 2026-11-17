@@ -139,48 +139,92 @@ it('reads a uv package named by a URL as unpinned', () => {
   expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, true]);
 });
 
-it('reads the runner a shell wrapper starts from plain words, and as unpinned when it cannot read them', () => {
+it('reads the runner a shell wrapper starts from plain words', () => {
   const cases: [string, string[]][] = [
     ['cmd', ['/c', 'npx -y evil-server']],
     ['cmd.exe', ['/d', '/s', '/c', 'npx -y docs-mcp@1.2.3']],
     ['cmd', ['/K', 'npx', '-y', 'evil-server']],
-    ['cmd', ['/c', 'npx -y docs-mcp@1.2.3 & calc']],
     ['cmd', ['/c', 'node server.js']],
     ['sh', ['-c', 'npx -y evil-server']],
     ['/bin/sh', ['-c', 'npx -y docs-mcp@1.2.3']],
     ['bash', ['-lc', 'API_URL=https://x.test uvx evil-server']],
-    ['bash', ['-c', 'cd app && node server.js']],
     ['bash', ['-o', 'pipefail', '-c', 'node server.js']],
     ['sh', ['-c', 'node server.js']],
     ['bash', ['server.sh']],
     ['env', ['TOKEN=x', 'npx', '-y', 'evil-server']],
     ['/usr/bin/env', ['-i', 'PATH=/usr/bin', 'npx', 'docs-mcp@1.2.3']],
-    ['env', ['-S', 'npx docs-mcp@1.2.3']],
     ['env', ['node', 'server.js']],
     ['cmd', ['/c', 'env', 'X=1', 'npx', 'evil-server']],
     ['sh', ['-c', 'exec npx -y evil-server']],
     ['bash', ['-euo', 'pipefail', '-c', 'npx -y docs-mcp@1.2.3']],
     ['bash', ['--norc', 'server.sh', '-config', 'prod.json']],
     ['cmd', ['/c', 'npx -y docs-mcp@1.2.3 --glob *.md']],
-    ['env', Array.from({ length: 10_000 }, () => 'env')],
+    ['env', ['A.B=1', 'npx', '-y', 'evil-server']],
+    ['bash', ['-oc', 'pipefail', 'npx -y evil-server']],
   ];
   expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
     true,
     false,
     true,
-    true,
-    false,
-    true,
-    false,
-    true,
-    true,
-    false,
-    false,
     false,
     true,
     false,
     true,
     false,
+    false,
+    false,
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    true,
+    true,
+  ]);
+});
+
+it('reads a wrapped line it cannot read as unpinned only when it names a runner', () => {
+  const cases: [string, string[]][] = [
+    ['cmd', ['/c', 'npx -y docs-mcp@1.2.3 & calc']],
+    ['bash', ['-c', 'cd app && node server.js']],
+    ['sh', ['-c', 'cd ${CLAUDE_PLUGIN_ROOT} && node server.js']],
+    ['bash', ['-c', 'cd "${CLAUDE_PLUGIN_ROOT}" && npx -y evil-server']],
+    ['sh', ['-c', 'cd app && uv run --with "mcp>=1.0" server.py']],
+    ['sh', ['-c', 'cd app && uv run --no-project server.py']],
+    ['env', ['-S', 'npx docs-mcp@1.2.3']],
+    ['env', [...Array.from({ length: 10_000 }, () => 'env'), 'npx', 'evil-server']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    false,
+    false,
+    true,
+    true,
+    false,
+    true,
+    true,
+  ]);
+});
+
+it('reads uv run as local code unless it installs a package without an exact version or runs a script from a URL', () => {
+  const cases: [string, string[]][] = [
+    ['uv', ['run', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '--with', 'requests==2.32.3', 'server.py']],
+    ['uv', ['run', '--with=httpx', '--with', 'requests==2.32.3', 'server.py']],
+    ['uv', ['--project', 'app', 'run', '--with', 'requests', 'server.py']],
+    ['uv', ['run', '-w', 'requests', 'server.py']],
+    ['uv', ['run', '--no-dev', '--extra', 'cli', '--group', 'mcp', '--package', 'app', 'server.py']],
+    ['uv', ['run', '--all-extras', '--exact', '--no-env-file', '-s', 'server.py']],
+    ['uv', ['run', '--frobnicate', 'server.py']],
+    ['uv', ['run', 'https://x.test/evil.py']],
+  ];
+  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([
+    true,
+    false,
+    true,
     true,
     true,
     false,
@@ -188,16 +232,6 @@ it('reads the runner a shell wrapper starts from plain words, and as unpinned wh
     false,
     true,
   ]);
-});
-
-it('reads a package that uv run installs with --with as pinned only with an exact version', () => {
-  const cases: [string, string[]][] = [
-    ['uv', ['run', '--with', 'requests', 'server.py']],
-    ['uv', ['run', '--with', 'requests==2.32.3', 'server.py']],
-    ['uv', ['run', '--with=httpx', '--with', 'requests==2.32.3', 'server.py']],
-    ['uv', ['--project', 'app', 'run', '--with', 'requests', 'server.py']],
-  ];
-  expect(cases.map(([command, args]) => unpinnedPackage(command, args))).toEqual([true, false, true, true]);
 });
 
 it('reads no package behind an unknown option when the subcommand word of a runner does not follow', () => {
