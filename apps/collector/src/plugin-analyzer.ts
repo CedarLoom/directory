@@ -1,6 +1,13 @@
 import { pluginRecord, versionLabel } from '@directory/contracts';
 import { z } from 'zod';
-import { type HookEvents, hookEvents, hookFacts, hookModules, inlineHookEvents } from './hook-analyzer.ts';
+import {
+  type HookEvents,
+  handledEvents,
+  hookEvents,
+  hookFacts,
+  hookModules,
+  inlineHookEvents,
+} from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
 import { isLicenseValue } from './license-class.ts';
 import { unpinnedPackage } from './package-pin.ts';
@@ -84,13 +91,14 @@ function inline(value: unknown): object[] {
 
 const components = pluginRecord.shape.components.pick({ hooksByEvent: true });
 
-/** The handlers per event; more events than the record holds throw a ZodError. */
+/** The handlers per event the hook record names; more events than the record holds throw a ZodError. */
 function hooksByEvent(configs: readonly HookEvents[]): Record<string, number> {
-  const counts: Record<string, number> = {};
+  // A Map, so an event named like an Object property, such as `constructor`, counts from zero.
+  const counts = new Map<string, number>();
   for (const config of configs)
-    for (const [event, groups] of Object.entries(config))
-      counts[event] = (counts[event] ?? 0) + groups.reduce((sum, group) => sum + group.hooks.length, 0);
-  return components.parse({ hooksByEvent: counts }).hooksByEvent;
+    for (const [event, groups] of handledEvents(config))
+      counts.set(event, (counts.get(event) ?? 0) + groups.reduce((sum, group) => sum + group.hooks.length, 0));
+  return components.parse({ hooksByEvent: Object.fromEntries(counts) }).hooksByEvent;
 }
 
 function mcpServers(configs: readonly unknown[]): Server[] {

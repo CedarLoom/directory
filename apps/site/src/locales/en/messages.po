@@ -68,7 +68,7 @@ msgid "commits.5-or-more"
 msgstr "5 or more"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:184
+#: src/method/MethodPage.tsx:218
 msgid "method.intro"
 msgstr "A collector reads public sources once a week, records published facts about each item and scores it with the open rubric of its kind. The last run was on {runDate}. The CedarLoom Directory is not affiliated with or endorsed by Anthropic."
 
@@ -528,7 +528,7 @@ msgid "item.measured"
 msgstr "Measured"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:181
+#: src/method/MethodPage.tsx:215
 msgid "method.heading"
 msgstr "Method"
 
@@ -764,7 +764,7 @@ msgid "item.historyRubric"
 msgstr "Rubric"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:193
+#: src/method/MethodPage.tsx:178
 msgid "method.rubricsHeading"
 msgstr "Rubrics"
 
@@ -1009,9 +1009,9 @@ msgid "licenseSource.frontmatter"
 msgstr "the license field of the frontmatter"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:196
+#: src/method/MethodPage.tsx:181
 msgid "method.licenseFacts"
-msgstr "The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's own folder. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the word proprietary alone, reads \"Withheld: no license granted\" in the list and on the item's page and scores as no license whatever the repository grants. A plugin manifest that withholds the license withholds it also for the skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license field still applies, and so does a license file in a skill's folder other than the plugin's. A blank field and one that holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding license field does not count as filled, neither for a skill's license field nor among a plugin's manifest fields. A field that holds no SPDX expression of listed license and exception ids, such as one with a LicenseRef, and a license file in the item's folder are recorded without an SPDX id. SPDX ids match in any case and are recorded as the SPDX License List writes them. An expression takes the class of its most permissive part when OR joins its parts and of its least permissive part when AND joins them. \"No license detected\" means that none of these was found, not that the item has no license."
+msgstr "The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's own folder. A license file at the repository root that GitHub cannot name comes after the license field of a plugin's manifest and is recorded without an SPDX id. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the word proprietary alone, reads \"Withheld: no license granted\" in the list and on the item's page and scores as no license whatever the repository grants. A plugin manifest that withholds the license withholds it also for the skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license field still applies, and so does a license file in a skill's folder other than the plugin's. A blank field and one that holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding license field does not count as filled, neither for a skill's license field nor among a plugin's manifest fields. A field that holds no SPDX expression of listed license and exception ids, such as one with a LicenseRef, and a license file in the item's folder are recorded without an SPDX id. SPDX ids match in any case and are recorded as the SPDX License List writes them. An expression takes the class of its most permissive part when OR joins its parts and of its least permissive part when AND joins them. \"No license detected\" means that none of these was found, not that the item has no license."
 
 #. js-lingui-explicit-id
 #: src/method/MethodPage.tsx:17
