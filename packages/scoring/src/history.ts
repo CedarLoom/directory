@@ -10,7 +10,6 @@ type Entry = HistoryFile['entries'][number];
 export function nextHistory(entries: readonly Entry[], score: Score, date: string): readonly Entry[] {
   const entry = { date, rubric: score.rubric.version, total: Math.round(score.total) };
   const same = (other: Entry | undefined) => other?.total === entry.total && other.rubric === entry.rubric;
-  if (same(entries.at(-1))) return entries;
   const kept = entries.at(-1)?.date === date ? entries.slice(0, -1) : entries;
   return same(kept.at(-1)) ? kept : [...kept, entry];
 }

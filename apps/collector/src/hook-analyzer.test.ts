@@ -57,12 +57,21 @@ function breadth(matcher: string) {
     ?.matcherBreadth;
 }
 
-it('reads the common spellings of a match-all regular expression as match-all', () => {
-  expect(['.+', '^.*$', '^.+$', '(.*)', 'Bash'].map(breadth)).toEqual([
+it('reads a regular expression that matches every tool name as match-all', () => {
+  expect(['.+', '^.*$', '^.+$', '(.*)', '.*.*', '(?:.*)', 'Read|.*', 'Bash', 'Bash.*'].map(breadth)).toEqual([
+    'match-all',
+    'match-all',
+    'match-all',
     'match-all',
     'match-all',
     'match-all',
     'match-all',
     'specific',
+    'specific',
   ]);
+});
+
+it('leaves an event without a handler out of the events', () => {
+  const file = { hooks: { SessionStart: [], Stop: [{ hooks: [] }], PreToolUse: [{ hooks: [{ type: 'prompt' }] }] } };
+  expect(analyzeHooks(JSON.stringify(file))?.events).toEqual(['PreToolUse']);
 });

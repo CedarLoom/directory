@@ -32,31 +32,45 @@ const toolEvents: ReadonlySet<string> = new Set([
   'PermissionRequest',
 ]);
 
-// A matcher is a regular expression, which no list classifies in full; these common spellings match every tool name.
-const matchAllPatterns: ReadonlySet<string> = new Set(['*', '.*', '.+', '^.*$', '^.+$', '(.*)']);
+// A matcher is a regular expression, which no check classifies in full: an alternative of wildcards only, such as `.*`,
+// `(?:.+)` or `^.*.*$`, matches every tool name.
+function wildcardOnly(matcher: string): boolean {
+  return (
+    matcher === '*' ||
+    matcher
+      .replaceAll(/\(\?:|[()^$]/g, '')
+      .split('|')
+      .some((alternative) => /^[.*+?]+$/.test(alternative) && /\.[*+]/.test(alternative))
+  );
+}
 
 type Group = z.infer<typeof group>;
+export type HookEvents = z.infer<typeof events>;
 
 function matcherBreadth(groups: readonly (readonly [string, Group])[]): HookFacts['matcherBreadth'] {
   const matchesAll = ([event, { matcher }]: readonly [string, Group]) =>
-    matchAllPatterns.has(matcher ?? '') || ((matcher === undefined || matcher === '') && toolEvents.has(event));
+    (matcher !== undefined && wildcardOnly(matcher)) ||
+    ((matcher === undefined || matcher === '') && toolEvents.has(event));
   if (groups.some(matchesAll)) return 'match-all';
   return groups.some(([, { matcher }]) => matcher !== undefined && matcher !== '') ? 'specific' : 'none';
 }
 
-/** The facts of a hooks file; a file without a `hooks` object, such as one that only lists modules, holds no hooks. */
+/** The events of a hooks file; a file without a `hooks` object, such as one that only lists modules, holds no hooks. */
+export function hookEvents(text: string): HookEvents | undefined {
+  return jsonText.pipe(hooksFile).parse(text).hooks;
+}
+
+/** The events of the `hooks` value of plugin.json; a malformed value throws, as a malformed hooks file does. */
+export function inlineHookEvents(value: unknown): HookEvents {
+  return inlineHooks.parse(value).hooks;
+}
+
 export function analyzeHooks(text: string): HookFacts | undefined {
-  const { hooks } = jsonText.pipe(hooksFile).parse(text);
+  const hooks = hookEvents(text);
   return hooks === undefined ? undefined : hookFacts(hooks);
 }
 
-/** The facts of the `hooks` value of plugin.json; a malformed one gives undefined, as the plugin's other facts stay. */
-export function inlineHookFacts(value: unknown): HookFacts | undefined {
-  const { data } = inlineHooks.safeParse(value);
-  return data === undefined ? undefined : hookFacts(data.hooks);
-}
-
-function hookFacts(hooks: Record<string, Group[]>): HookFacts {
+export function hookFacts(hooks: HookEvents): HookFacts {
   const groups = Object.entries(hooks).flatMap(([event, list]) => list.map((entry) => [event, entry] as const));
   const handlers = groups.flatMap(([, { hooks: list }]) => list);
   const commands = handlers.filter(({ type }) => type === 'command');
@@ -64,7 +78,10 @@ function hookFacts(hooks: Record<string, Group[]>): HookFacts {
   const forms = new Set(commands.map(({ args }) => (Array.isArray(args) ? 'exec' : 'shell')));
   const types = new Set(handlers.map(({ type }) => type));
   return {
-    events: Object.keys(hooks).filter((event) => keyword.safeParse(event).success),
+    // An event without a handler runs nothing.
+    events: Object.entries(hooks)
+      .filter(([event, list]) => keyword.safeParse(event).success && list.some((entry) => entry.hooks.length > 0))
+      .map(([event]) => event),
     handlerTypes: handlerTypes.filter((type) => types.has(type)),
     commandForms: (['shell', 'exec'] as const).filter((form) => forms.has(form)),
     matcherBreadth: matcherBreadth(groups),

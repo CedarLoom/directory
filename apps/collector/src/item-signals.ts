@@ -15,10 +15,6 @@ export interface Assessment {
 export const officialMarketplace = 'gh.anthropics.claude-plugins-official';
 
 const kebabCase = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-// The kebab-case plugin names Claude Code refuses.
-const reservedPrefix = /^(?:claude|anthropics?|cc-plugin)-/;
-const reservedNames: ReadonlySet<string> = new Set(['claude', 'anthropic', 'anthropics', 'claude-code', 'claude-mods']);
-const officialBeside = /(?:^|-)(?:claude|anthropics?)-official(?:-|$)|(?:^|-)official-(?:claude|anthropics?)(?:-|$)/;
 
 function raised(checks: readonly (readonly [Flag, boolean])[]): Flag[] {
   return checks.filter(([, on]) => on).map(([flag]) => flag);
@@ -27,10 +23,6 @@ function raised(checks: readonly (readonly [Flag, boolean])[]): Flag[] {
 /** Lowercase letters, digits and single hyphens, up to 64 characters. */
 function validName(name: string | undefined): name is string {
   return name !== undefined && name.length <= 64 && kebabCase.test(name);
-}
-
-function reservedName(name: string): boolean {
-  return reservedPrefix.test(name) || reservedNames.has(name) || officialBeside.test(name);
 }
 
 interface FileFacts {
@@ -43,12 +35,12 @@ interface FileFacts {
 
 export function skillAssessment(
   facts: FileFacts & { declaredLicense: string | undefined; scripts: number; tests: boolean },
-  folderName: string,
+  folderName: string | undefined,
 ): Assessment {
   return {
     signals: {
-      // The name must match the skill's folder.
-      nameValid: validName(facts.declaredName) && facts.declaredName === folderName,
+      // The name must match the skill's folder, where it has one.
+      nameValid: validName(facts.declaredName) && (folderName === undefined || facts.declaredName === folderName),
       descriptionLength: facts.descriptionLength,
       bodyLines: facts.bodyLines,
       licenseField: facts.declaredLicense !== undefined,
@@ -98,10 +90,10 @@ export function outputStyleAssessment(facts: {
 }
 
 /** The hook flags raised by any of the hook configurations. */
-function hookFlags(configs: readonly HookFacts[], sessionStart: boolean) {
+function hookFlags(configs: readonly HookFacts[]) {
   return [
     ['hook-shell-command', configs.some(({ handlerTypes }) => handlerTypes.includes('command'))],
-    ['hook-session-start', sessionStart],
+    ['hook-session-start', configs.some(({ events }) => events.includes('SessionStart'))],
     ['hook-match-all', configs.some(({ matcherBreadth }) => matcherBreadth === 'match-all')],
     ['hook-http', configs.some(({ handlerTypes }) => handlerTypes.includes('http'))],
   ] as const;
@@ -110,10 +102,7 @@ function hookFlags(configs: readonly HookFacts[], sessionStart: boolean) {
 export function hookAssessment(hooks: HookFacts): Assessment {
   return {
     signals: { matchersSpecific: hooks.matcherBreadth !== 'match-all' },
-    flags: raised([
-      ...hookFlags([hooks], hooks.events.includes('SessionStart')),
-      ['network-indicator', hooks.networkIndicator],
-    ]),
+    flags: raised([...hookFlags([hooks]), ['network-indicator', hooks.networkIndicator]]),
   };
 }
 
@@ -125,13 +114,14 @@ export interface PluginFacts {
     skills: number;
     agents: number;
     commands: number;
-    hooksByEvent: Record<string, number>;
     mcpServersByTransport: Partial<Record<'stdio' | 'http' | 'sse', number>>;
     binFiles: number;
   };
   hasEvals: boolean;
-  /** The facts of each hook configuration the hook analyzer read: hooks/hooks.json and hooks inline in plugin.json. */
+  /** The facts of each hook configuration: hooks/hooks.json and hooks inline in plugin.json. */
   hooks: readonly HookFacts[];
+  mcpUnpinnedPackage: boolean;
+  mcpSecretsRequired: boolean;
   source: { kind: SourceKind; pin: Pin };
   listedIn: readonly string[];
 }
@@ -142,16 +132,18 @@ export function pluginAssessment(facts: PluginFacts): Assessment {
   return {
     signals: {
       manifestFields: facts.manifestFields,
-      nameValid: validName(facts.name) && !reservedName(facts.name),
+      nameValid: validName(facts.name),
       noRootClaudeMd: !facts.rootClaudeMd,
       alwaysOnComponents: components.skills + components.agents + components.commands,
       hasEvals: facts.hasEvals,
     },
     flags: raised([
-      ...hookFlags(hooks, (components.hooksByEvent['SessionStart'] ?? 0) > 0),
+      ...hookFlags(hooks),
       ['bin-executables', components.binFiles > 0],
       ['network-indicator', hooks.some(({ networkIndicator }) => networkIndicator)],
+      ['mcp-stdio-unpinned-package', facts.mcpUnpinnedPackage],
       ['mcp-remote', http + sse > 0],
+      ['mcp-secrets-required', facts.mcpSecretsRequired],
       ['install-command-source', facts.source.kind === 'command'],
       ['unpinned-source', facts.source.pin === 'none'],
       ['listed-official-marketplace', facts.listedIn.includes(officialMarketplace)],

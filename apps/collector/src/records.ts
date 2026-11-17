@@ -59,7 +59,7 @@ export interface ItemRecord {
 /** What a record is built from: the candidate, its repository's facts and what was read for its kind. */
 export type RecordInput = { candidate: Located; facts: RepositoryFacts } & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
-  | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin }; hooks: HookFacts | undefined }
+  | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin } }
   | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean }
   | { kind: 'agent'; text: string }
   | { kind: 'hook'; hooks: HookFacts }
@@ -134,13 +134,17 @@ function marketplace(input: InputOf<'marketplace'>, runDate: string) {
 }
 
 function plugin(input: InputOf<'plugin'>, runDate: string) {
-  const { manifestName, manifestFields, rootClaudeMd, inlineHookFacts, ...facts } = analyzePlugin(input.inspection);
+  // The scoring-only facts stay out of the record.
+  const { manifestName, manifestFields, rootClaudeMd, hooks, mcpUnpinnedPackage, mcpSecretsRequired, ...facts } =
+    analyzePlugin(input.inspection);
   const assessment = pluginAssessment({
     ...facts,
     name: manifestName ?? input.candidate.name,
     manifestFields,
     rootClaudeMd,
-    hooks: [input.hooks, inlineHookFacts].filter((hooks) => hooks !== undefined),
+    hooks,
+    mcpUnpinnedPackage,
+    mcpSecretsRequired,
     source: input.source,
     listedIn: input.candidate.listedIn,
   });
@@ -172,7 +176,8 @@ function skill(input: InputOf<'skill'>, runDate: string) {
   } = analysis;
   const assessment = skillAssessment(
     { ...analysis, scripts: input.folders.scripts, tests: input.tests },
-    input.candidate.name,
+    // A repository that is one skill has no skill folder; its clone folder is named by whoever clones it.
+    input.candidate.location.path === '' ? undefined : input.candidate.name,
   );
   return scored(
     skillRecord,

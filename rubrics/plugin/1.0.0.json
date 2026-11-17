@@ -52,7 +52,9 @@
     { "flag": "hook-http", "points": 5 },
     { "flag": "network-indicator", "points": 5 },
     { "flag": "bin-executables", "points": 5 },
+    { "flag": "mcp-stdio-unpinned-package", "points": 10 },
     { "flag": "mcp-remote", "points": 5 },
+    { "flag": "mcp-secrets-required", "points": 5 },
     { "flag": "install-command-source", "points": 10 },
     { "flag": "unpinned-source", "points": 10 },
     { "flag": "listed-official-marketplace", "points": -10 }

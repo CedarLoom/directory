@@ -7,3 +7,17 @@ it('reads an empty tools field and model inherit as not set, and drops inline co
   );
   expect({ name, toolsDeclared, modelSet }).toEqual({ name: 'reviewer', toolsDeclared: false, modelSet: false });
 });
+
+const read = (tools: string) => {
+  const { toolClasses, unrestrictedBash } = analyzeAgent(`---\nname: shell\n${tools}\n---\nRun.\n`);
+  return { toolClasses, unrestrictedBash };
+};
+
+it('reads Bash in a tools list that holds a comment or spans lines', () => {
+  const bash = { toolClasses: ['read', 'bash'], unrestrictedBash: true };
+  expect([
+    read('tools:\n  # shell access\n  - Read\n  - Bash'),
+    read('tools: # shell access\n  - Read\n  - Bash'),
+    read('tools: [Read,\n  Bash]'),
+  ]).toEqual([bash, bash, bash]);
+});

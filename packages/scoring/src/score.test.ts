@@ -90,5 +90,10 @@ it('refuses a record that lacks a signal of its rubric', () =>
     'The hook record has no signal matchersSpecific',
   ));
 
+it('refuses a number signal that is not finite', () =>
+  expect(() => scored({ ...skill, signals: { ...skill.signals, bodyTokens: Number.NaN } })).toThrow(
+    'Signal bodyTokens is not a finite number',
+  ));
+
 it('refuses a rubric of another kind', () =>
   expect(() => score(skill, currentRubric('agent'), now)).toThrow('A agent rubric cannot score a skill record'));

@@ -50,7 +50,8 @@ function signalValue({ record, signal }: Context): number | boolean {
 
 function numberSignal(context: Context): number {
   const value = signalValue(context);
-  if (typeof value !== 'number') throw new TypeError(`Signal ${context.signal.id} is not a number`);
+  if (typeof value !== 'number' || !Number.isFinite(value))
+    throw new TypeError(`Signal ${context.signal.id} is not a finite number`);
   return value;
 }
 

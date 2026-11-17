@@ -1,7 +1,8 @@
 import { versionLabel } from '@directory/contracts';
 import { z } from 'zod';
-import { inlineHookFacts } from './hook-analyzer.ts';
+import { type HookEvents, hookEvents, hookFacts, inlineHookEvents } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
+import { unpinnedPackage } from './package-pin.ts';
 import type { Entry, Inspection } from './repository-tree.ts';
 
 // Upstream files carry more keys than these; only the keys a fact needs are read, the rest is stripped.
@@ -17,39 +18,45 @@ const manifest = z.object({
   mcpServers: z.unknown().optional(),
   lspServers: z.unknown().optional(),
 });
-const handlerGroups = z.record(z.string(), z.array(z.object({ hooks: z.array(z.unknown()) })));
-// `hooks/hooks.json` wraps the events in `hooks`; an inline `hooks` value in plugin.json may give the events directly.
-const hooksConfig = z.union([z.object({ hooks: handlerGroups }), handlerGroups.transform((hooks) => ({ hooks }))]);
-const servers = z.record(z.string(), z.object({ type: z.string().optional() }));
-const mcpConfig = z.union([z.object({ mcpServers: servers }), servers.transform((mcpServers) => ({ mcpServers }))]);
+const strings = z.record(z.string(), z.string()).optional();
+const server = z.object({
+  type: z.string().optional(),
+  command: z.string().optional(),
+  args: z.array(z.string()).optional(),
+  env: strings,
+  headers: strings,
+});
+type Server = z.infer<typeof server>;
+const serverMap = z.record(z.string(), server);
+const mcpConfig = z.union([z.object({ mcpServers: serverMap }), serverMap.transform((map) => ({ mcpServers: map }))]);
 const lspConfig = z.record(z.string(), z.unknown());
 
 // A Set, so a type such as `constructor` reads no inherited property.
 const transports: ReadonlySet<string> = new Set(['stdio', 'http', 'sse'] as const);
 const isTransport = (type: string): type is 'stdio' | 'http' | 'sse' => transports.has(type);
+// `${NAME}` without a `:-default` is a value the user must set; the plugin's own paths are filled by Claude Code.
+const userVariable = /\$\{(?!CLAUDE_PLUGIN_)[A-Za-z_]\w*\}/;
 
 /** A manifest value that is an object holds the configuration inline; a path or a list of paths is not followed. */
 function inline(value: unknown): unknown {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : undefined;
 }
 
-function hooksByEvent(configs: readonly unknown[]): Record<string, number> {
+function hooksByEvent(configs: readonly HookEvents[]): Record<string, number> {
   const counts: Record<string, number> = {};
-  for (const config of configs) {
-    if (config === undefined) continue;
-    for (const [event, groups] of Object.entries(hooksConfig.parse(config).hooks))
+  for (const config of configs)
+    for (const [event, groups] of Object.entries(config))
       counts[event] = (counts[event] ?? 0) + groups.reduce((sum, group) => sum + group.hooks.length, 0);
-  }
   return counts;
 }
 
-function mcpServersByTransport(configs: readonly unknown[]): Partial<Record<'stdio' | 'http' | 'sse', number>> {
+function mcpServers(configs: readonly unknown[]): Server[] {
+  return configs.flatMap((config) => (config === undefined ? [] : Object.values(mcpConfig.parse(config).mcpServers)));
+}
+
+function mcpServersByTransport(list: readonly Server[]): Partial<Record<'stdio' | 'http' | 'sse', number>> {
   const counts: Partial<Record<'stdio' | 'http' | 'sse', number>> = {};
-  for (const config of configs) {
-    if (config === undefined) continue;
-    for (const { type = 'stdio' } of Object.values(mcpConfig.parse(config).mcpServers))
-      if (isTransport(type)) counts[type] = (counts[type] ?? 0) + 1;
-  }
+  for (const { type = 'stdio' } of list) if (isTransport(type)) counts[type] = (counts[type] ?? 0) + 1;
   return counts;
 }
 
@@ -72,19 +79,41 @@ function parseFile(text: string | undefined): unknown {
   return text === undefined ? undefined : jsonText.parse(text);
 }
 
+const text = z.string().min(1);
+const filled = (value: unknown): boolean => text.safeParse(value).success;
+const namedAuthor = z.object({ name: text });
+
+/** Of version, description, author, repository or homepage, and license: each given with a value. */
+function manifestFields(plugin: z.infer<typeof manifest>, versioned: boolean): number {
+  return [
+    versioned,
+    filled(plugin.description),
+    filled(plugin.author) || namedAuthor.safeParse(plugin.author).success,
+    filled(plugin.repository) || filled(plugin.homepage),
+    filled(plugin.license),
+  ].filter(Boolean).length;
+}
+
 /** The facts of a plugin directory in the default layout; component paths a manifest adds are not followed. */
 export function analyzePlugin({ directories, files }: Inspection) {
   const plugin = manifest.parse(parseFile(files.manifest) ?? {});
   const version = versionLabel.safeParse(plugin.version);
   const inlineHooks = inline(plugin.hooks);
+  // Hooks in plugin.json run like those in hooks/hooks.json; a malformed one throws, so the plugin gets no record.
+  const hookConfigs = [
+    files.hooks === undefined ? undefined : hookEvents(files.hooks),
+    inlineHooks === undefined ? undefined : inlineHookEvents(inlineHooks),
+  ].filter((config) => config !== undefined);
+  const serverList = mcpServers([parseFile(files.mcp), inline(plugin.mcpServers)]);
+  const stdio = serverList.filter(({ type = 'stdio' }) => type === 'stdio');
   return {
     ...(version.success ? { version: version.data } : {}),
     components: {
       skills: countEntries(directories.skills, false, 'tree'),
       agents: countEntries(directories.agents, true),
       commands: countEntries(directories.commands, true),
-      hooksByEvent: hooksByEvent([parseFile(files.hooks), inlineHooks]),
-      mcpServersByTransport: mcpServersByTransport([parseFile(files.mcp), inline(plugin.mcpServers)]),
+      hooksByEvent: hooksByEvent(hookConfigs),
+      mcpServersByTransport: mcpServersByTransport(serverList),
       lspServers: lspServers([parseFile(files.lsp), inline(plugin.lspServers)]),
       outputStyles: countEntries(directories.outputStyles, true),
       // The monitor format is not read yet.
@@ -93,16 +122,12 @@ export function analyzePlugin({ directories, files }: Inspection) {
     },
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
-    // Of version, description, author, repository or homepage, and license.
-    manifestFields: [
-      version.success,
-      plugin.description !== undefined,
-      plugin.author !== undefined,
-      (plugin.repository ?? plugin.homepage) !== undefined,
-      plugin.license !== undefined,
-    ].filter(Boolean).length,
+    manifestFields: manifestFields(plugin, version.success),
     rootClaudeMd: directories.root?.some((entry) => entry.name === 'CLAUDE.md') ?? false,
-    // Hooks in plugin.json run like those in hooks/hooks.json, so they raise the same flags.
-    inlineHookFacts: inlineHookFacts(inlineHooks),
+    hooks: hookConfigs.map(hookFacts),
+    mcpUnpinnedPackage: stdio.some(({ command, args = [] }) => command !== undefined && unpinnedPackage(command, args)),
+    mcpSecretsRequired: serverList.some(({ env = {}, headers = {} }) =>
+      [...Object.values(env), ...Object.values(headers)].some((value) => userVariable.test(value)),
+    ),
   };
 }

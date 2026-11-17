@@ -1,5 +1,6 @@
 import { registryName, versionLabel } from '@directory/contracts';
 import { z } from 'zod';
+import { imagePinned } from './package-pin.ts';
 
 const transportTypes = ['stdio', 'streamable-http', 'sse'] as const;
 const registryTypes = ['npm', 'pypi', 'oci', 'nuget', 'mcpb', 'cargo'] as const;
@@ -49,8 +50,7 @@ export interface McpServerFacts {
 /** A package names an exact version: its `version`, or for an image without one a tag or digest other than `latest`. */
 function pinned({ version, identifier }: z.infer<typeof registryPackage>): boolean {
   if (version !== undefined) return version !== '' && version !== 'latest';
-  const image = identifier.slice(identifier.lastIndexOf('/') + 1);
-  return /[:@]/.test(image) && !image.endsWith(':latest');
+  return imagePinned(identifier);
 }
 
 function secrets(inputs: readonly z.infer<typeof input>[] = []): number {
