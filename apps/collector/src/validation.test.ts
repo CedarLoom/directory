@@ -4,7 +4,7 @@ import { expect, it } from 'vitest';
 import { z } from 'zod';
 import { readDataFolder } from './data-folder.ts';
 import { readRubricFiles } from './rubric-files.ts';
-import { runRefusals } from './validation.ts';
+import { type RunFiles, runRefusals } from './validation.ts';
 
 const folder = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 // The site's fixture data: 22 items of every kind, each with its record, history and popularity file.
@@ -19,59 +19,108 @@ function candidate(changes: Record<string, string> = {}) {
   return files;
 }
 
-const indexRows = z.looseObject({ items: z.array(z.looseObject({})) });
+const indexRows = z.looseObject({ items: z.array(z.looseObject({ kind: z.string(), id: z.string() })) });
+const fixtureIndex = indexRows.parse(JSON.parse(publishedIndex ?? ''));
+
+/** The fixture items of each kind as the run report counts them. */
+const fixtureCounts = { marketplace: 3, plugin: 3, skill: 4, agent: 3, hook: 3, 'mcp-server': 3, 'output-style': 3 };
+
+/** The refusals for a run of these files, with the fixture counts in its report unless `reportedItems` is given. */
+const refusals = (files: Partial<RunFiles> = {}) =>
+  runRefusals({
+    candidate: candidate(),
+    reportedItems: fixtureCounts,
+    publishedIndex,
+    allowRemovals: false,
+    rubrics,
+    lock,
+    ...files,
+  });
 
 /** The index without the items at the given positions. */
 function indexWithout(positions: readonly number[]) {
-  const index = indexRows.parse(JSON.parse(published.get('index.json') ?? ''));
   return {
     'index.json': JSON.stringify({
-      ...index,
-      items: index.items.filter((_, position) => !positions.includes(position)),
+      ...fixtureIndex,
+      items: fixtureIndex.items.filter((_, position) => !positions.includes(position)),
     }),
   };
 }
 
-// The first item of each kind in the fixture index: marketplace, plugin, skill, agent, hook, MCP server, output style.
-const firstOfEachKind = [0, 3, 6, 10, 13, 16, 19];
+/** A run with this many copies of the first fixture skill and of the first fixture marketplace, each under its own id. */
+function copies(skills: number, marketplaces: number) {
+  const files = new Map<string, string>();
+  const items = [...copiesOf(0, marketplaces, files), ...copiesOf(6, skills, files)];
+  files.set('index.json', JSON.stringify({ ...fixtureIndex, items }));
+  return files;
+}
+
+function copiesOf(position: number, count: number, files: Map<string, string>) {
+  const row = fixtureIndex.items[position];
+  if (row === undefined) throw new Error(`no fixture item at ${position}`);
+  const record = z.looseObject({}).parse(JSON.parse(published.get(`records/${row.kind}/${row.id}.json`) ?? ''));
+  return Array.from({ length: count }, (_, copy) => {
+    const id = `${row.id}-${copy}`;
+    files.set(`records/${row.kind}/${id}.json`, JSON.stringify({ ...record, id }));
+    return { ...row, id };
+  });
+}
+
 const skillPath = 'records/skill/gh.example-org.skills.pdf-forms.json';
 
-it('accepts a run that produced the published files', () =>
-  expect(runRefusals({ candidate: candidate(), publishedIndex, rubrics, lock })).toEqual([]));
-
-it('accepts a run in which 4 of 22 items of 4 kinds vanished', () =>
-  expect(
-    runRefusals({ candidate: candidate(indexWithout(firstOfEachKind.slice(0, 4))), publishedIndex, rubrics, lock }),
-  ).toEqual([]));
-
-it('refuses a run in which 7 of 22 items, about 30 percent, vanished', () =>
-  expect(runRefusals({ candidate: candidate(indexWithout(firstOfEachKind)), publishedIndex, rubrics, lock })).toEqual([
-    'index.json: 7 of 22 published items vanished, more than 20 percent',
-  ]));
+it('accepts a run that produced the published files', () => expect(refusals()).toEqual([]));
 
 it('refuses a run in which every published MCP server vanished', () =>
-  expect(runRefusals({ candidate: candidate(indexWithout([16, 17, 18])), publishedIndex, rubrics, lock })).toEqual([
-    'index.json: all 3 published mcp-server items vanished',
+  expect(
+    refusals({
+      candidate: candidate(indexWithout([16, 17, 18])),
+      reportedItems: { ...fixtureCounts, 'mcp-server': 0 },
+    }),
+  ).toEqual(['index.json: 3 of 3 published mcp-server items vanished, more than 20 percent']));
+
+// 59 of 300 items vanished, under 20 percent of all of them.
+const sixtyToOne = {
+  candidate: copies(1, 240),
+  reportedItems: {
+    ...fixtureCounts,
+    marketplace: 240,
+    plugin: 0,
+    skill: 1,
+    agent: 0,
+    hook: 0,
+    'mcp-server': 0,
+    'output-style': 0,
+  },
+  publishedIndex: copies(60, 240).get('index.json'),
+};
+
+it('refuses a run in which a kind fell from 60 items to 1', () =>
+  expect(refusals(sixtyToOne)).toEqual(['index.json: 59 of 60 published skill items vanished, more than 20 percent']));
+
+it('accepts a kind that fell from 60 items to 1 when removals are allowed', () =>
+  expect(refusals({ ...sixtyToOne, allowRemovals: true })).toEqual([]));
+
+it('refuses a run report whose item counts differ from the index', () =>
+  expect(refusals({ reportedItems: { ...fixtureCounts, skill: 5, hook: 2 } })).toEqual([
+    'index.json: 4 skill items, the run report counts 5',
+    'index.json: 3 hook items, the run report counts 2',
   ]));
 
 // The published index with a key its contract does not know, as one written under another contract version holds.
-const otherContractIndex = JSON.stringify({
-  ...indexRows.parse(JSON.parse(publishedIndex ?? '')),
-  generator: 'collect',
-});
+const otherContractIndex = JSON.stringify({ ...fixtureIndex, generator: 'collect' });
 
 it('reads only kind and id from the published index, so another contract still counts its items', () =>
-  expect(runRefusals({ candidate: candidate(), publishedIndex: otherContractIndex, rubrics, lock })).toEqual([]));
+  expect(refusals({ publishedIndex: otherContractIndex })).toEqual([]));
 
 it('refuses a candidate index against its contract with a refusal, not an error', () =>
-  expect(
-    runRefusals({ candidate: candidate({ 'index.json': otherContractIndex }), publishedIndex, rubrics, lock }),
-  ).toEqual(['index.json: value unrecognized_keys']));
+  expect(refusals({ candidate: candidate({ 'index.json': otherContractIndex }) })).toEqual([
+    'index.json: value unrecognized_keys',
+  ]));
 
 it('refuses a record at a path its kind and id do not name, and an index row without its record', () => {
   const files = candidate({ 'records/skill/gh.example-org.skills.pdf-form.json': published.get(skillPath) ?? '' });
   files.delete(skillPath);
-  expect(runRefusals({ candidate: files, publishedIndex, rubrics, lock })).toEqual([
+  expect(refusals({ candidate: files })).toEqual([
     'records/skill/gh.example-org.skills.pdf-form.json: its kind and id belong at records/skill/gh.example-org.skills.pdf-forms.json',
     'index.json: skill/gh.example-org.skills.pdf-forms has no record',
   ]);
@@ -81,7 +130,7 @@ it('refuses a file above its size cap', () => {
   const snapshots = Array.from({ length: 2000 }, (_, index) => ({ date: '2026-11-16', stars: index }));
   const path = 'popularity/gh.example-org.terse.json';
   const text = JSON.stringify({ schemaVersion: 1, id: 'gh.example-org.terse', snapshots }, null, 2);
-  expect(runRefusals({ candidate: candidate({ [path]: text }), publishedIndex, rubrics, lock })).toEqual([
+  expect(refusals({ candidate: candidate({ [path]: text }) })).toEqual([
     'popularity/gh.example-org.terse.json: 120967 bytes, over the cap of 65536',
   ]);
 });
@@ -89,21 +138,18 @@ it('refuses a file above its size cap', () => {
 it('refuses a run when a rubric file is not in the lock', () => {
   const hook = z.looseObject({ version: semver }).parse(rubrics['hook/1.0.0.json']);
   const unlocked = { ...hook, version: '1.1.0' };
-  expect(
-    runRefusals({ candidate: candidate(), publishedIndex, rubrics: { ...rubrics, 'hook/1.1.0.json': unlocked }, lock }),
-  ).toEqual(['rubrics/hook/1.1.0.json is not in the lock']);
+  expect(refusals({ rubrics: { ...rubrics, 'hook/1.1.0.json': unlocked } })).toEqual([
+    'rubrics/hook/1.1.0.json is not in the lock',
+  ]);
 });
 
 it('refuses meta.json in a run and a record with a free-text field', () =>
   expect(
-    runRefusals({
+    refusals({
       candidate: candidate({
         'meta.json': published.get('meta.json') ?? '',
         [skillPath]: JSON.stringify({ ...JSON.parse(published.get(skillPath) ?? ''), description: 'Fills forms.' }),
       }),
-      publishedIndex,
-      rubrics,
-      lock,
     }),
   ).toEqual([
     'records/skill/gh.example-org.skills.pdf-forms.json: value unrecognized_keys',

@@ -833,7 +833,9 @@ it('keeps a deprecated server and leaves out a deleted one and one without a Git
 
 it('publishes meta.json with the run time, the versions, the sources read and the run statistics', async () => {
   const { report, files } = await run(fakeWorld(), '2026-11-16');
-  const meta = JSON.parse(publication(files, new Map(), { ...report, requests: 123 }).get('meta.json') ?? '');
+  const meta = JSON.parse(
+    publication(files, new Map(), { ...report, requests: 123 }, new Set()).files.get('meta.json') ?? '',
+  );
   const versions = (version: unknown) => Object.fromEntries(Object.keys(firstItems).map((kind) => [kind, version]));
   expect(meta).toEqual({
     schemaVersion: 1,
@@ -852,7 +854,8 @@ it('publishes meta.json with the run time, the versions, the sources read and th
 
 it('changes only meta.json on a second run on the same run date without upstream changes', async () => {
   const first = await run(fakeWorld(), '2026-11-16');
-  const published = publication(first.files, new Map(), first.report);
+  const published = publication(first.files, new Map(), first.report, new Set()).files;
   const second = await run(fakeWorld(), '2026-11-16', published, { time: '18:00:00' });
-  expect([...publication(second.files, published, second.report).keys()]).toEqual(['meta.json']);
+  const { files, removed } = publication(second.files, published, second.report, new Set());
+  expect({ changed: [...files.keys()], removed }).toEqual({ changed: ['meta.json'], removed: [] });
 });

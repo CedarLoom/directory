@@ -2,6 +2,7 @@ import { count, metaFile, recordContracts, type SourceId, sourceId } from '@dire
 import { currentRubric } from '@directory/scoring';
 import { z } from 'zod';
 import { type DataFiles, jsonFile } from './data-files.ts';
+import { isExcluded } from './exclusions.ts';
 import type { RunReport } from './run-report.ts';
 
 const recordFacts = z.looseObject({
@@ -43,11 +44,58 @@ function metaText(report: RunReport, candidate: DataFiles): string {
   return jsonFile(meta);
 }
 
+// What a record names of the files that belong to it.
+const recordLinks = z.looseObject({
+  id: z.string(),
+  container: z.string().optional(),
+  popularity: z.array(z.looseObject({ ref: z.string().optional() })),
+});
+
+const fileId = (path: string) => path.slice(path.lastIndexOf('/') + 1, -'.json'.length);
+
 /**
- * The files `publish` writes into the published data folder: each file of the validated run whose text differs from the
- * published one, and `meta.json` with the run time. A file the run did not produce stays as it is.
+ * Published files the run did not produce and drops: the record of every item that left the index, and the history and
+ * popularity file of an excluded item. An item that left without an exclusion keeps its history and popularity file, so
+ * a return continues them; a popularity file stays while an item that is not excluded points to it.
  */
-export function publication(candidate: DataFiles, published: DataFiles, report: RunReport): Map<string, string> {
+function removals(candidate: DataFiles, published: DataFiles, excluded: ReadonlySet<string>): string[] {
+  const excludedHistories = new Set<string>();
+  const [excludedRefs, keptRefs] = [new Set<string>(), new Set<string>()];
+  for (const [path, text] of [...published, ...candidate]) {
+    if (!path.startsWith('records/')) continue;
+    const record = recordLinks.parse(JSON.parse(text));
+    const gone = isExcluded(record, excluded);
+    if (gone) excludedHistories.add(`history/${path.slice('records/'.length)}`);
+    for (const { ref } of record.popularity) if (ref !== undefined) (gone ? excludedRefs : keptRefs).add(ref);
+  }
+  return [...published.keys()].filter((path) => {
+    if (candidate.has(path)) return false;
+    if (path.startsWith('records/')) return true;
+    // A history whose record an earlier run removed is matched by its id alone.
+    if (path.startsWith('history/')) return excludedHistories.has(path) || excluded.has(fileId(path));
+    const id = fileId(path);
+    return path.startsWith('popularity/') && excludedRefs.has(id) && !keptRefs.has(id);
+  });
+}
+
+/** What `publish` does to the published data folder. */
+export interface Publication {
+  /** Each file of the validated run whose text differs from the published one, and `meta.json` with the run time. */
+  files: Map<string, string>;
+  /** Paths of the published files to remove. */
+  removed: string[];
+}
+
+/** The files `publish` writes into the published data folder and the ones it removes; any other file stays as it is. */
+export function publication(
+  candidate: DataFiles,
+  published: DataFiles,
+  report: RunReport,
+  excluded: ReadonlySet<string>,
+): Publication {
   const files = [...candidate, ['meta.json', metaText(report, candidate)] as const];
-  return new Map(files.filter(([path, text]) => published.get(path) !== text));
+  return {
+    files: new Map(files.filter(([path, text]) => published.get(path) !== text)),
+    removed: removals(candidate, published, excluded),
+  };
 }

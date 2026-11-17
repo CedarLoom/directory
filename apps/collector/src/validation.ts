@@ -4,13 +4,18 @@ import { z } from 'zod';
 import type { DataFiles } from './data-files.ts';
 import { issueSummary } from './issue-summary.ts';
 import { jsonText } from './json-text.ts';
+import type { RunReport } from './run-report.ts';
 
 /** What `validate` checks: the files a run produced against the published ones and the released rubrics. */
 export interface RunFiles {
   /** The data files the run produced, by path relative to the data folder. */
   candidate: DataFiles;
+  /** The records built per kind, as the run report counts them. */
+  reportedItems: RunReport['items'];
   /** `index.json` of the last published run; undefined before the first. */
   publishedIndex: string | undefined;
+  /** Accepts any share of vanished items, for an intended removal. */
+  allowRemovals: boolean;
   /** The rubric files by path under `rubrics/`, without `lock.json`. */
   rubrics: Readonly<Record<string, unknown>>;
   /** The parsed `rubrics/lock.json`. */
@@ -20,7 +25,7 @@ export interface RunFiles {
 // Bytes per file: a record, history or popularity file is a few kilobytes, the index of 500 items a few hundred.
 const fileCap = 64 * 1024;
 const indexCap = 2 * 1024 * 1024;
-// More vanished items than this share of the published ones points to a broken source, not to upstream removals.
+// More vanished items than this share of the published ones of a kind points to a broken source, not to upstream removals.
 const vanishedShare = 0.2;
 
 const scoredRecord = z.looseObject({
@@ -76,26 +81,36 @@ function listingRefusals(items: readonly IndexRow[], candidate: DataFiles): stri
     .map((item) => `index.json: ${itemKey(item)} has no record`);
 }
 
-/** Refuses a run that lost more than the vanished share of the published items, or every item of a published kind. */
-function vanishedRefusals(items: readonly IndexRow[], publishedIndex: string | undefined): string[] {
-  if (publishedIndex === undefined) return [];
-  const published = indexRows.parse(JSON.parse(publishedIndex)).items;
-  const [before, after] = [new Set(published.map(itemKey)), new Set(items.map(itemKey))];
-  const vanished = [...before].filter((key) => !after.has(key)).length;
-  const refusals =
-    vanished > before.size * vanishedShare
-      ? [`index.json: ${vanished} of ${before.size} published items vanished, more than ${vanishedShare * 100} percent`]
-      : [];
-  // Collect refuses items one by one, so a source that changed its format can empty a kind well under that share.
-  const kinds = new Set(items.map((item) => item.kind));
-  for (const gone of new Set(published.map((item) => item.kind)).difference(kinds)) {
-    const count = [...before].filter((key) => key.startsWith(`${gone}/`)).length;
-    refusals.push(`index.json: all ${count} published ${gone} items vanished`);
-  }
-  return refusals;
+/** Index counts per kind that differ from the run report's: the report and the files come from different runs. */
+function reportRefusals(items: readonly IndexRow[], reported: RunReport['items']): string[] {
+  return kind.options.flatMap((itemKind) => {
+    const listed = items.filter((item) => item.kind === itemKind).length;
+    return listed === reported[itemKind]
+      ? []
+      : [`index.json: ${listed} ${itemKind} items, the run report counts ${reported[itemKind]}`];
+  });
 }
 
-/** Why the run must not be published: every file that breaks its contract, size cap or path, an index row without its record, too many vanished items or a vanished kind, or rubric files that differ from their lock; empty when the run holds. */
+/**
+ * Refuses a run that lost more than the vanished share of the published items of a kind, and so of all of them: collect
+ * refuses items one by one, so a source that changed its format can empty a kind well under the share of all items.
+ */
+function vanishedRefusals(items: readonly IndexRow[], publishedIndex: string | undefined): string[] {
+  if (publishedIndex === undefined) return [];
+  const after = new Set(items.map(itemKey));
+  const published = new Set(indexRows.parse(JSON.parse(publishedIndex)).items.map(itemKey));
+  const byKind = Map.groupBy(published, (key) => key.slice(0, key.indexOf('/')));
+  return [...byKind].flatMap(([itemKind, keys]) => {
+    const vanished = keys.filter((key) => !after.has(key)).length;
+    return vanished > keys.length * vanishedShare
+      ? [
+          `index.json: ${vanished} of ${keys.length} published ${itemKind} items vanished, more than ${vanishedShare * 100} percent`,
+        ]
+      : [];
+  });
+}
+
+/** Why the run must not be published: every file that breaks its contract, size cap or path, an index row without its record, index counts that differ from the run report, too many vanished items of a kind unless removals are allowed, or rubric files that differ from their lock; empty when the run holds. */
 export function runRefusals(files: RunFiles): string[] {
   const refusals: string[] = [];
   let released: Set<string> | undefined;
@@ -120,6 +135,7 @@ export function runRefusals(files: RunFiles): string[] {
   return [
     ...refusals,
     ...listingRefusals(index.data.items, files.candidate),
-    ...vanishedRefusals(index.data.items, files.publishedIndex),
+    ...reportRefusals(index.data.items, files.reportedItems),
+    ...(files.allowRemovals ? [] : vanishedRefusals(index.data.items, files.publishedIndex)),
   ];
 }

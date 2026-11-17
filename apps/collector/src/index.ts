@@ -5,7 +5,7 @@ import { ZodError } from 'zod';
 import { systemClock } from './clock.ts';
 import { collect, summaryLine } from './collect.ts';
 import { commitDataFolder } from './data-commit.ts';
-import { readDataFile, readDataFolder, writeDataFolder } from './data-folder.ts';
+import { readDataFile, readDataFolder, removeDataFiles, writeDataFolder } from './data-folder.ts';
 import { parseExclusions } from './exclusions.ts';
 import { gitHubHeaders } from './github-contents.ts';
 import { createHttpClient, RequestError } from './http-client.ts';
@@ -103,14 +103,25 @@ program
   .requiredOption('--candidate <folder>', 'the data folder `collect --out` wrote')
   .requiredOption('--report <file>', 'the run report `collect` printed')
   .requiredOption('--published <folder>', 'the published data folder of the last run')
-  .action(async ({ candidate, report, published }) => {
-    await readReport(report);
+  .option(
+    '--allow-removals',
+    'accepts a run that lost more than 20 percent of the published items or of the items of a kind, for an intended removal',
+  )
+  .action(async ({ candidate, report: reportFile, published, allowRemovals }) => {
+    const report = await readReport(reportFile);
     const [candidateFiles, publishedIndex, { rubrics, lock }] = await Promise.all([
       readDataFolder(candidate),
       readDataFile(published, 'index.json'),
       readRubricFiles(rubricsFolder),
     ]);
-    const refusals = runRefusals({ candidate: candidateFiles, publishedIndex, rubrics, lock });
+    const refusals = runRefusals({
+      candidate: candidateFiles,
+      reportedItems: report.items,
+      publishedIndex,
+      allowRemovals: allowRemovals === true,
+      rubrics,
+      lock,
+    });
     for (const refusal of refusals) log(`validate: refused: ${refusal}`);
     if (refusals.length > 0) {
       process.exitCode = 65;
@@ -122,20 +133,28 @@ program
 program
   .command('publish')
   .description(
-    'Writes the changed files of a validated run and meta.json into the published data folder and commits them.',
+    'Writes the changed files of a validated run and meta.json into the published data folder, removes the files of items that left or are excluded, and commits them.',
   )
   .requiredOption('--candidate <folder>', 'the data folder of the validated run')
   .requiredOption('--report <file>', 'the run report `collect` printed')
   .requiredOption('--data <folder>', 'the published data folder, inside a git work tree of the data branch')
-  .action(async ({ candidate, report: reportFile, data }) => {
+  .option('--exclusions <file>', 'the exclusions file', defaultExclusions)
+  .action(async ({ candidate, report: reportFile, data, exclusions }) => {
     const report = await readReport(reportFile);
-    const [candidateFiles, published] = await Promise.all([readDataFolder(candidate), readDataFolder(data)]);
+    const [candidateFiles, published, excluded] = await Promise.all([
+      readDataFolder(candidate),
+      readDataFolder(data),
+      readFile(exclusions, 'utf8').then(parseExclusions),
+    ]);
     if (!candidateFiles.has('index.json')) program.error(`publish: ${candidate} holds no index.json`);
-    const files = publication(candidateFiles, published, report);
+    const { files, removed } = publication(candidateFiles, published, report, excluded);
     await writeDataFolder(data, files);
+    await removeDataFiles(data, removed);
     // Also commits what an earlier publish wrote but failed to commit.
     const committed = await commitDataFolder(data, `chore(data): refresh of ${report.runAt}`);
-    log(`publish: ${files.size} changed files${committed ? ', committed' : ', nothing to commit'}`);
+    log(
+      `publish: ${files.size} changed files, ${removed.length} removed${committed ? ', committed' : ', nothing to commit'}`,
+    );
   });
 
 try {
