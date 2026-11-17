@@ -281,17 +281,17 @@ function withheldByContainer(
     : { source: 'manifest', class: 'none', withheld: true };
 }
 
-// GitHub's detected license, else a manifest value, else a license file in the item's folder.
 function detectedOrStated(
   detected: string | undefined,
   manifest: string | undefined,
   folderLicenseFile: boolean,
 ): License {
-  // NOASSERTION: GitHub found a license file it could not name, so a manifest value says more and applies first.
-  if ((detected === undefined || detected === 'NOASSERTION') && given(manifest)) return stated(manifest, 'manifest');
+  if (detected !== undefined && detected !== 'NOASSERTION')
+    return { spdx: detected, source: 'github-detected', class: classOf(detected) };
+  if (given(manifest)) return stated(manifest, 'manifest');
+  // NOASSERTION: GitHub found a license file it could not name, which says less than a manifest value.
   if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
-  if (detected === undefined) return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
-  return { spdx: detected, source: 'github-detected', class: classOf(detected) };
+  return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
 }
 
 /**

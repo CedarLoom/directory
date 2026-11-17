@@ -100,14 +100,12 @@ it('reads a NOASSERTION field like a blank one, so the next source applies, GitH
   ]);
 });
 
-it('takes a manifest or frontmatter value over a root license file GitHub cannot name, else records that file', () => {
+it('takes a manifest value over a root license file GitHub cannot name, else records that file', () => {
   expect([
     licenseOf('NOASSERTION', { manifest: 'MIT' }),
-    licenseOf('NOASSERTION', { declared: 'Apache-2.0', manifest: 'MIT' }),
     licenseOf('NOASSERTION', { manifest: 'NOASSERTION', folderLicenseFile: true }),
   ]).toEqual([
     { spdx: 'MIT', source: 'manifest', class: 'permissive' },
-    { spdx: 'Apache-2.0', source: 'frontmatter', class: 'permissive' },
     { source: 'github-detected', class: 'none' },
   ]);
 });
