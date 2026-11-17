@@ -1,0 +1,4 @@
+# Build output, and the token file scripts/tokens.ts writes from the design tokens.
+apps/site/dist/
+apps/site/storybook-static/
+apps/site/src/theme/tokens.css

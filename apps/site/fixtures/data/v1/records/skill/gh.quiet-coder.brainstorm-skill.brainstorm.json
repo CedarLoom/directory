@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.quiet-coder.brainstorm-skill.brainstorm",
+  "kind": "skill",
+  "name": "brainstorm",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/quiet-coder/brainstorm-skill/tree/main/brainstorm",
+    "install": "https://github.com/quiet-coder/brainstorm-skill/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "class": "none"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-09T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.quiet-coder.brainstorm-skill",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.quiet-coder.brainstorm-skill",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 180,
+    "bodyLines": 210,
+    "licenseField": true,
+    "metadataTokens": 160,
+    "bodyTokens": 6200,
+    "testsShipped": false
+  },
+  "flags": ["allowed-tools-unrestricted-bash"],
+  "tags": ["planning"],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "skill",
+      "version": "1.0.0"
+    },
+    "total": 73.2,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 8,
+        "max": 8
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 7,
+        "max": 7
+      },
+      {
+        "signal": "licenseField",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 4,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 9.2,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 10,
+        "max": 20
+      },
+      {
+        "signal": "testsShipped",
+        "points": 0,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "frontmatterFields": ["name", "description", "license", "allowed-tools"],
+  "bodyLines": 210,
+  "tokens": {
+    "metadata": 160,
+    "body": 6200
+  },
+  "allowedTools": ["read", "bash"],
+  "files": {
+    "scripts": 2,
+    "references": 1,
+    "assets": 0
+  }
+}

@@ -4,9 +4,52 @@
   "type": "module",
   "license": "ISC",
   "scripts": {
-    "typecheck": "tsc"
+    "dev": "vite dev",
+    "build": "vite build && node scripts/post-build.ts",
+    "weight": "node scripts/weight.ts",
+    "tokens": "node scripts/tokens.ts",
+    "messages": "lingui extract --clean && node scripts/message-ids.ts",
+    "storybook": "storybook dev --port 6006",
+    "build-storybook": "storybook build --quiet --output-dir storybook-static",
+    "e2e": "playwright test --project=chromium --project=chromium-phone --project=webkit-phone --project=webkit --project=firefox",
+    "typecheck": "tsc && tsc --project tsconfig.node.json",
+    "test-storybook": "vitest run --config vitest.storybook.config.ts",
+    "visual": "playwright test --project=visual"
+  },
+  "dependencies": {
+    "@directory/contracts": "workspace:*",
+    "@fontsource-variable/inter": "catalog:",
+    "@lingui/core": "catalog:",
+    "@lingui/react": "catalog:",
+    "@mantine/core": "catalog:",
+    "@mantine/hooks": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-start": "catalog:",
+    "@tanstack/react-table": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "@axe-core/playwright": "catalog:",
+    "@lingui/cli": "catalog:",
+    "@lingui/vite-plugin": "catalog:",
+    "@playwright/test": "catalog:",
+    "@storybook/addon-a11y": "catalog:",
+    "@storybook/addon-vitest": "catalog:",
+    "@storybook/react-vite": "catalog:",
+    "@terrazzo/parser": "catalog:",
+    "@terrazzo/plugin-css": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
+    "playwright": "catalog:",
+    "storybook": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

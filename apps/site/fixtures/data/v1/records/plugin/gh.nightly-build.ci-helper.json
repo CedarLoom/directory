@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.nightly-build.ci-helper",
+  "kind": "plugin",
+  "name": "ci-helper",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/nightly-build/ci-helper",
+    "install": "https://github.com/nightly-build/ci-helper/blob/main/README.md"
+  },
+  "listedIn": ["gh.nightly-build.ci-helper"],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-09T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.nightly-build.ci-helper",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.nightly-build.ci-helper",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "manifestFields": 4,
+    "nameValid": true,
+    "noRootClaudeMd": true,
+    "alwaysOnComponents": 6,
+    "hasEvals": true
+  },
+  "flags": ["hook-match-all", "bin-executables", "network-indicator"],
+  "tags": ["testing"],
+  "cedarloomFit": {
+    "label": "may-conflict",
+    "tags": ["testing"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "plugin",
+      "version": "1.0.0"
+    },
+    "total": 82.6,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "manifestFields",
+        "points": 9.6,
+        "max": 12
+      },
+      {
+        "signal": "nameValid",
+        "points": 4,
+        "max": 4
+      },
+      {
+        "signal": "noRootClaudeMd",
+        "points": 4,
+        "max": 4
+      },
+      {
+        "signal": "alwaysOnComponents",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 30
+      },
+      {
+        "signal": "hasEvals",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "container": "gh.nightly-build.ci-helper",
+  "version": "1.2.0",
+  "components": {
+    "skills": 2,
+    "agents": 1,
+    "commands": 3,
+    "hooksByEvent": {
+      "PreToolUse": 1,
+      "SessionStart": 1
+    },
+    "mcpServersByTransport": {
+      "stdio": 1
+    },
+    "lspServers": 0,
+    "outputStyles": 0,
+    "monitors": 0,
+    "binFiles": 0
+  },
+  "dependencies": [],
+  "hasEvals": true,
+  "sourceKind": "path",
+  "pin": "marketplace-commit"
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.acme-labs.issue-tracker-mcp",
+  "snapshots": [
+    {
+      "date": "2026-10-12",
+      "stars": 3480
+    },
+    {
+      "date": "2026-11-16",
+      "stars": 4100
+    }
+  ]
+}

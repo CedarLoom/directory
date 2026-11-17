@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.db-folks.postgres",
+  "kind": "mcp-server",
+  "name": "io.github.db-folks/postgres",
+  "aliases": [],
+  "links": {
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.db-folks%2Fpostgres/versions/latest",
+    "source": "https://github.com/db-folks/postgres-mcp"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "BUSL-1.1",
+    "source": "github-detected",
+    "class": "source-available"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.db-folks.postgres-mcp",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.db-folks.postgres-mcp",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": false,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": ["mcp-stdio-unpinned-package", "mcp-secrets-required", "mcp-remote"],
+  "tags": ["data"],
+  "cedarloomFit": {
+    "label": "may-conflict",
+    "tags": ["data"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 45,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 5,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 0,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": ["mcp-registry"],
+  "changedAt": "2026-11-09",
+  "version": "1.0.2",
+  "registryStatus": "active",
+  "transports": ["stdio"],
+  "packageRegistryTypes": ["npm"],
+  "versionPinned": false,
+  "requiredSecrets": 1,
+  "remoteHosts": 0,
+  "maintenance": {
+    "pushedAt": "2026-11-09T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  }
+}

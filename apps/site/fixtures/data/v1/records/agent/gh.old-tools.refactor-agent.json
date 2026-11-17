@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.old-tools.refactor-agent",
+  "kind": "agent",
+  "name": "refactor-agent",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/old-tools/refactor-agent",
+    "install": "https://github.com/old-tools/refactor-agent/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2025-03-14T09:00:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": true,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.old-tools.refactor-agent",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.old-tools.refactor-agent",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 64,
+    "toolsDeclared": true,
+    "bodyLines": 120,
+    "metadataTokens": 60,
+    "bodyTokens": 900
+  },
+  "flags": ["agent-inherits-all-tools"],
+  "tags": ["review"],
+  "cedarloomFit": {
+    "label": "may-conflict",
+    "tags": ["review"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "agent",
+      "version": "1.0.0"
+    },
+    "total": 55,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "toolsDeclared",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 10,
+        "max": 25
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "toolsDeclared": true,
+  "toolClasses": ["read", "bash"],
+  "modelSet": false,
+  "tokens": {
+    "metadata": 60,
+    "body": 900
+  }
+}

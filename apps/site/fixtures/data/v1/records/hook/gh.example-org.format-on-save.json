@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.format-on-save",
+  "kind": "hook",
+  "name": "format-on-save",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/example-org/format-on-save",
+    "install": "https://github.com/example-org/format-on-save/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "GPL-3.0-only",
+    "source": "github-detected",
+    "class": "copyleft"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-09T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.example-org.format-on-save",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.example-org.format-on-save",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "matchersSpecific": true
+  },
+  "flags": ["hook-shell-command"],
+  "tags": ["formatting"],
+  "cedarloomFit": {
+    "label": "overlaps",
+    "tags": ["formatting"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.0.0"
+    },
+    "total": 85,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "events": ["PostToolUse"],
+  "handlerTypes": ["command"],
+  "commandForms": ["shell"],
+  "matcherBreadth": "specific"
+}

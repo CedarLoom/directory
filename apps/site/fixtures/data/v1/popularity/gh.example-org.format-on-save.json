@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.format-on-save",
+  "snapshots": [
+    {
+      "date": "2026-10-12",
+      "stars": 182
+    },
+    {
+      "date": "2026-11-16",
+      "stars": 190
+    }
+  ]
+}

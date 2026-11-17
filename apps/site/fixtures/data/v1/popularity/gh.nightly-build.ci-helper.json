@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.nightly-build.ci-helper",
+  "snapshots": [
+    {
+      "date": "2026-10-12",
+      "stars": 81
+    },
+    {
+      "date": "2026-11-16",
+      "stars": 77
+    }
+  ]
+}

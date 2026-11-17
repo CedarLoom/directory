@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.terse",
+  "kind": "output-style",
+  "name": "terse",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/example-org/terse",
+    "install": "https://github.com/example-org/terse/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "class": "none"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-09T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.example-org.terse",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.example-org.terse",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameField": true,
+    "descriptionField": true,
+    "bodyLines": 12,
+    "tokens": 340
+  },
+  "flags": [],
+  "tags": ["writing"],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "output-style",
+      "version": "1.0.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "nameField",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "descriptionField",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "bodyLines",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "tokens",
+        "points": 25,
+        "max": 25
+      },
+      {
+        "signal": "safety",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "tokens": 340,
+  "frontmatterFields": ["name", "description"]
+}

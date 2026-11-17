@@ -104,6 +104,12 @@
           }
         ]
       }
+    },
+    {
+      "files": ["apps/site/**"],
+      "rules": {
+        "import/no-unassigned-import": ["error", { "allow": ["**/*.css", "**/styles.ts"] }]
+      }
     }
   ]
 }

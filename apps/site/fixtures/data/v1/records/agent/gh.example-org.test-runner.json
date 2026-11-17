@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.test-runner",
+  "kind": "agent",
+  "name": "test-runner",
+  "aliases": [],
+  "links": {
+    "source": "https://github.com/example-org/test-runner",
+    "install": "https://github.com/example-org/test-runner/blob/main/README.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-09T08:15:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.2.0",
+      "date": "2026-10-01"
+    },
+    "archived": false,
+    "headSha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.example-org.test-runner",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.example-org.test-runner",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 64,
+    "toolsDeclared": true,
+    "bodyLines": 120,
+    "metadataTokens": 60,
+    "bodyTokens": 900
+  },
+  "flags": ["allowed-tools-unrestricted-bash"],
+  "tags": ["testing"],
+  "cedarloomFit": {
+    "label": "overlaps",
+    "tags": ["testing"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "agent",
+      "version": "1.0.0"
+    },
+    "total": 80,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "toolsDeclared",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 25
+      }
+    ]
+  },
+  "provenance": ["github"],
+  "changedAt": "2026-11-09",
+  "toolsDeclared": true,
+  "toolClasses": ["read", "bash"],
+  "modelSet": false,
+  "tokens": {
+    "metadata": 60,
+    "body": 900
+  }
+}

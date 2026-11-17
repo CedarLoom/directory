@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.example-org.weather",
+  "kind": "mcp-server",
+  "name": "io.github.example-org/weather",
+  "aliases": [],
+  "links": {
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.example-org%2Fweather/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "popularity": [],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": false,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": ["mcp-stdio-unpinned-package", "mcp-secrets-required"],
+  "tags": ["data"],
+  "cedarloomFit": {
+    "label": "complements",
+    "tags": ["data"]
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 50,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": ["mcp-registry"],
+  "changedAt": "2026-11-09",
+  "version": "1.0.2",
+  "registryStatus": "active",
+  "transports": ["stdio"],
+  "packageRegistryTypes": ["npm"],
+  "versionPinned": false,
+  "requiredSecrets": 1,
+  "remoteHosts": 0
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.example-org.skills.pdf-forms",
+  "kind": "skill",
+  "entries": [
+    {
+      "date": "2026-11-09",
+      "rubric": "1.0.0",
+      "total": 88
+    }
+  ]
+}
