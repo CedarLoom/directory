@@ -69,7 +69,7 @@ function flagsShare({ record, rubric, signal }: Context): number {
 }
 
 function licenseLevel({ license }: Scorable): keyof Extract<Scale, { type: 'license' }>['levels'] {
-  // Class `none` with a source: the item states a license that no SPDX id names.
+  // Class `none` with a source: the item states a license that no SPDX id names or whose class is not known.
   return license.class === 'none' && license.source !== undefined ? 'custom' : license.class;
 }
 

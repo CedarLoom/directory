@@ -16,11 +16,11 @@ import {
   semver,
   share,
   sourceId,
-  spdxId,
   tag,
   versionLabel,
 } from './fields.ts';
 import { pin, sourceKind } from './plugin-source.ts';
+import { spdxExpression } from './spdx-expression.ts';
 
 // Strict objects throughout: a key outside the contract, such as a copied description, is refused.
 
@@ -52,7 +52,7 @@ const common = {
   container: itemId.optional(),
   listedIn: z.array(itemId),
   license: z.strictObject({
-    spdx: spdxId.optional(),
+    spdx: spdxExpression.optional(),
     source: z.enum(['github-detected', 'manifest', 'frontmatter', 'license-file']).optional(),
     class: licenseClass,
   }),

@@ -1,4 +1,4 @@
-import { spdxId } from '@directory/contracts';
+import { parseSpdxExpression, type SpdxExpression, spdxId } from '@directory/contracts';
 
 type LicenseClass = 'permissive' | 'copyleft' | 'source-available' | 'none';
 
@@ -12,10 +12,17 @@ const classes: Readonly<Record<string, LicenseClass>> = {
   ...Object.fromEntries(
     [
       '0BSD',
+      'AFL-1.1',
+      'AFL-1.2',
+      'AFL-2.0',
+      'AFL-2.1',
       'AFL-3.0',
       'Apache-1.0',
       'Apache-1.1',
       'Apache-2.0',
+      'Artistic-1.0',
+      'Artistic-1.0-cl8',
+      'Artistic-1.0-Perl',
       'Artistic-2.0',
       'BlueOak-1.0.0',
       'BSD-1-Clause',
@@ -32,14 +39,19 @@ const classes: Readonly<Record<string, LicenseClass>> = {
       'CC-BY-4.0',
       'CC0-1.0',
       'CERN-OHL-P-2.0',
+      'ECL-1.0',
       'ECL-2.0',
       'ISC',
       'MIT',
       'MIT-0',
       'MS-PL',
+      'MulanPSL-1.0',
       'MulanPSL-2.0',
       'NCSA',
       'PostgreSQL',
+      'PSF-2.0',
+      'Python-2.0',
+      'Python-2.0.1',
       'Unlicense',
       'UPL-1.0',
       'WTFPL',
@@ -57,6 +69,9 @@ const classes: Readonly<Record<string, LicenseClass>> = {
       'CC-BY-SA-4.0',
       'CDDL-1.0',
       'CDDL-1.1',
+      'CECILL-1.0',
+      'CECILL-1.1',
+      'CECILL-2.0',
       'CECILL-2.1',
       'CERN-OHL-S-2.0',
       'CERN-OHL-W-2.0',
@@ -66,21 +81,43 @@ const classes: Readonly<Record<string, LicenseClass>> = {
       'EUPL-1.1',
       'EUPL-1.2',
       'GFDL-1.1',
+      'GFDL-1.1-invariants',
+      'GFDL-1.1-no-invariants',
       'GFDL-1.2',
+      'GFDL-1.2-invariants',
+      'GFDL-1.2-no-invariants',
       'GFDL-1.3',
+      'GFDL-1.3-invariants',
+      'GFDL-1.3-no-invariants',
       'GPL-1.0',
       'GPL-2.0',
+      'GPL-2.0-with-autoconf-exception',
+      'GPL-2.0-with-bison-exception',
+      'GPL-2.0-with-classpath-exception',
+      'GPL-2.0-with-font-exception',
+      'GPL-2.0-with-GCC-exception',
       'GPL-3.0',
+      'GPL-3.0-with-autoconf-exception',
+      'GPL-3.0-with-GCC-exception',
       'LGPL-2.0',
       'LGPL-2.1',
       'LGPL-3.0',
+      'LPPL-1.0',
+      'LPPL-1.1',
+      'LPPL-1.2',
+      'LPPL-1.3a',
       'LPPL-1.3c',
       'MPL-1.0',
       'MPL-1.1',
       'MPL-2.0',
       'MS-RL',
       'ODbL-1.0',
+      'OFL-1.0',
       'OFL-1.1',
+      'OSL-1.0',
+      'OSL-1.1',
+      'OSL-2.0',
+      'OSL-2.1',
       'OSL-3.0',
       'Vim',
     ].map((id) => [id, 'copyleft']),
@@ -127,13 +164,14 @@ export interface License {
 // LICENSE-MIT, COPYING.LESSER or UNLICENSE count; a file such as license.js is code, not a license.
 const licenseFileName =
   /^(?:(?:un)?licen[cs]e|copying(?:\.lesser)?|licen[cs]e-(?<id>.+?))(?:\.(?:md|markdown|txt|rst|html))?$/i;
-// LICENSE-DOC holds the terms of the documentation, not the DOC license.
-const licenseIds: ReadonlySet<string> = new Set(
-  spdxId.options.filter((id) => id !== 'DOC').map((id) => id.toLowerCase()),
-);
+const onlyOrLater = /-(?:only|or-later)$/;
+// Only class table ids count in full: LICENSE-openssl or LICENSE-curl is mostly the notice of a vendored library.
+const tableIds: ReadonlySet<string> = new Set(Object.keys(classes).map((id) => id.toLowerCase()));
 // A family is a class table id without its version: LICENSE-BUSL counts, LICENSE-INFO or LICENSE-python does not.
 const licenseFamilies: ReadonlySet<string> = new Set(
-  Object.keys(classes).map((id) => id.replace(/-\d.*$/, '').toLowerCase()),
+  Object.keys(classes)
+    .map((id) => id.replace(/-\d.*$/, '').toLowerCase())
+    .filter((family) => family !== 'python'),
 );
 // A family may carry a version of its own, as in LICENSE-APACHE2 or LICENSE-GPLv3.
 const familyVersion = /-?v?\d+(?:\.\d+)*$/;
@@ -145,7 +183,7 @@ function isLicenseFileName(name: string): boolean {
   return (
     suffix === undefined ||
     suffix === 'code' ||
-    licenseIds.has(suffix) ||
+    tableIds.has(suffix.replace(onlyOrLater, '')) ||
     licenseFamilies.has(suffix) ||
     licenseFamilies.has(suffix.replace(familyVersion, ''))
   );
@@ -158,7 +196,7 @@ export function holdsLicenseFile(entries: readonly { name: string; type: string 
 
 function knownClass(id: string): LicenseClass | undefined {
   // GPL-3.0-only and GPL-3.0-or-later share the class of GitHub's GPL-3.0.
-  return classes[id.replace(/-(only|or-later)$/, '')];
+  return classes[id.replace(onlyOrLater, '')];
 }
 
 function classOf(id: string): LicenseClass {
@@ -168,20 +206,35 @@ function classOf(id: string): LicenseClass {
   return found;
 }
 
-// A stated value that is no SPDX id, such as a sentence, states terms of its own: class `none` without its text.
-// An SPDX id the class table lacks, such as Artistic-1.0, keeps its id with class `none` rather than refusing the item.
-function stated(value: string, source: 'manifest' | 'frontmatter'): License {
-  return spdxId.safeParse(value).success
-    ? { spdx: value, source, class: knownClass(value) ?? 'none' }
-    : { source, class: 'none' };
+const permissiveness: readonly LicenseClass[] = ['none', 'source-available', 'copyleft', 'permissive'];
+
+// An OR lets the user pick a part, so its most permissive part counts; an AND binds every part, so its least.
+function expressionClass(expression: SpdxExpression): LicenseClass {
+  if ('license' in expression) return knownClass(expression.license) ?? 'none';
+  const rank = (licenseClass: LicenseClass) => permissiveness.indexOf(licenseClass);
+  return expression.parts
+    .map(expressionClass)
+    .reduce((kept, part) => (rank(part) > rank(kept) === (expression.operator === 'OR') ? part : kept));
 }
 
-// Blank, npm's UNLICENSED, SPDX's NONE or NOASSERTION, or proprietary grants no license, so the manifest states none.
+// A stated value that is no SPDX expression, such as a sentence, states terms of its own: class `none` without its text.
+// An SPDX id the class table lacks, such as Unicode-3.0, keeps its id with class `none` rather than refusing the item.
+function stated(value: string, source: 'manifest' | 'frontmatter'): License {
+  const written = value.trim();
+  const expression = parseSpdxExpression(written);
+  if (expression === undefined) return { source, class: 'none' };
+  // A deprecated plus id such as GPL-2.0+ is stored as its -or-later id.
+  const orLater = /^([^ ()]+)\+$/.exec(written)?.[1]?.concat('-or-later');
+  const spdx = orLater !== undefined && spdxId.safeParse(orLater).success ? orLater : written;
+  return { spdx, source, class: expressionClass(expression) };
+}
+
+// Blank, npm's UNLICENSED, SPDX's NONE or NOASSERTION, or proprietary grants no license.
 const grantsNoLicense = /^\s*(?:unlicensed|proprietary|none|noassertion)?\s*$/i;
 
 /**
- * The item's license: a frontmatter value first, else GitHub's detected one, else a plugin manifest value, else a
- * license file in the item's folder.
+ * The item's license: a frontmatter value first, even one that grants no license, else GitHub's detected one, else a
+ * plugin manifest value that grants one, else a license file in the item's folder.
  * A license file in the item's folder is not named, as GitHub detects licenses at the repository root only.
  */
 export function licenseOf(
@@ -192,7 +245,9 @@ export function licenseOf(
     folderLicenseFile = false,
   }: { declared?: string | undefined; manifest?: string | undefined; folderLicenseFile?: boolean } = {},
 ): License {
-  if (declared !== undefined) return stated(declared, 'frontmatter');
+  // The record has no value for a license withheld, so a frontmatter that grants none reads as none detected.
+  if (declared !== undefined)
+    return grantsNoLicense.test(declared) ? { class: 'none' } : stated(declared, 'frontmatter');
   if (detected === undefined) {
     if (manifest !== undefined && !grantsNoLicense.test(manifest)) return stated(manifest, 'manifest');
     return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };

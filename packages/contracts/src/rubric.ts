@@ -33,7 +33,9 @@ const scale = z.discriminatedUnion('type', [
         none: share,
       }),
     })
-    .describe('`license.class`; `custom` is class `none` with a license the item states but no SPDX id names.'),
+    .describe(
+      '`license.class`; `custom` is class `none` with a license the item states: one no SPDX id names, or an SPDX id or expression of no known class.',
+    ),
   z
     .strictObject({ type: z.literal('flags') })
     .describe("The maximum minus the `flagPenalties` of the record's flags, between 0 and the maximum."),

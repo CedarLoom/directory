@@ -35,3 +35,4 @@ export { metaFile } from './meta.ts';
 export { type PopularityFile, popularityFile } from './popularity.ts';
 export { classifySource, type Pin, type SourceKind, sourceKind } from './plugin-source.ts';
 export { type Rubric, rubricFile } from './rubric.ts';
+export { parseSpdxExpression, type SpdxExpression } from './spdx-expression.ts';

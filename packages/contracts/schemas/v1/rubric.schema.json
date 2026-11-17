@@ -181,7 +181,7 @@
                   "levels"
                 ],
                 "additionalProperties": false,
-                "description": "`license.class`; `custom` is class `none` with a license the item states but no SPDX id names."
+                "description": "`license.class`; `custom` is class `none` with a license the item states: one no SPDX id names, or an SPDX id or expression of no known class."
               },
               {
                 "type": "object",
