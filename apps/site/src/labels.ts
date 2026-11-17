@@ -27,15 +27,26 @@ export const licenseClassLabels = {
   permissive: msg({ id: 'license.permissive', message: 'Permissive' }),
   copyleft: msg({ id: 'license.copyleft', message: 'Copyleft' }),
   'source-available': msg({ id: 'license.source-available', message: 'Source available' }),
-  none: msg({ id: 'license.none', message: 'No license' }),
+  // The class also holds licenses found without an SPDX id, so the label does not assert that there is none.
+  none: msg({ id: 'license.none', message: 'None detected or no SPDX id' }),
 } satisfies Record<LicenseClass, MessageDescriptor>;
 
-/** A license with no SPDX id: the item states a license of its own, or its class. */
+/** A license with no SPDX id: one found without an id, none detected, or its class. */
 export function licenseWithoutId({ class: licenseClass, source }: ItemRecord['license']): MessageDescriptor {
-  return licenseClass === 'none' && source !== undefined
-    ? msg({ id: 'license.custom', message: 'A license no SPDX id names' })
-    : licenseClassLabels[licenseClass];
+  if (licenseClass !== 'none') return licenseClassLabels[licenseClass];
+  return source === undefined
+    ? msg({ id: 'license.notDetected', message: 'No license detected' })
+    : msg({ id: 'license.custom', message: 'A license, no SPDX id detected' });
 }
+
+/** Where a license value comes from; without a source, the collector found none where it looks. */
+export const licenseSourceLabels = {
+  'github-detected': msg({ id: 'licenseSource.github-detected', message: 'GitHub at the repository root' }),
+  manifest: msg({ id: 'licenseSource.manifest', message: 'the plugin manifest' }),
+  frontmatter: msg({ id: 'licenseSource.frontmatter', message: 'the license field of the frontmatter' }),
+  'license-file': msg({ id: 'licenseSource.license-file', message: "a license file in the item's folder" }),
+  none: msg({ id: 'licenseSource.none', message: 'none of the places the method page lists' }),
+} satisfies Record<NonNullable<ItemRecord['license']['source']> | 'none', MessageDescriptor>;
 
 export const recentCommitsLabels = {
   none: msg({ id: 'commits.none', message: 'None' }),

@@ -13,6 +13,8 @@ const sha = 'c'.repeat(40);
 interface FakeRepository {
   stars: number;
   files: Record<string, string>;
+  /** GitHub detects no license at the repository root. */
+  unlicensed?: true;
 }
 
 function pluginRepository(index: number): FakeRepository {
@@ -181,7 +183,7 @@ function facts(repository: FakeRepository) {
     stargazerCount: repository.stars,
     pushedAt: '2026-11-10T09:00:00Z',
     isArchived: false,
-    licenseInfo: { spdxId: 'MIT' },
+    licenseInfo: repository.unlicensed === true ? null : { spdxId: 'MIT' },
     owner: { kind: 'Organization' },
     defaultBranchRef: { target: { oid: sha, history: { totalCount: 3 } } },
     latestRelease: { tagName: 'v1.4.0', publishedAt: '2026-10-01T12:00:00Z' },
@@ -414,6 +416,21 @@ it('refuses a skill whose SKILL.md is over 256 KB', async () => {
     record: false,
     lines: ['gh.example-org.plugin-0.skills.skill-0: refused: a file is cut by GitHub or over the size cap'],
   });
+});
+
+it('records a license file in a skill folder when the repository root has none', async () => {
+  const world = fakeWorld();
+  const repository = world.get('example-org/plugin-0');
+  if (repository === undefined) throw new Error('example-org/plugin-0 is missing');
+  repository.unlicensed = true;
+  repository.files['skills/skill-0/SKILL.md'] = `---\nname: skill-0\ndescription: ${marker}\n---\n# Skill\n`;
+  repository.files['skills/skill-0/LICENSE.txt'] = marker;
+  const { files } = await run(world, '2026-11-16');
+  const license = (path: string) => z.object({ license: z.unknown() }).parse(JSON.parse(files.get(path) ?? '')).license;
+  expect([
+    license('records/skill/gh.example-org.plugin-0.skills.skill-0.json'),
+    license('records/plugin/gh.example-org.plugin-0.json'),
+  ]).toEqual([{ source: 'license-file', class: 'none' }, { class: 'none' }]);
 });
 
 it('writes records, popularity files and the index, and no third-party text', async () => {

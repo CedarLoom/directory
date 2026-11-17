@@ -81,8 +81,16 @@ const classes: Readonly<Record<string, LicenseClass>> = {
 
 export interface License {
   spdx?: string;
-  source?: 'github-detected' | 'frontmatter';
+  source?: 'github-detected' | 'frontmatter' | 'license-file';
   class: LicenseClass;
+}
+
+// LICENSE-MIT, COPYING.LESSER or UNLICENSE count; a file such as license.js is code, not a license.
+const licenseFileName = /^((un)?licen[cs]e(-[a-z0-9.]+)?|copying(\.lesser)?)(\.(md|markdown|txt|rst|html))?$/i;
+
+/** Whether a folder listing holds a license file. */
+export function holdsLicenseFile(entries: readonly { name: string; type: string }[] | undefined): boolean {
+  return entries?.some(({ name, type }) => type === 'blob' && licenseFileName.test(name)) ?? false;
 }
 
 function classOf(id: string): LicenseClass {
@@ -94,15 +102,19 @@ function classOf(id: string): LicenseClass {
 }
 
 /**
- * The item's license: a frontmatter value first, else GitHub's detected one.
+ * The item's license: a frontmatter value first, else GitHub's detected one, else a license file in the item's folder.
  * A frontmatter value that is no SPDX id, such as a sentence, states terms of its own: class `none` without its text.
+ * A license file in the item's folder is not named, as GitHub detects licenses at the repository root only.
  */
-export function licenseOf(detected: string | undefined, declared?: string): License {
+export function licenseOf(
+  detected: string | undefined,
+  { declared, folderLicenseFile = false }: { declared?: string | undefined; folderLicenseFile?: boolean } = {},
+): License {
   if (declared !== undefined)
     return spdxId.safeParse(declared).success
       ? { spdx: declared, source: 'frontmatter', class: classOf(declared) }
       : { source: 'frontmatter', class: 'none' };
-  if (detected === undefined) return { class: 'none' };
+  if (detected === undefined) return folderLicenseFile ? { source: 'license-file', class: 'none' } : { class: 'none' };
   // NOASSERTION: GitHub found a license file it could not name.
   if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
   return { spdx: detected, source: 'github-detected', class: classOf(detected) };

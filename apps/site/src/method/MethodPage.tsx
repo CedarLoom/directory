@@ -11,20 +11,40 @@ import { rubrics } from './rubrics.ts';
 const sourceLabels: Readonly<Record<string, MessageDescriptor>> = {
   'official-marketplace': msg({
     id: 'source.official-marketplace',
-    message: 'The official Claude Code plugin marketplace (anthropics/claude-plugins-official)',
+    message: 'The official Claude Code plugin marketplace',
   }),
-  'community-marketplace': msg({
-    id: 'source.community-marketplace',
-    message: 'The community plugin marketplace (anthropics/claude-plugins-community)',
-  }),
+  'community-marketplace': msg({ id: 'source.community-marketplace', message: 'The community plugin marketplace' }),
   'anthropic-marketplaces': msg({
     id: 'source.anthropic-marketplaces',
-    message: 'The marketplaces in anthropics/skills and anthropics/knowledge-work-plugins',
+    message: 'The marketplaces of two more Anthropic repositories',
   }),
   github: msg({ id: 'source.github', message: 'GitHub: repository facts, stars and a search by topic' }),
   'mcp-registry': msg({ id: 'source.mcp-registry', message: 'The MCP Registry' }),
   seeds: msg({ id: 'source.seeds', message: 'A curated list of repositories' }),
 };
+
+// The repositories behind each source, by GitHub owner and name.
+const sourceRepositories: Readonly<Record<string, readonly string[]>> = {
+  'official-marketplace': ['anthropics/claude-plugins-official'],
+  'community-marketplace': ['anthropics/claude-plugins-community'],
+  'anthropic-marketplaces': ['anthropics/skills', 'anthropics/knowledge-work-plugins'],
+  'mcp-registry': ['modelcontextprotocol/registry'],
+};
+
+function RepositoryLinks({ repositories }: { repositories: readonly string[] }) {
+  return (
+    <>
+      {' ('}
+      {repositories.map((repository, index) => (
+        <span key={repository}>
+          {index > 0 && ', '}
+          <ExternalLink href={`https://github.com/${repository}`}>{repository}</ExternalLink>
+        </span>
+      ))}
+      {')'}
+    </>
+  );
+}
 
 function Sources({ meta }: { meta: MetaFile }) {
   const { i18n } = useLingui();
@@ -38,11 +58,13 @@ function Sources({ meta }: { meta: MetaFile }) {
           const label = sourceLabels[source.id];
           const readAt = i18n.date(source.readAt, { dateStyle: 'long', timeZone: 'UTC' });
           const name = label === undefined ? source.id : i18n._(label);
+          const repositories = sourceRepositories[source.id];
           return (
             <List.Item key={source.id}>
               <Trans id="method.sourceRead">
                 {name}, read {readAt}
               </Trans>
+              {repositories !== undefined && <RepositoryLinks repositories={repositories} />}
             </List.Item>
           );
         })}
@@ -76,6 +98,41 @@ function NotMeasured() {
         </List.Item>
         <List.Item>
           <Trans id="method.notMeasured.tokens">Token counts are estimates: characters divided by four.</Trans>
+        </List.Item>
+      </List>
+    </section>
+  );
+}
+
+function OwnInterest() {
+  return (
+    <section aria-labelledby="own-interest-heading">
+      <Title order={2} id="own-interest-heading">
+        <Trans id="method.ownInterestHeading">Who runs the Directory</Trans>
+      </Title>
+      <List>
+        <List.Item>
+          <Trans id="method.ownInterest.maker">
+            The Directory is run by the maker of CedarLoom. CedarLoom is its maker's own Claude Code plugin, so the
+            maker has an interest of its own in how other items compare with it.
+          </Trans>
+        </List.Item>
+        <List.Item>
+          <Trans id="method.ownInterest.sameRubric">
+            Every item of a kind is scored with the same published rubric. No entry, score or position is paid for.
+          </Trans>
+        </List.Item>
+        <List.Item>
+          <Trans id="method.ownInterest.fit">
+            The CedarLoom fit fact on item pages and in the list is not part of the score. It reads "Not assessed" for
+            every item today.
+          </Trans>
+        </List.Item>
+        <List.Item>
+          <Trans id="method.ownInterest.ownItems">
+            Items of CedarLoom's maker get no exception: they are read from the same sources and scored with the same
+            rubric as every other item, and no score is set by hand.
+          </Trans>
         </List.Item>
       </List>
     </section>
@@ -127,6 +184,14 @@ export function MethodPage({ meta }: { meta: MetaFile }) {
         <Title order={2} id="rubrics-heading">
           <Trans id="method.rubricsHeading">Rubrics</Trans>
         </Title>
+        <Text>
+          <Trans id="method.licenseFacts">
+            The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the
+            repository root, else a license file in a skill's or plugin's own folder. A field that holds no SPDX id and
+            a license file in the item's folder are recorded without an SPDX id. "No license detected" means that none
+            of these was found, not that the item has no license.
+          </Trans>
+        </Text>
         <Stack gap="md">
           {rubrics.map((rubric) => (
             <RubricTable key={rubric.kind} rubric={rubric} />
@@ -134,6 +199,7 @@ export function MethodPage({ meta }: { meta: MetaFile }) {
         </Stack>
       </section>
       <NotMeasured />
+      <OwnInterest />
       <Policies />
     </Stack>
   );

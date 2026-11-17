@@ -59,6 +59,11 @@ The repository is meant to go public, so everything written into it is public te
 
 The product is the CedarLoom Directory, code name `directory`. Use "Directory" in names and text; never call it an extension index, database, catalog or registry.
 
+## Curation
+
+- The Directory lists items, not people or organizations: no page, total or ranking per owner.
+- Records hold no contact data: no email address, phone number or postal address of an owner or author.
+
 ## Gates while the repository is private
 
 On GitHub Free a private repository gets no CodeQL, dependency review or Scorecard. Until the repository is public, these substitutes run in `pnpm run check` and CI:

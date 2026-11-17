@@ -815,7 +815,8 @@
           "enum": [
             "github-detected",
             "manifest",
-            "frontmatter"
+            "frontmatter",
+            "license-file"
           ]
         },
         "class": {
