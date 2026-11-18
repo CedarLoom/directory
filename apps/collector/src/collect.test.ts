@@ -692,6 +692,21 @@ it('records a root license file GitHub cannot name or does not detect by its tex
   ]);
 });
 
+it('keeps a root license file GitHub cannot name unnamed beside another file GitHub reads for the license', async () => {
+  const world = fakeWorld();
+  const others = ['PATENTS', 'COPYRIGHT', 'LICENSE-COMMERCIAL.md', 'OFL.txt', 'LICENSES/MIT.txt'];
+  for (const [index, other] of others.entries()) {
+    const repository = repositoryOf(world, `example-org/plugin-${index + 4}`);
+    repository.license = 'NOASSERTION';
+    repository.files['LICENSE'] = isc;
+    repository.files[other] = marker;
+  }
+  const { files } = await run(world, '2026-11-16');
+  expect(
+    others.map((_other, index) => recordLicense(files, `records/plugin/gh.example-org.plugin-${index + 4}.json`)),
+  ).toEqual(others.map(() => ({ source: 'github-detected', class: 'none' })));
+});
+
 it('writes records, popularity files and the index, and no third-party text', async () => {
   const { files } = await run(fakeWorld(), '2026-11-16');
   const paths = [...files.keys()];

@@ -45,14 +45,34 @@ function uncommented(raw: string, template: boolean): string {
   return marks + line.slice(marks.length).replace(commentMark, '').trim();
 }
 
-// A notice wrapped onto a second line: the two lines, read as one, must still be a notice without terms. A period that
-// ends the first line, as in "Inc.", does not end the notice.
-const continuesNotice = (notice: string, bare: string) =>
-  notice !== '' && bare !== '' && isNotice(`${notice.replace(/\.$/, '')} ${bare}`);
+// A notice line that goes on: it ends with a comma or a joining word.
+const openEnd = /(?:,|&|\b(?:and|the|of))$/i;
+const companyAbbreviation = /\b(?:inc|corp|ltd|co)\.$/i;
+// A name or an address, as in "Mountain View, California": each word of its first sentence opens with a capital or a digit.
+const isNameLine = (line: string) =>
+  (line.split(sentenceBreak)[0]?.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => /^[\p{Lu}\p{N}]/u.test(word));
+
+// A notice wrapped onto a second line: the first line goes on, or it ends with a company abbreviation such as "Inc." or
+// the second opens with a digit and the second is a name or an address; and the two lines, read as one, are still a
+// notice without terms. Any other line after a notice is a sentence of its own.
+function continuesNotice(notice: string, next: string): boolean {
+  if (notice === '' || next === '') return false;
+  const abbreviated = companyAbbreviation.test(notice);
+  const goesOn = openEnd.test(notice) || ((abbreviated || /^\d/.test(next)) && isNameLine(next));
+  return goesOn && isNotice(`${abbreviated ? notice.slice(0, -1) : notice} ${next}`);
+}
 
 // Each part of a template line between its own optional marks becomes optional, so that its optional parts stay balanced.
 const optionalLine = (line: string) =>
   line.replace(/(?:(?!<<(?:begin|end)Optional>>).)+/g, (part) => `<<beginOptional>>${part}<<endOptional>>`);
+
+// A template line with its variable parts as placeholders, as an unfilled notice has them, and as a license states it,
+// with each part's original, which tells whether a notice goes on.
+function templateReadings(line: string): [bare: string, stated: string] {
+  const unmarked = line.replace(optionalMark, '');
+  const stated = unmarked.replace(templateToken, (_token, original = '') => original);
+  return [unmarked.replace(templateToken, '[X]'), stated.replace(/\s+/g, ' ').trim()];
+}
 
 function textLines(text: string, template: boolean): string[] {
   let notice = '';
@@ -61,11 +81,10 @@ function textLines(text: string, template: boolean): string[] {
     .split(/\r\n?|\n/)
     .map((raw) => {
       const line = uncommented(raw, template);
-      // A template's variable part reads as a placeholder, as an unfilled notice has.
-      const bare = template ? line.replace(optionalMark, '').replace(templateToken, '[X]') : line;
+      const [bare, stated] = template ? templateReadings(line) : [line, line];
       const own = isNotice(bare);
-      const continues = !own && continuesNotice(notice, bare);
-      notice = own ? bare : '';
+      const continues = !own && continuesNotice(notice, stated);
+      notice = own ? stated : '';
       if (!own && !continues && !rule.test(bare)) return line;
       if (!template) return '';
       // A text may set the line a notice wraps onto apart from it with a blank line, so a template keeps it as optional.

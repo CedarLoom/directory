@@ -206,6 +206,33 @@ export function licenseFileNames(entries: readonly { name: string; type: string 
   return entries?.filter(({ name, type }) => type === 'blob' && isLicenseFileName(name)).map(({ name }) => name) ?? [];
 }
 
+// The file names GitHub's license detection reads at a repository root: `FILENAME_REGEXES` with a score above 0 in
+// https://github.com/licensee/licensee/blob/main/lib/licensee/project_files/license_file.rb
+const anyExtension = String.raw`\.(?:[^./]|\.\d)+`;
+const otherExtension = String.raw`\.(?!xml|sh|go|gemspec)(?:[^./]|\.\d)+`;
+const detectedLicenseFileName = new RegExp(
+  [
+    String.raw`^(?:un)?licen[sc]e(?:\.(?!spdx|header)(?:[^./]|\.\d)+)?$`,
+    `^copying(?:${anyExtension})?$`,
+    `^(?:(?:un)?licen[sc]e|copying|copyright)[-_][^.]*(?:${otherExtension})?$`,
+    String.raw`^[\p{L}\p{N}_]+[-_](?:(?:un)?licen[sc]e|copying)[^.]*(?:${otherExtension})?$`,
+    `^(?:ofl|copyright|patents)(?:${otherExtension})?$`,
+  ].join('|'),
+  'iu',
+);
+
+/** The files of a repository root listing that GitHub's license detection reads, and its LICENSES folder. */
+export function detectedLicenseFileNames(entries: readonly { name: string; type: string }[] | undefined): string[] {
+  return (
+    entries
+      ?.filter(
+        ({ name, type }) =>
+          (type === 'blob' && detectedLicenseFileName.test(name)) || (type === 'tree' && name === 'LICENSES'),
+      )
+      .map(({ name }) => name) ?? []
+  );
+}
+
 function knownClass(id: string): LicenseClass | undefined {
   // GPL-3.0-only and GPL-3.0-or-later share the class of GitHub's GPL-3.0.
   return classes[id.replace(onlyOrLater, '')];

@@ -8,7 +8,7 @@ import type { HttpClient } from './http-client.ts';
 import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
-import { licenseFileNames, UnknownLicenseError } from './license-class.ts';
+import { detectedLicenseFileNames, licenseFileNames, UnknownLicenseError } from './license-class.ts';
 import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
 import { manifestLicense } from './plugin-analyzer.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
@@ -205,10 +205,14 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
   return { inspections, found };
 }
 
-/** What a record is built from, and the license files in the item's own folder. */
+/**
+ * What a record is built from, the license files in the item's own folder and the files of that folder GitHub's license
+ * detection reads at a repository root.
+ */
 interface Unbuilt {
   input: RecordInput;
   licenseFiles: readonly string[];
+  detectedLicenseFiles: readonly string[];
 }
 
 /**
@@ -227,10 +231,14 @@ async function buildRecords(
     const { location } = item.input.candidate;
     const [file, ...others] = item.licenseFiles;
     const { license } = record.value;
-    // GitHub's NOASSERTION is the only detected license without an SPDX id.
+    // GitHub's NOASSERTION is the only detected license without an SPDX id. It may come from another file GitHub reads,
+    // such as PATENTS, so the one license file names the root only when it is the only file GitHub reads there.
     const decides =
       license.source === 'license-file' ||
-      (location.path === '' && license.source === 'github-detected' && license.spdx === undefined);
+      (location.path === '' &&
+        license.source === 'github-detected' &&
+        license.spdx === undefined &&
+        item.detectedLicenseFiles.length === 1);
     return decides && file !== undefined && others.length === 0 ? [{ index, input: item.input, location, file }] : [];
   });
   const reads = await readItemFiles(client, targets, false);
@@ -263,6 +271,7 @@ function pluginReader(reading: Reading, found: Candidate[]) {
       return {
         input: { kind: 'plugin', candidate, facts, inspection, source },
         licenseFiles: licenseFileNames(inspection.directories.root),
+        detectedLicenseFiles: detectedLicenseFileNames(inspection.directories.root),
       };
     });
     return buildRecords(reading, unbuilt);
@@ -281,13 +290,14 @@ function fileInput(
   }
   const text = read?.file.text;
   if (read === undefined || text === undefined) return undefined;
-  const { folders, tests, licenseFiles } = read;
+  const { folders, tests, licenseFiles, detectedLicenseFiles } = read;
   return {
     input:
       kind === 'skill'
         ? { kind, candidate, facts, text, folders, tests, licenseFile: licenseFiles.length > 0 }
         : { kind, candidate, facts, text },
     licenseFiles,
+    detectedLicenseFiles,
   };
 }
 

@@ -54,6 +54,20 @@ it('names a license whose copyright notice wraps onto a second line, unless that
   ]).toEqual(['MIT', 'MIT', 'MIT', 'MIT', undefined, undefined]);
 });
 
+it('names no license for a sentence of terms on the line after a copyright notice', () => {
+  const gpl = templateLicenseText(templates['GPL-2.0']);
+  expect([
+    ...[
+      'Copyright (c) 2024 Jane Doe\nFor personal and educational use',
+      'Copyright (c) 2024 Jane Doe.\nAuthor liability is unlimited',
+      'Copyright (c) 2024 Jane Doe\nUse is subject to the terms at example.com/terms',
+      'Copyright (c) 2024 Jane Doe\nNo use by companies with more than ten employees',
+      'Copyright (c) 2024 Jane Doe\nAI training is banned',
+    ].map((notice) => licenseTextId(mit(notice))),
+    licenseTextId(gpl.replace(/^51 Franklin Street.*$/m, 'For personal and educational use')),
+  ]).toEqual(Array.from({ length: 6 }, () => undefined));
+});
+
 it('names GPL-2.0 when a blank line sets its address apart from its copyright line', () => {
   const text = templateLicenseText(templates['GPL-2.0']).replace('Inc. \n51 Franklin', 'Inc.\n\n51 Franklin');
   expect(licenseTextId(text)).toBe('GPL-2.0');
