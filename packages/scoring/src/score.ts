@@ -115,10 +115,10 @@ export function score(record: Scorable, rubric: Rubric, now: string): Score {
   const archived = record.maintenance?.archived === true;
   const parts = rubric.signals.map((signal) => {
     const context = { record, rubric, signal, now: time };
+    if (archived && signal.group === 'maintenance') return { signal: signal.id, points: 0, max: signal.max };
     const gate = closedGate(context);
     if (gate !== undefined) return { signal: signal.id, points: 0, max: signal.max, closedGate: gate };
-    const share = archived && signal.group === 'maintenance' ? 0 : shareOf(signal.scale, context);
-    return { signal: signal.id, points: hundredths(signal.max * share), max: signal.max };
+    return { signal: signal.id, points: hundredths(signal.max * shareOf(signal.scale, context)), max: signal.max };
   });
   return {
     rubric: { kind: rubric.kind, version: rubric.version },
