@@ -209,7 +209,7 @@ function manifestFields(plugin: z.infer<typeof manifest>, versioned: boolean): n
 }
 
 const licenseField = (value: unknown): string | undefined => text.safeParse(value).data;
-const manifestObject = jsonText.pipe(z.object({ license: z.unknown().optional() }));
+const manifestObject = jsonText.pipe(manifest.pick({ license: true }));
 
 /**
  * The license field of a plugin manifest, for the items the plugin holds, or `invalid` for a manifest that is no JSON

@@ -421,9 +421,11 @@ async function topicItems(
     const inspection = inspections[index];
     if (typeof inspection !== 'object' || inspection.files.manifest === undefined) continue;
     const id = repositoryId(location);
+    plugins.add(id);
+    // A listed plugin at the repository root keeps its own location and pin, whose manifest its reading records.
+    if (locations.has(id)) continue;
     locations.set(id, location);
     licenses.set(id, manifestLicense(inspection.files.manifest));
-    plugins.add(id);
   }
   for (const candidate of found) {
     const id = candidate.location === undefined ? undefined : repositoryId(candidate.location);
