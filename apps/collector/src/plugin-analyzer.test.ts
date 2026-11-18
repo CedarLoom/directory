@@ -134,20 +134,23 @@ it('counts only the command map entries that give exactly one of a text or a sou
     ).components.commands,
   ).toBe(2));
 
-it('reads no manifest path that is absolute or leaves the plugin folder', () =>
+it('reads only manifest paths inside the plugin folder below a root entry it holds', () =>
   expect(
-    componentTargets(
-      JSON.stringify({
-        commands: '../other-plugin/commands',
-        agents: ['/etc/agents', './team/../crew'],
-        hooks: ['./config/hooks.json', '../hooks.json'],
-        mcpServers: './.mcp.json',
-      }),
-    ),
-  ).toEqual({
-    folders: ['skills', 'crew', 'output-styles', 'themes', 'workflows'],
-    texts: ['config/hooks.json'],
-  }));
+    componentTargets({
+      directories: {
+        root: ['skills', 'crew', 'config', 'themes', 'hooks'].map((name) => ({ name, type: 'tree' as const })),
+      },
+      files: {
+        manifest: JSON.stringify({
+          commands: '../other-plugin/commands',
+          agents: ['/etc/agents', './team/../crew', './missing'],
+          hooks: ['./config/hooks.json', '../hooks.json', './extra/hooks.json'],
+          mcpServers: './.mcp.json',
+          workflows: './',
+        }),
+      },
+    }),
+  ).toEqual({ folders: ['skills', 'crew', 'themes', ''], texts: ['config/hooks.json'] }));
 
 it('reads hooks, MCP servers and LSP servers inline and at the paths of a manifest list', () => {
   const plugin = analyzeManifest(

@@ -1,9 +1,11 @@
+import { filePaths } from './repository-tree.ts';
+
 /** The default configuration files of a plugin's hooks, MCP servers, LSP servers and monitors. */
-export const configFiles = {
-  hooks: 'hooks/hooks.json',
-  mcpServers: '.mcp.json',
-  lspServers: '.lsp.json',
-  monitors: 'monitors/monitors.json',
+const configFiles = {
+  hooks: filePaths.hooks,
+  mcpServers: filePaths.mcp,
+  lspServers: filePaths.lsp,
+  monitors: filePaths.monitors,
 } as const;
 
 const folders = {

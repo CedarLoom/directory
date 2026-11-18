@@ -359,7 +359,7 @@ function pluginReader(reading: Reading, found: Candidate[]) {
       batch.map(({ candidate: { location, source } }, index) => {
         const inspection = inspected.inspections[index];
         const read = typeof inspection === 'object' && source !== undefined;
-        return { location, ...(read ? componentTargets(inspection.files.manifest) : { folders: [], texts: [] }) };
+        return { location, ...(read ? componentTargets(inspection) : { folders: [], texts: [] }) };
       }),
     );
     const unbuilt = batch.map(({ candidate, facts }, index): Unbuilt | 'refused' | undefined => {

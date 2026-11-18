@@ -42,7 +42,9 @@ const folderAnswer = z.object({ path: z.object({ entries: z.array(treeEntry).opt
 const textAnswer = z.object({ path: blob }).nullable();
 
 const folderFragment = (depth: number): string =>
-  depth === 0 ? '' : `entries { name type object { ... on Tree { ${folderFragment(depth - 1)} } } }`;
+  depth === 1
+    ? 'entries { name type }'
+    : `entries { name type object { ... on Tree { ${folderFragment(depth - 1)} } } }`;
 
 function blobPaths(entries: readonly TreeEntry[], prefix: string): string[] {
   return entries.flatMap(({ name, type, object }) => {

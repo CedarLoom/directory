@@ -8,12 +8,12 @@ import {
   hookModules,
   inlineHookEvents,
 } from './hook-analyzer.ts';
-import { componentLocations, configFiles, isObject, pluginPath } from './component-locations.ts';
+import { componentLocations, isObject, pluginPath } from './component-locations.ts';
 import type { ComponentReads } from './component-reads.ts';
 import { jsonText } from './json-text.ts';
 import { isLicenseValue } from './license-class.ts';
 import { unpinnedPackage } from './package-pin.ts';
-import type { Entry, Inspection } from './repository-tree.ts';
+import { type Entry, type Inspection, filePaths } from './repository-tree.ts';
 
 const userConfig = z
   .record(z.string(), z.object({ sensitive: z.boolean().optional(), default: z.unknown().optional() }))
@@ -217,31 +217,36 @@ function readManifest(file: string | undefined): z.infer<typeof manifest> {
   return manifest.parse(file === undefined ? {} : jsonText.parse(file));
 }
 
+const layoutPaths: ReadonlySet<string> = new Set(Object.values(filePaths));
+
 /**
- * The component folders and the configuration files beyond the layout files that the manifest names; a manifest that is
- * no JSON object names none, as it refuses the plugin's record.
+ * The component folders and the configuration files beyond the layout files that the manifest names and the plugin's
+ * root holds; a manifest that is no JSON object names none, as it refuses the plugin's record.
  */
-export function componentTargets(file: string | undefined): { folders: string[]; texts: string[] } {
-  const parsed = file === undefined ? manifest.safeParse({}) : jsonText.pipe(manifest).safeParse(file);
+export function componentTargets({ directories, files }: Inspection): { folders: string[]; texts: string[] } {
+  const parsed =
+    files.manifest === undefined ? manifest.safeParse({}) : jsonText.pipe(manifest).safeParse(files.manifest);
   if (!parsed.success) return { folders: [], texts: [] };
   const { folders, configs } = componentLocations(
     parsed.data,
     experimental.safeParse(parsed.data.experimental).data ?? {},
   );
-  const layout = new Set<string>(Object.values(configFiles));
+  // A path below a root entry the listing lacks is missing, so it costs no read.
+  const rootNames = new Set(directories.root?.map((entry) => entry.name));
+  const held = (path: string) => path === '' || rootNames.has(path.split('/')[0] ?? '');
   return {
-    folders: [...new Set(Object.values(folders).flat())],
-    texts: [...new Set(Object.values(configs).flat())].filter((path) => !layout.has(path)),
+    folders: [...new Set(Object.values(folders).flat())].filter(held),
+    texts: [...new Set(Object.values(configs).flat())].filter((path) => !layoutPaths.has(path) && held(path)),
   };
 }
 
 /** The text of each configuration file at the paths, of a layout file from the layout read. */
 function configTexts(files: Inspection['files'], reads: ComponentReads, paths: readonly string[]): string[] {
   const layout = new Map<string, string | undefined>([
-    [configFiles.hooks, files.hooks],
-    [configFiles.mcpServers, files.mcp],
-    [configFiles.lspServers, files.lsp],
-    [configFiles.monitors, files.monitors],
+    [filePaths.hooks, files.hooks],
+    [filePaths.mcp, files.mcp],
+    [filePaths.lsp, files.lsp],
+    [filePaths.monitors, files.monitors],
   ]);
   return paths.flatMap((path) => (layout.has(path) ? layout.get(path) : reads.texts.get(path)) ?? []);
 }
