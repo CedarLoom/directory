@@ -95,26 +95,28 @@ it('counts a root SKILL.md as the one skill of a plugin without a skills folder'
     ].map(({ components }) => components.skills),
   ).toEqual([1, 1]));
 
-it('counts only skill folders that hold SKILL.md, also a manifest path that is one skill', () =>
+it('counts only skill folders that hold SKILL.md, also a manifest path that is one skill, beside the skills folder', () =>
   expect(
     [
       analyzeManifest({}, holding({ skills: ['notes.md', 'lint/SKILL.md', 'docs/README.md', 'a/b/SKILL.md'] })),
       analyzeManifest({ skills: ['./review', './more/'] }, holding({ review: ['SKILL.md'], more: ['fix/SKILL.md'] })),
+      analyzeManifest({ skills: ['./extra'] }, holding({ skills: ['a/SKILL.md'], extra: ['b/SKILL.md'] })),
     ].map(({ components }) => components.skills),
-  ).toEqual([1, 2]));
+  ).toEqual([1, 2, 2]));
 
-it('counts commands and agents in subfolders and at manifest paths in place of the default folders', () => {
+it('counts commands in subfolders and at manifest paths, and agents at manifest paths of .md files, in place of the default folders', () => {
   const { components } = analyzeManifest(
-    { commands: ['./cmds', './extra/run.md'], agents: './team/' },
+    { commands: ['./cmds', './extra/run.md'], agents: ['./team/', './crew/lead.md'] },
     holding({
       commands: ['old.md'],
       agents: ['old.md'],
       cmds: ['deploy.md', 'git/commit.md', 'git/review/pr.md', 'README.txt'],
       'extra/run.md': ['run.md'],
       team: ['lead.md', 'qa/tester.md'],
+      'crew/lead.md': ['lead.md'],
     }),
   );
-  expect([components.commands, components.agents]).toEqual([4, 2]);
+  expect([components.commands, components.agents]).toEqual([4, 1]);
 });
 
 it('counts only the command map entries that give exactly one of a text or a source inside the plugin', () =>
@@ -142,15 +144,15 @@ it('reads only manifest paths inside the plugin folder below a root entry it hol
       },
       files: {
         manifest: JSON.stringify({
-          commands: '../other-plugin/commands',
-          agents: ['/etc/agents', './team/../crew', './missing'],
-          hooks: ['./config/hooks.json', '../hooks.json', './extra/hooks.json'],
+          commands: '../crew/commands',
+          agents: ['/crew/lead.md', './team/../crew/qa.md', './missing.md'],
+          hooks: ['./config/hooks.json', '../hooks/extra.json', './extra/hooks.json'],
           mcpServers: './.mcp.json',
           workflows: './',
         }),
       },
     }),
-  ).toEqual({ folders: ['skills', 'crew', 'themes', ''], texts: ['config/hooks.json'] }));
+  ).toEqual({ folders: ['skills', 'crew/qa.md', 'themes', ''], texts: ['config/hooks.json'] }));
 
 it('reads hooks, MCP servers and LSP servers inline and at the paths of a manifest list', () => {
   const plugin = analyzeManifest(

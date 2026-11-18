@@ -212,9 +212,14 @@ export function manifestLicense(
   return parsed === undefined ? 'invalid' : { license: pluginLicense(parsed.license, entryLicense) };
 }
 
-/** The manifest's keys; only a missing file is an empty manifest, so JSON null, like any non-object, throws. */
-function readManifest(file: string | undefined): z.infer<typeof manifest> {
-  return manifest.parse(file === undefined ? {} : jsonText.parse(file));
+/** The manifest's keys; only a missing file is an empty manifest, so JSON null, like any non-object, fails. */
+const readManifest = (file: string | undefined) =>
+  (file === undefined ? manifest : jsonText.pipe(manifest)).safeParse(file ?? {});
+
+/** The manifest's experimental values and the component locations it names. */
+function manifestLocations(plugin: z.infer<typeof manifest>) {
+  const experimentalValues = experimental.safeParse(plugin.experimental).data ?? {};
+  return { experimentalValues, ...componentLocations(plugin, experimentalValues) };
 }
 
 const layoutPaths: ReadonlySet<string> = new Set(Object.values(filePaths));
@@ -224,13 +229,9 @@ const layoutPaths: ReadonlySet<string> = new Set(Object.values(filePaths));
  * root holds; a manifest that is no JSON object names none, as it refuses the plugin's record.
  */
 export function componentTargets({ directories, files }: Inspection): { folders: string[]; texts: string[] } {
-  const parsed =
-    files.manifest === undefined ? manifest.safeParse({}) : jsonText.pipe(manifest).safeParse(files.manifest);
+  const parsed = readManifest(files.manifest);
   if (!parsed.success) return { folders: [], texts: [] };
-  const { folders, configs } = componentLocations(
-    parsed.data,
-    experimental.safeParse(parsed.data.experimental).data ?? {},
-  );
+  const { folders, configs } = manifestLocations(parsed.data);
   // A path below a root entry the listing lacks is missing, so it costs no read.
   const rootNames = new Set(directories.root?.map((entry) => entry.name));
   const held = (path: string) => path === '' || rootNames.has(path.split('/')[0] ?? '');
@@ -256,10 +257,12 @@ function configTexts(files: Inspection['files'], reads: ComponentReads, paths: r
  * marketplace entry when plugin.json states none.
  */
 export function analyzePlugin({ directories, files }: Inspection, reads: ComponentReads, entryLicense?: string) {
-  const plugin = readManifest(files.manifest);
+  const read = readManifest(files.manifest);
+  // A manifest that is no JSON object throws, so the plugin gets no record.
+  if (!read.success) throw read.error;
+  const plugin = read.data;
   const version = versionLabel.safeParse(plugin.version);
-  const experimentalValues = experimental.safeParse(plugin.experimental).data ?? {};
-  const { folders, configs } = componentLocations(plugin, experimentalValues);
+  const { experimentalValues, folders, configs } = manifestLocations(plugin);
   const texts = (paths: readonly string[]) => configTexts(files, reads, paths);
   const hookFiles = texts(configs.hooks);
   const inlineHooks = inline(plugin.hooks);

@@ -73,9 +73,9 @@ export const isObject = (value: unknown): value is object =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
- * Where each kind of component lives. Paths for skills, commands, agents, output styles, themes, workflows and
- * monitors replace the default location; hooks, MCP and LSP files add to the default file. A `commands` object map
- * holds its commands itself.
+ * Where each kind of component lives. Paths for commands, agents, output styles, themes, workflows and monitors
+ * replace the default location; skill folders and hooks, MCP and LSP files add to the default one. A `commands` object
+ * map holds its commands itself, and an `agents` path names an agent file, never a folder.
  */
 export function componentLocations(
   fields: LocationFields,
@@ -83,9 +83,12 @@ export function componentLocations(
 ): ComponentLocations {
   return {
     folders: {
-      skills: replacing([fields.skills], folders.skills),
+      skills: namedPaths([folders.skills, fields.skills]),
       commands: isObject(fields.commands) ? [] : replacing([fields.commands], folders.commands),
-      agents: replacing([fields.agents], folders.agents),
+      agents:
+        fields.agents === undefined
+          ? [folders.agents]
+          : namedPaths([fields.agents]).filter((path) => path.endsWith('.md')),
       outputStyles: replacing([fields.outputStyles], folders.outputStyles),
       themes: replacing([fields.themes, experimental.themes], folders.themes),
       workflows: replacing([fields.workflows], folders.workflows),

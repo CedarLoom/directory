@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { queryEach } from './github-graphql.ts';
 import type { GitHubLocation } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
-import { blob, expression, fileRead } from './repository-tree.ts';
+import { readItemFiles } from './item-files.ts';
+import { expression } from './repository-tree.ts';
 
 // Third-party file text stays in memory: it is parsed for facts and never written.
 
@@ -39,7 +40,6 @@ const treeEntry: z.ZodType<TreeEntry> = z.object({
 });
 // A blob read without fields is an empty object; a missing path is null.
 const folderAnswer = z.object({ path: z.object({ entries: z.array(treeEntry).optional() }).nullable() }).nullable();
-const textAnswer = z.object({ path: blob }).nullable();
 
 const folderFragment = (depth: number): string =>
   depth === 1
@@ -55,14 +55,13 @@ function blobPaths(entries: readonly TreeEntry[], prefix: string): string[] {
 
 type Target = { location: GitHubLocation; path: string };
 
-function read(client: HttpClient, targets: readonly Target[], text: boolean): Promise<unknown[]> {
-  // Three levels hold a command or agent two subfolders down and a skill folder's SKILL.md.
-  const selection = text ? '... on Blob { text isTruncated }' : `... on Tree { ${folderFragment(3)} }`;
+function readFolders(client: HttpClient, targets: readonly Target[]): Promise<unknown[]> {
   return queryEach(client, targets, {
-    name: text ? 'ComponentFiles' : 'ComponentFolders',
+    name: 'ComponentFolders',
     variables: { owner: 'String!', name: 'String!', path: 'String!' },
+    // Three levels hold a command or agent two subfolders down and a skill folder's SKILL.md.
     field: (variable) =>
-      `repository(owner: ${variable('owner')}, name: ${variable('name')}) { path: object(expression: ${variable('path')}) { ${selection} } }`,
+      `repository(owner: ${variable('owner')}, name: ${variable('name')}) { path: object(expression: ${variable('path')}) { ... on Tree { ${folderFragment(3)} } } }`,
     values: ({ location, path }) => ({ owner: location.owner, name: location.repo, path: expression(location, path) }),
     fragments: '',
     batchSize: 25,
@@ -80,7 +79,14 @@ export async function readComponents(
   const flat = (key: 'folders' | 'texts') =>
     plugins.flatMap(({ location, ...paths }, plugin) => paths[key].map((path) => ({ plugin, location, path })));
   const [folderTargets, textTargets] = [flat('folders'), flat('texts')];
-  const [folders, texts] = await Promise.all([read(client, folderTargets, false), read(client, textTargets, true)]);
+  const [folders, texts] = await Promise.all([
+    readFolders(client, folderTargets),
+    readItemFiles(
+      client,
+      textTargets.map(({ location, path }) => ({ location, file: path })),
+      false,
+    ),
+  ]);
   const reads = plugins.map(() => ({ files: new Map<string, string[]>(), texts: new Map<string, string>() }));
   const tooLarge = new Set<number>();
   for (const [index, { plugin, path }] of folderTargets.entries()) {
@@ -88,9 +94,9 @@ export async function readComponents(
     if (files !== undefined) reads[plugin]?.files.set(path, files);
   }
   for (const [index, { plugin, path }] of textTargets.entries()) {
-    const file = fileRead(textAnswer.parse(texts[index])?.path);
+    const file = texts[index]?.file;
     if (file === 'too-large') tooLarge.add(plugin);
-    else if (file.text !== undefined) reads[plugin]?.texts.set(path, file.text);
+    else if (file?.text !== undefined) reads[plugin]?.texts.set(path, file.text);
   }
   return reads.map((own, plugin) => (tooLarge.has(plugin) ? 'too-large' : own));
 }

@@ -161,8 +161,8 @@ function fakeWorld() {
 
 type World = ReadonlyMap<string, FakeRepository>;
 
-/** A Git object as GraphQL returns it for `<ref>:<path>`: a blob with its text or a tree two levels deep. */
-function gitObject(repository: FakeRepository, expression: string, depth = 2): unknown {
+/** A Git object as GraphQL returns it for `<ref>:<path>`: a blob with its text or a tree `depth` levels deep. */
+function gitObject(repository: FakeRepository, expression: string, depth: number): unknown {
   const [ref, path] = [expression.slice(0, expression.indexOf(':')), expression.slice(expression.indexOf(':') + 1)];
   const text = (ref === 'HEAD' ? undefined : repository.pinned?.[path]) ?? repository.files[path];
   if (text !== undefined) return { text };
@@ -176,10 +176,20 @@ function gitObject(repository: FakeRepository, expression: string, depth = 2): u
   return {
     entries: [...names].map((name) => {
       const type = repository.files[`${prefix}${name}`] === undefined ? 'tree' : 'blob';
-      const object = depth > 1 ? gitObject(repository, `HEAD:${prefix}${name}`, depth - 1) : {};
-      return { name, type, object: type === 'tree' ? object : {} };
+      if (depth === 1) return { name, type };
+      return { name, type, object: type === 'tree' ? gitObject(repository, `HEAD:${prefix}${name}`, depth - 1) : {} };
     }),
   };
+}
+
+const entrySelections = (text: string) => text.split('entries').length - 1;
+
+/** How many folder levels a query lists: the `entries` selections of its first alias and of its fragments. */
+function listingDepth(query: string): number {
+  const fragmentsAt = query.indexOf(' fragment ');
+  const fields = fragmentsAt === -1 ? query : query.slice(0, fragmentsAt);
+  const fragments = fragmentsAt === -1 ? '' : query.slice(fragmentsAt);
+  return entrySelections(fields.split(' a1: ')[0] ?? '') + entrySelections(fragments);
 }
 
 function facts(repository: FakeRepository) {
@@ -199,6 +209,8 @@ function graphql(world: World, body: string): unknown {
   const { query, variables } = z
     .object({ query: z.string(), variables: z.record(z.string(), z.string()) })
     .parse(JSON.parse(body));
+  // GitHub refuses a selection set without a field as invalid GraphQL.
+  if (/\{\s*\}/.test(query)) return { errors: [{ type: 'PARSE_ERROR' }] };
   const data: Record<string, unknown> = {};
   for (let index = 0; `owner${index}` in variables; index += 1) {
     const repository = world.get(`${variables[`owner${index}`]}/${variables[`name${index}`]}`);
@@ -209,7 +221,10 @@ function graphql(world: World, body: string): unknown {
       repository === undefined || query.startsWith('query Facts')
         ? repository && facts(repository)
         : Object.fromEntries(
-            own.map(([key, value]) => [key.slice(0, -String(index).length), gitObject(repository, value)]),
+            own.map(([key, value]) => [
+              key.slice(0, -String(index).length),
+              gitObject(repository, value, listingDepth(query)),
+            ]),
           );
   }
   return { data };
@@ -560,6 +575,7 @@ it('counts the components at the manifest paths of a plugin, also in subfolders 
   });
   Object.assign(files, {
     'cmds/git/commit.md': marker,
+    'cmds/git/review/pr.md': marker,
     'cmds/deploy.md': marker,
     'crew/lead.md': marker,
     'watch/monitors.json': JSON.stringify([{ name: 'deploys', command: 'watch.sh', description: marker }]),
@@ -572,7 +588,7 @@ it('counts the components at the manifest paths of a plugin, also in subfolders 
     })
     .parse(JSON.parse(written.get('records/plugin/gh.example-org.plugin-2.json') ?? '{}'));
   expect([record.components, record.flags.includes('monitor-background-command')]).toEqual([
-    { commands: 2, agents: 1, monitors: 1 },
+    { commands: 3, agents: 1, monitors: 1 },
     true,
   ]);
 });
