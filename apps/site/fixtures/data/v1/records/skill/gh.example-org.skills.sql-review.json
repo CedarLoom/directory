@@ -57,7 +57,7 @@
   "score": {
     "rubric": {
       "kind": "skill",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "total": 93.2,
     "parts": [
@@ -124,7 +124,7 @@
     ]
   },
   "provenance": ["github"],
-  "changedAt": "2026-11-09",
+  "changedAt": "2026-11-16",
   "frontmatterFields": ["name", "description", "license", "allowed-tools"],
   "bodyLines": 210,
   "tokens": {

@@ -15,7 +15,7 @@ msgstr "{0} (new rubric)"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: i18n._(kindPluralLabels[loaderData])
-#: src/routes/$kind/index.tsx:32
+#: src/routes/$kind/index.tsx:35
 msgid "kindList.title"
 msgstr "{0} | CedarLoom Directory"
 
@@ -28,7 +28,7 @@ msgstr "{0} | CedarLoom Directory"
 #. js-lingui-explicit-id
 #. placeholder {0}: shown.length
 #. placeholder {1}: rows.length
-#: src/list/ListPage.tsx:50
+#: src/list/ListPage.tsx:88
 msgid "list.count"
 msgstr "{0} of {1} items"
 
@@ -38,12 +38,17 @@ msgid "method.rubricHeading"
 msgstr "{kind}, rubric {version}"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:64
+#: src/method/MethodPage.tsx:63
 msgid "method.sourceRead"
 msgstr "{name}, read {readAt}"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:45
+#: src/item/ScoreBreakdown.tsx:39
+msgid "item.closedGate"
+msgstr "{name}: none, so the item counts as empty and gets no points for this signal."
+
+#. js-lingui-explicit-id
+#: src/item/ScoreBreakdown.tsx:56
 msgid "item.pointsOf"
 msgstr "{points} of {max}"
 
@@ -68,12 +73,12 @@ msgid "commits.5-or-more"
 msgstr "5 or more"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:229
+#: src/method/MethodPage.tsx:228
 msgid "method.intro"
 msgstr "A collector reads public sources once a week, records published facts about each item and scores it with the open rubric of its kind. The last run was on {runDate}. The CedarLoom Directory is not affiliated with or endorsed by Anthropic."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:23
+#: src/method/MethodPage.tsx:22
 msgid "source.seeds"
 msgstr "A curated list of repositories"
 
@@ -198,7 +203,7 @@ msgid "columns.label"
 msgstr "Columns"
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:62
+#: src/list/ListPage.tsx:100
 msgid "list.columns"
 msgstr "Columns"
 
@@ -273,7 +278,7 @@ msgid "group.evals"
 msgstr "Evals"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:127
+#: src/method/MethodPage.tsx:126
 msgid "method.ownInterest.sameRubric"
 msgstr "Every item of a kind is scored with the same published rubric. No entry, score or position is paid for."
 
@@ -283,7 +288,7 @@ msgid "signal.versionPinned"
 msgstr "Exact package versions"
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:56
+#: src/list/ListPage.tsx:94
 msgid "list.filters"
 msgstr "Filters"
 
@@ -303,7 +308,7 @@ msgid "licenseSource.github-detected"
 msgstr "GitHub at the repository root"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:21
+#: src/method/MethodPage.tsx:20
 msgid "source.github"
 msgstr "GitHub: repository facts, stars and a search by topic"
 
@@ -373,12 +378,12 @@ msgid "flag.unpinned-source"
 msgstr "Installs from a source not pinned to a commit or tag."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:138
+#: src/method/MethodPage.tsx:137
 msgid "method.ownInterest.ownItems"
 msgstr "Items of CedarLoom's maker get no exception: they are read from the same sources and scored with the same rubric as every other item, and no score is set by hand."
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:68
+#: src/list/ListPage.tsx:106
 msgid "list.caption"
 msgstr "Items, sorted by the chosen column"
 
@@ -448,7 +453,7 @@ msgid "item.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:152
+#: src/method/MethodPage.tsx:151
 msgid "method.policiesHeading"
 msgstr "License, corrections and removal"
 
@@ -523,12 +528,12 @@ msgid "kinds.mcp-server"
 msgstr "MCP servers"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:70
+#: src/item/ScoreBreakdown.tsx:81
 msgid "item.measured"
 msgstr "Measured"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:226
+#: src/method/MethodPage.tsx:225
 msgid "method.heading"
 msgstr "Method"
 
@@ -538,7 +543,7 @@ msgid "nav.method"
 msgstr "Method"
 
 #. js-lingui-explicit-id
-#: src/routes/method/index.tsx:7
+#: src/routes/method/index.tsx:12
 msgid "method.title"
 msgstr "Method | CedarLoom Directory"
 
@@ -669,7 +674,7 @@ msgid "filter.noFlags"
 msgstr "Only items without safety flags"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:167
+#: src/method/MethodPage.tsx:166
 msgid "method.openIssue"
 msgstr "Open an issue"
 
@@ -689,7 +694,7 @@ msgid "fit.overlaps"
 msgstr "Overlaps CedarLoom"
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:81
+#: src/list/ListPage.tsx:119
 msgid "list.page"
 msgstr "Page {item}"
 
@@ -704,7 +709,7 @@ msgid "kind.plugin"
 msgstr "Plugin"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:103
+#: src/method/MethodPage.tsx:102
 msgid "method.notMeasured.componentPaths"
 msgstr "Plugin components that the manifest names by path, commands or agents in subfolders, and themes and workflows: they are not counted and raise no flag, and only keep the plugin from counting as empty."
 
@@ -719,7 +724,7 @@ msgid "method.maxPoints"
 msgstr "Points"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:73
+#: src/item/ScoreBreakdown.tsx:84
 msgid "item.points"
 msgstr "Points"
 
@@ -729,7 +734,7 @@ msgid "item.popularity"
 msgstr "Popularity"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:95
+#: src/method/MethodPage.tsx:94
 msgid "method.notMeasured.stars"
 msgstr "Popularity: stars count for the whole repository, not for one item in it, and do not change the score."
 
@@ -764,7 +769,7 @@ msgid "item.historyRubric"
 msgstr "Rubric"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:178
+#: src/method/MethodPage.tsx:177
 msgid "method.rubricsHeading"
 msgstr "Rubrics"
 
@@ -819,7 +824,7 @@ msgid "item.historyTotal"
 msgstr "Score"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:61
+#: src/item/ScoreBreakdown.tsx:72
 msgid "item.scoreHeading"
 msgstr "Score {total} of 100, rubric {version}"
 
@@ -844,7 +849,7 @@ msgid "filter.q"
 msgstr "Search names, owners and tags"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:89
+#: src/method/MethodPage.tsx:88
 msgid "method.notMeasured.audit"
 msgstr "Security: safety flags point at patterns that need care; they are no audit, and an item without flags is not proven safe."
 
@@ -889,7 +894,7 @@ msgid "method.signal"
 msgstr "Signal"
 
 #. js-lingui-explicit-id
-#: src/item/ScoreBreakdown.tsx:67
+#: src/item/ScoreBreakdown.tsx:78
 msgid "item.signal"
 msgstr "Signal"
 
@@ -924,7 +929,7 @@ msgid "item.licenseSource"
 msgstr "Source: {licenseSource}"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:54
+#: src/method/MethodPage.tsx:53
 msgid "method.sourcesHeading"
 msgstr "Sources"
 
@@ -979,7 +984,7 @@ msgid "footer.affiliation"
 msgstr "The CedarLoom Directory is not affiliated with or endorsed by Anthropic."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:132
+#: src/method/MethodPage.tsx:131
 msgid "method.ownInterest.fit"
 msgstr "The CedarLoom fit fact on item pages and in the list is not part of the score. It reads \"Not assessed\" for every item today."
 
@@ -989,17 +994,17 @@ msgid "item.noFlags"
 msgstr "The collector raised no safety flag."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:16
+#: src/method/MethodPage.tsx:15
 msgid "source.community-marketplace"
 msgstr "The community plugin marketplace"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:121
+#: src/method/MethodPage.tsx:120
 msgid "method.ownInterest.maker"
 msgstr "The Directory is run by the maker of CedarLoom. CedarLoom is its maker's own Claude Code plugin, so the maker has an interest of its own in how other items compare with it."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:155
+#: src/method/MethodPage.tsx:154
 msgid "method.license"
 msgstr "The Directory's own data is released under CC0 1.0. Names and descriptions of listed items belong to their authors; the Directory links to them and copies no description."
 
@@ -1009,22 +1014,22 @@ msgid "licenseSource.frontmatter"
 msgstr "the license field of the frontmatter"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:181
+#: src/method/MethodPage.tsx:180
 msgid "method.licenseFacts"
 msgstr "The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's own folder. A license file at the repository root that GitHub cannot name comes after the license field of a plugin's manifest and is recorded without an SPDX id. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the word proprietary alone, reads \"Withheld: no license granted\" in the list and on the item's page and scores as no license whatever the repository grants. A plugin manifest that withholds the license withholds it also for the skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license field still applies, and so does a license file in a skill's folder other than the plugin's. A blank field and one that holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding license field does not count as filled, neither for a skill's license field nor among a plugin's manifest fields. A field that holds no SPDX expression of listed license and exception ids, such as one with a LicenseRef, is recorded without an SPDX id. A license file in the item's folder is recorded with the SPDX id of the license whose template in the SPDX License List 3.29 its text matches once whitespace, case, dash and quote styles, the spaces next to punctuation, title lines that hold only words of the license's name or id and a version, and copyright notices are set aside as the SPDX matching guidelines describe; the templates are those of the licenses GitHub detects, their earlier versions and other licenses items state. A copyright notice opens with Copyright, (c) or © and may name its holders in any case or script; a copyright line that holds a word of terms, such as only, commercial, NC, proprietary, confidential, evaluation, trial, expires, internal, not, prohibited, restricted or permission, is kept, so the text matches no template. Terms in other words, such as \"ask first\", pass as a holder's name and do not change the match. A part that a template leaves free, such as the copyright holders in MIT's warranty disclaimer, takes any text, so terms added there do not change the match. A license file that matches none of the templates, and one of several license files in the folder, is recorded without an SPDX id. SPDX ids match in any case and are recorded as the SPDX License List writes them. An expression takes the class of its most permissive part when OR joins its parts and of its least permissive part when AND joins them. \"No license detected\" means that none of these was found, not that the item has no license."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:17
+#: src/method/MethodPage.tsx:16
 msgid "source.anthropic-marketplaces"
 msgstr "The marketplaces of two more Anthropic repositories"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:22
+#: src/method/MethodPage.tsx:21
 msgid "source.mcp-registry"
 msgstr "The MCP Registry"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:12
+#: src/method/MethodPage.tsx:11
 msgid "source.official-marketplace"
 msgstr "The official Claude Code plugin marketplace"
 
@@ -1039,7 +1044,7 @@ msgid "notFound.body"
 msgstr "This page does not exist."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:161
+#: src/method/MethodPage.tsx:160
 msgid "method.takedown"
 msgstr "To correct an entry or to have your item removed, open an issue with the correction or removal form. No reason is needed for a removal, and every request is answered within one month. A removed item stays out of later runs."
 
@@ -1049,7 +1054,7 @@ msgid "group.token-cost"
 msgstr "Token cost"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:100
+#: src/method/MethodPage.tsx:99
 msgid "method.notMeasured.tokens"
 msgstr "Token counts are estimates: characters divided by four."
 
@@ -1064,17 +1069,17 @@ msgid "signal.nameValid"
 msgstr "Valid name"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:80
+#: src/method/MethodPage.tsx:79
 msgid "method.notMeasuredHeading"
 msgstr "What the score does not measure"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:84
+#: src/method/MethodPage.tsx:83
 msgid "method.notMeasured.works"
 msgstr "Whether an item works or does what it describes: nothing is installed or run."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:117
+#: src/method/MethodPage.tsx:116
 msgid "method.ownInterestHeading"
 msgstr "Who runs the Directory"
 

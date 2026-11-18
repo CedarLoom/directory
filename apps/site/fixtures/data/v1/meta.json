@@ -13,12 +13,12 @@
   },
   "rubricVersions": {
     "marketplace": "1.0.0",
-    "plugin": "1.0.0",
-    "skill": "1.0.0",
-    "agent": "1.0.0",
+    "plugin": "1.1.0",
+    "skill": "1.1.0",
+    "agent": "1.1.0",
     "hook": "1.0.0",
     "mcp-server": "1.0.0",
-    "output-style": "1.0.0"
+    "output-style": "1.1.0"
   },
   "sources": [
     {

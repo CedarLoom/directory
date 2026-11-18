@@ -63,6 +63,7 @@ declare module '@lingui/core' {
       | 'group.safety'
       | 'group.token-cost'
       | 'item.archived'
+      | 'item.closedGate'
       | 'item.dataAsOf'
       | 'item.fit'
       | 'item.flagsHeading'

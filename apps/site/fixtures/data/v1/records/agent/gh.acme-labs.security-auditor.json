@@ -56,7 +56,7 @@
   "score": {
     "rubric": {
       "kind": "agent",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "total": 90,
     "parts": [
@@ -118,7 +118,7 @@
     ]
   },
   "provenance": ["github"],
-  "changedAt": "2026-11-09",
+  "changedAt": "2026-11-16",
   "toolsDeclared": true,
   "toolClasses": ["read", "bash"],
   "modelSet": false,

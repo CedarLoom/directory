@@ -14,6 +14,8 @@ async function fixtureItem(kind: Kind, id: string): Promise<Item> {
 const plugin = await fixtureItem('plugin', 'gh.example-org.plugins.code-review');
 // An MCP server: a registry link and no stars.
 const mcpServer = await fixtureItem('mcp-server', 'io.github.example-org.weather');
+// An output style with frontmatter only: its token points are gated on a body, so it counts as empty.
+const emptyOutputStyle = await fixtureItem('output-style', 'gh.example-org.terse');
 
 const meta = {
   component: ItemPage,
@@ -27,3 +29,5 @@ type Story = StoryObj<typeof meta>;
 export const Plugin: Story = {};
 
 export const McpServer: Story = { args: { item: mcpServer } };
+
+export const EmptyOutputStyle: Story = { args: { item: emptyOutputStyle } };

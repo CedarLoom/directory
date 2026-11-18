@@ -37,6 +37,6 @@ test('a link from the list opens an item page without a data request', async ({ 
   await page.goto('/');
   await hydrated(page);
   await page.getByRole('link', { name: 'code-review' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Score 87.6 of 100, rubric 1.0.0' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Score 87.6 of 100, rubric 1.1.0' })).toBeVisible();
   expect(problems).toEqual([]);
 });

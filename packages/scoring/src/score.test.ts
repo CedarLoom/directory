@@ -66,6 +66,13 @@ describe('no token-cost points without content, so an empty item scores below th
   );
 });
 
+it('names the gate that gives a signal of an empty item no points', () =>
+  expect(
+    scored({ ...plugin, signals: { ...plugin.signals, hasComponents: false } }).parts.find(
+      ({ signal }) => signal === 'alwaysOnComponents',
+    ),
+  ).toEqual({ signal: 'alwaysOnComponents', points: 0, max: 15, closedGate: 'hasComponents' }));
+
 it('gives each signal its points', () =>
   expect(scored(skill).parts).toEqual([
     { signal: 'lastPush', points: 10, max: 10 },

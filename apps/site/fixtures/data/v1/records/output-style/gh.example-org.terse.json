@@ -40,8 +40,8 @@
     "release": true,
     "nameField": true,
     "descriptionField": true,
-    "bodyLines": 12,
-    "tokens": 340
+    "bodyLines": 0,
+    "tokens": 20
   },
   "flags": [],
   "tags": ["writing"],
@@ -52,9 +52,9 @@
   "score": {
     "rubric": {
       "kind": "output-style",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
-    "total": 90,
+    "total": 50,
     "parts": [
       {
         "signal": "lastPush",
@@ -88,13 +88,14 @@
       },
       {
         "signal": "bodyLines",
-        "points": 15,
+        "points": 0,
         "max": 15
       },
       {
         "signal": "tokens",
-        "points": 25,
-        "max": 25
+        "points": 0,
+        "max": 25,
+        "closedGate": "bodyLines"
       },
       {
         "signal": "safety",
@@ -104,7 +105,7 @@
     ]
   },
   "provenance": ["github"],
-  "changedAt": "2026-11-09",
-  "tokens": 340,
+  "changedAt": "2026-11-16",
+  "tokens": 20,
   "frontmatterFields": ["name", "description"]
 }

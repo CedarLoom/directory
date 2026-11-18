@@ -44,7 +44,8 @@
     "nameValid": true,
     "noRootClaudeMd": true,
     "alwaysOnComponents": 6,
-    "hasEvals": true
+    "hasEvals": true,
+    "hasComponents": true
   },
   "flags": ["hook-match-all", "bin-executables", "network-indicator"],
   "tags": ["testing"],
@@ -55,7 +56,7 @@
   "score": {
     "rubric": {
       "kind": "plugin",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "total": 82.6,
     "parts": [
@@ -112,7 +113,7 @@
     ]
   },
   "provenance": ["github"],
-  "changedAt": "2026-11-09",
+  "changedAt": "2026-11-16",
   "container": "gh.nightly-build.ci-helper",
   "version": "1.2.0",
   "components": {

@@ -4,8 +4,8 @@
     "list": { "chunks": ["src/routes/index.tsx?tsr-split=component"], "capKb": 150 },
     "kind list": { "chunks": ["src/routes/$kind/index.tsx?tsr-split=component"], "capKb": 150 },
     "item": { "chunks": ["src/routes/$kind/$id/index.tsx?tsr-split=component", "src/item-data.ts"], "capKb": 80 },
-    "method": { "chunks": ["src/routes/method/index.tsx?tsr-split=component"], "capKb": 80 }
+    "method": { "chunks": ["src/routes/method/index.tsx?tsr-split=component", "src/method/rubrics.ts"], "capKb": 80 }
   },
   "dataChunkKb": 8,
-  "artifactGzipMb": 10
+  "artifactMb": 1000
 }
