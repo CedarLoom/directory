@@ -28,7 +28,7 @@ import {
   pluginAssessment,
   skillAssessment,
 } from './item-signals.ts';
-import { holdsLicenseFile, licenseOf } from './license-class.ts';
+import { licenseFileNames, licenseOf } from './license-class.ts';
 import { analyzeMarketplace, type MarketplaceEntries } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
 import { analyzeOutputStyle } from './output-style-analyzer.ts';
@@ -50,13 +50,15 @@ export interface ItemRecord {
 
 /**
  * What a record is built from: the candidate, its repository's facts, the license field of its containing plugin's
- * manifest, whether the item's folder is that plugin's folder, and what was read for its kind.
+ * manifest, whether the item's folder is that plugin's folder, the text of the license file in the item's own folder,
+ * and what was read for its kind.
  */
 export type RecordInput = {
   candidate: Located;
   facts: RepositoryFacts;
   containerLicense?: string | undefined;
   inContainerFolder?: boolean;
+  folderLicenseText?: string | undefined;
 } & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
   | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin } }
@@ -79,7 +81,7 @@ const sourceOrder: readonly SourceId[] = [
 
 /** The fields every kind shares; a release or a version label counts as a release. */
 function baseFields(
-  { candidate, facts, containerLicense, inContainerFolder }: RecordInput,
+  { candidate, facts, containerLicense, inContainerFolder, folderLicenseText }: RecordInput,
   runDate: string,
   { signals, flags, version }: Assessment & { version?: string | undefined },
   license: Parameters<typeof licenseOf>[1] = {},
@@ -95,7 +97,12 @@ function baseFields(
     links: candidate.links,
     ...(candidate.container === undefined ? {} : { container: candidate.container }),
     listedIn: candidate.listedIn,
-    license: licenseOf(facts.license, { ...license, container: containerLicense, containerFolder: inContainerFolder }),
+    license: licenseOf(facts.license, {
+      ...license,
+      container: containerLicense,
+      containerFolder: inContainerFolder,
+      folderLicenseText,
+    }),
     ...(facts.maintenance === undefined ? {} : { maintenance: facts.maintenance }),
     popularity: [
       { signal: 'stars', ...pointer },
@@ -167,7 +174,10 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
         input,
         runDate,
         { ...assessment, version: facts.version },
-        { manifest: manifestLicense, folderLicenseFile: holdsLicenseFile(input.inspection.directories.root) },
+        {
+          manifest: manifestLicense,
+          folderLicenseFile: licenseFileNames(input.inspection.directories.root).length > 0,
+        },
       ),
       kind: 'plugin',
       ...facts,

@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { holdsLicenseFile, licenseOf } from './license-class.ts';
+import { licenseFileNames, licenseOf } from './license-class.ts';
 
 it('classes an SPDX id with an -only or -or-later suffix like its base id', () => {
   expect([
@@ -30,7 +30,7 @@ it('takes the root license over a manifest value and a manifest value over a fol
   ]);
 });
 
-const holds = (name: string, type = 'blob') => holdsLicenseFile([{ name, type }]);
+const holds = (name: string, type = 'blob') => licenseFileNames([{ name, type }]).length > 0;
 
 it('counts license files by name, but neither code named license nor a LICENSES folder', () => {
   expect([
@@ -296,4 +296,35 @@ it('counts no LICENSE-<suffix> for an id the class table lacks or for software n
       (name) => holds(name),
     ),
   ).toEqual([]);
+});
+
+const zlib = `This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+`;
+
+it('names a folder license file by its text where it applies, also under a withholding plugin', () => {
+  expect([
+    licenseOf(undefined, { folderLicenseFile: true, folderLicenseText: zlib }),
+    licenseOf('MIT', { container: 'UNLICENSED', folderLicenseFile: true, folderLicenseText: zlib }),
+    licenseOf(undefined, { folderLicenseFile: true, folderLicenseText: `${zlib}4. Only on Sundays.\n` }),
+    licenseOf('MIT', { folderLicenseFile: true, folderLicenseText: zlib }),
+  ]).toEqual([
+    { spdx: 'Zlib', source: 'license-file', class: 'permissive' },
+    { spdx: 'Zlib', source: 'license-file', class: 'permissive' },
+    { source: 'license-file', class: 'none' },
+    { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+  ]);
 });

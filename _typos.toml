@@ -9,4 +9,10 @@ extend-ignore-re = ["CC-BY(-NC)?-ND-[0-9.]+", "harbour-exception"]
 axe = "axe"
 
 [files]
-extend-exclude = ["pnpm-lock.yaml", "LICENSES/", "LICENSE", "packages/contracts/schemas/"]
+extend-exclude = [
+  "pnpm-lock.yaml",
+  "LICENSES/",
+  "LICENSE",
+  "packages/contracts/schemas/",
+  "apps/collector/src/license-templates.json",
+]

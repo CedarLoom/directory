@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { queryEach } from './github-graphql.ts';
 import type { GitHubLocation } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
-import { holdsLicenseFile } from './license-class.ts';
+import { licenseFileNames } from './license-class.ts';
 import { blob, expression, type FileRead, fileRead } from './repository-tree.ts';
 const subdirectory = z.object({
   entries: z
@@ -29,8 +29,8 @@ export interface ItemFile {
   folders: SkillFolders;
   /** The location holds an evals, tests or test folder. */
   tests: boolean;
-  /** The location holds a license file. */
-  licenseFile: boolean;
+  /** The names of the location's license files. */
+  licenseFiles: string[];
 }
 
 const testFolders: ReadonlySet<string> = new Set(['evals', 'tests', 'test']);
@@ -77,7 +77,7 @@ export async function readItemFiles(
       file: fileRead(read?.file),
       folders: folders(read?.directory),
       tests,
-      licenseFile: holdsLicenseFile(read?.directory?.entries),
+      licenseFiles: licenseFileNames(read?.directory?.entries),
     };
   });
 }

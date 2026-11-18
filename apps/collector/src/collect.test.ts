@@ -513,19 +513,36 @@ it('refuses a plugin with hooks on more than 64 events before selection, so the 
   });
 });
 
-it('records a license file in a skill folder when the repository root has none', async () => {
+const isc = `ISC License
+
+Copyright (c) 2024 Example Org
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+`;
+
+it('records a license file in a skill folder by its text when the repository root has none', async () => {
   const world = fakeWorld();
   const repository = world.get('example-org/plugin-0');
   if (repository === undefined) throw new Error('example-org/plugin-0 is missing');
   repository.unlicensed = true;
   repository.files['skills/skill-0/SKILL.md'] = `---\nname: skill-0\ndescription: ${marker}\n---\n# Skill\n`;
-  repository.files['skills/skill-0/LICENSE.txt'] = marker;
+  repository.files['skills/skill-0/LICENSE.txt'] = isc;
   const { files } = await run(world, '2026-11-16');
   const license = (path: string) => recordLicense(files, path);
   expect([
     license('records/skill/gh.example-org.plugin-0.skills.skill-0.json'),
     license('records/plugin/gh.example-org.plugin-0.json'),
-  ]).toEqual([{ source: 'license-file', class: 'none' }, { class: 'none' }]);
+  ]).toEqual([{ spdx: 'ISC', source: 'license-file', class: 'permissive' }, { class: 'none' }]);
 });
 
 it('lists a skill whose license field withholds the license as withheld, not as a license class', async () => {
@@ -608,7 +625,7 @@ it("records a skill listed in its withholding plugin's own folder as withheld, l
   ]).toEqual([withheld, withheld]);
 });
 
-it("records a plugin's manifest license, else a license file in its folder, when the repository root has none", async () => {
+it("records a plugin's manifest license, else its one license file in its folder, when the repository root has none", async () => {
   const world = fakeWorld();
   world.set('example-org/market', {
     // The most stars of the run, so its plugins are inspected first.
@@ -620,12 +637,19 @@ it("records a plugin's manifest license, else a license file in its folder, when
         plugins: [
           { name: 'stated', source: './plugins/stated' },
           { name: 'filed', source: './plugins/filed' },
+          { name: 'named', source: './plugins/named' },
+          { name: 'dual', source: './plugins/dual' },
         ],
       }),
       'plugins/stated/.claude-plugin/plugin.json': JSON.stringify({ name: 'stated', license: 'MIT' }),
       'plugins/stated/LICENSE': marker,
       'plugins/filed/.claude-plugin/plugin.json': JSON.stringify({ name: 'filed' }),
       'plugins/filed/LICENSE': marker,
+      'plugins/named/.claude-plugin/plugin.json': JSON.stringify({ name: 'named' }),
+      'plugins/named/LICENSE.md': isc,
+      'plugins/dual/.claude-plugin/plugin.json': JSON.stringify({ name: 'dual' }),
+      'plugins/dual/LICENSE': isc,
+      'plugins/dual/LICENSE-ISC': isc,
     },
   });
   const { files } = await run(world, '2026-11-16');
@@ -633,8 +657,12 @@ it("records a plugin's manifest license, else a license file in its folder, when
   expect([
     license('records/plugin/gh.example-org.market.plugins.stated.json'),
     license('records/plugin/gh.example-org.market.plugins.filed.json'),
+    license('records/plugin/gh.example-org.market.plugins.named.json'),
+    license('records/plugin/gh.example-org.market.plugins.dual.json'),
   ]).toEqual([
     { spdx: 'MIT', source: 'manifest', class: 'permissive' },
+    { source: 'license-file', class: 'none' },
+    { spdx: 'ISC', source: 'license-file', class: 'permissive' },
     { source: 'license-file', class: 'none' },
   ]);
 });
