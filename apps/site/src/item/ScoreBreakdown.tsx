@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Table, Title } from '@mantine/core';
+import { Table, Text, Title } from '@mantine/core';
 import type { ItemRecord } from '../data-types.ts';
 import { flagLabels, signalName } from '../labels.ts';
 import { type Measured, measuredValue } from './measured-value.ts';
@@ -31,6 +31,16 @@ function MeasuredCell({ measured }: { measured: Measured }) {
   }
 }
 
+function ClosedGate({ gate }: { gate: string }) {
+  const { i18n } = useLingui();
+  const name = signalName(i18n, gate);
+  return (
+    <Text size="sm" c="dimmed">
+      <Trans id="item.closedGate">{name}: none, so the item counts as empty and gets no points for this signal.</Trans>
+    </Text>
+  );
+}
+
 function PartRow({ record, part }: { record: ItemRecord; part: Score['parts'][number] }) {
   const { i18n } = useLingui();
   const points = i18n.number(part.points);
@@ -40,6 +50,7 @@ function PartRow({ record, part }: { record: ItemRecord; part: Score['parts'][nu
       <Table.Th scope="row">{signalName(i18n, part.signal)}</Table.Th>
       <Table.Td>
         <MeasuredCell measured={measuredValue(record, part.signal)} />
+        {part.closedGate !== undefined && <ClosedGate gate={part.closedGate} />}
       </Table.Td>
       <Table.Td data-numeric>
         <Trans id="item.pointsOf">

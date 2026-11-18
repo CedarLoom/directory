@@ -2,12 +2,20 @@ import { expect, test } from '@playwright/test';
 
 test('an item page shows its score breakdown', async ({ page }) => {
   await page.goto('/plugin/gh.example-org.plugins.code-review/');
-  const breakdown = page.getByRole('region', { name: 'Score 87.6 of 100, rubric 1.0.0' });
+  const breakdown = page.getByRole('region', { name: 'Score 87.6 of 100, rubric 1.1.0' });
   await expect(breakdown).toBeVisible();
   // A header row and one row per signal of the plugin rubric.
   await expect(breakdown.getByRole('row')).toHaveCount(11);
   await expect(breakdown.getByRole('rowheader', { name: 'Last push' })).toBeVisible();
   await expect(breakdown.getByRole('rowheader', { name: 'Safety flags' })).toBeVisible();
+});
+
+test('a signal that an empty item gets no points for says why, and one with points does not', async ({ page }) => {
+  await page.goto('/output-style/gh.example-org.terse/');
+  const breakdown = page.getByRole('region', { name: 'Score 50 of 100, rubric 1.1.0' });
+  const row = (name: string) => breakdown.getByRole('row').filter({ has: page.getByRole('rowheader', { name }) });
+  await expect(row('Tokens (estimate)')).toContainText('Body lines: none, so the item counts as empty');
+  await expect(row('Safety flags')).not.toContainText('counts as empty');
 });
 
 test('on an item page the link to its kind list is not marked as the current page', async ({ page }) => {

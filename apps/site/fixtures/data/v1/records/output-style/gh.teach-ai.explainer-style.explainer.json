@@ -54,7 +54,7 @@
   "score": {
     "rubric": {
       "kind": "output-style",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "total": 100,
     "parts": [
@@ -106,7 +106,7 @@
     ]
   },
   "provenance": ["github"],
-  "changedAt": "2026-11-09",
+  "changedAt": "2026-11-16",
   "tokens": 340,
   "frontmatterFields": ["name", "description"]
 }

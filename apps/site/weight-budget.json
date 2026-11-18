@@ -7,5 +7,5 @@
     "method": { "chunks": ["src/routes/method/index.tsx?tsr-split=component"], "capKb": 80 }
   },
   "dataChunkKb": 8,
-  "artifactGzipMb": 10
+  "artifactMb": 1000
 }
