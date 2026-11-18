@@ -15,7 +15,7 @@ msgstr "{0} (new rubric)"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: i18n._(kindPluralLabels[loaderData])
-#: src/routes/$kind/index.tsx:32
+#: src/routes/$kind/index.tsx:35
 msgid "kindList.title"
 msgstr "{0} | CedarLoom Directory"
 
