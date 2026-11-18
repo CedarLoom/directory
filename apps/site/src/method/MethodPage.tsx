@@ -186,21 +186,21 @@ function LicenseFacts() {
         or listed for the plugin; a skill's own license field still applies, and so does a license file in a skill's
         folder other than the plugin's. A plugin manifest's license field that states a license applies to these items
         as well when GitHub names no license at the repository root, again after a skill's own license field and a
-        license file in a skill's folder other than the plugin's. A repository found by topic search with a plugin
-        manifest at its root is that plugin for the items it holds. An item whose plugin manifest is cut by GitHub, over
-        the size cap or not a JSON object is not listed, as its license cannot be read. A plugin without a plugin.json
-        that sits in its marketplace's own repository has its marketplace entry as its manifest, so the license field of
-        that entry is read as the manifest's. Where a plugin.json exists, its license field is read and the entry's is
-        not, as the entry's value only changes what Claude Code displays. The entry of a plugin in another repository is
-        not read, as a marketplace may hold no rights to grant that plugin's license. A blank field and one that holds
-        NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding license
-        field does not count as filled, neither for a skill's license field nor among a plugin's manifest fields. A
-        field that holds the full name of a license in the SPDX License List 3.29, other than a deprecated one, such as
-        MIT License, in any case and spacing, is recorded with that license's SPDX id. A field that holds neither such a
-        name nor an SPDX expression of listed license and exception ids, such as one with a LicenseRef or The MIT
-        License, is recorded without an SPDX id. A license file in the item's folder is recorded with the SPDX id of the
-        license whose template in the SPDX License List 3.29 its text matches once whitespace, case, dash and quote
-        styles, the spaces next to punctuation, title lines that hold only words of the license's name or id and a
+        license file in a skill's folder other than the plugin's. A repository found by topic search is the plugin of
+        the items it holds when a plugin is listed or a plugin manifest sits at its root, unless only its own
+        marketplace lists plugins there and lists several. An item whose plugin manifest is cut by GitHub, over the size
+        cap or not a JSON object is not listed, as its license cannot be read. For a plugin in its marketplace's own
+        repository, the license field of its marketplace entry is read as the manifest's when it has no plugin.json or
+        one without a license field, also when another marketplace lists it. The entry of a plugin in another repository
+        is not read, as a marketplace may hold no rights to grant that plugin's license. A blank field and one that
+        holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding
+        license field does not count as filled, neither for a skill's license field nor among a plugin's manifest
+        fields. A field that holds the full name of a license in the SPDX License List 3.29, other than a deprecated
+        one, such as MIT License, in any case and spacing, is recorded with that license's SPDX id. A field that holds
+        neither such a name nor an SPDX expression of listed license and exception ids, such as one with a LicenseRef or
+        The MIT License, is recorded without an SPDX id. A license file in the item's folder is recorded with the SPDX
+        id of the license whose template in the SPDX License List 3.29 its text matches once whitespace, case, dash and
+        quote styles, the spaces next to punctuation, title lines that hold only words of the license's name or id and a
         version, and copyright notices are set aside as the SPDX matching guidelines describe; the templates are those
         of the licenses GitHub detects, their earlier versions and other licenses items state. A copyright notice opens
         with Copyright, (c) or © and may name its holders in any case or script. The next line is set aside with it when

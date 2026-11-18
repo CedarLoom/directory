@@ -137,7 +137,7 @@ const unreadManifest = { 'too-large': tooLarge, invalid: 'the manifest of its pl
  */
 interface Containers {
   locations: Map<string, GitHubLocation>;
-  /** The license field of each listed plugin's marketplace entry that is its manifest without plugin.json. */
+  /** The license field of each listed plugin's marketplace entry, its manifest's when plugin.json states none. */
   entryLicenses: ReadonlyMap<string, string>;
   /** Filled before the items a plugin holds are built. */
   licenses: Map<string, { license: string | undefined } | keyof typeof unreadManifest>;
@@ -425,28 +425,45 @@ function topicPlaces(topicRepositories: readonly Repository[], facts: ReadonlyMa
 }
 
 /**
- * The items found in the topic repositories, those of a repository with a plugin manifest at its root with that plugin as
- * their container, like the items of a listed plugin, and its manifest license added to the containers.
+ * The id of the listed plugin at the root of a repository: the one whose id is the repository's, else the only one the
+ * repository's own marketplace lists there.
+ */
+function listedRootPlugin(locations: ReadonlyMap<string, GitHubLocation>, id: string): string | undefined {
+  if (locations.has(id)) return id;
+  const roots = [...locations.entries()].filter(
+    ([, location]) => location.path === '' && repositoryId(location) === id,
+  );
+  // Several plugins at one root leave no plugin to hold its items.
+  return roots.length === 1 ? roots[0]?.[0] : undefined;
+}
+
+/**
+ * The items found in the topic repositories, those of a repository whose root is a listed plugin or holds a plugin
+ * manifest with that plugin as their container, like the items of a listed plugin, and the manifest license of an
+ * unlisted one added to the containers.
  */
 async function topicItems(
   { client, refuse, containers: { locations, licenses } }: Reading,
   places: readonly InspectedPlace[],
 ): Promise<Candidate[]> {
   const { inspections, found } = await inspectPlaces(client, places, refuse);
-  const plugins = new Set<string>();
+  const plugins = new Map<string, string>();
   for (const [index, { location }] of places.entries()) {
     const inspection = inspections[index];
-    if (typeof inspection !== 'object' || inspection.files.manifest === undefined) continue;
+    if (typeof inspection !== 'object') continue;
     const id = repositoryId(location);
-    plugins.add(id);
     // A listed plugin at the repository root keeps its own location and pin, whose manifest its reading records.
-    if (locations.has(id)) continue;
-    locations.set(id, location);
-    licenses.set(id, manifestLicense(inspection.files.manifest, undefined));
+    const listed = listedRootPlugin(locations, id);
+    if (listed !== undefined) plugins.set(id, listed);
+    else if (inspection.files.manifest !== undefined) {
+      plugins.set(id, id);
+      locations.set(id, location);
+      licenses.set(id, manifestLicense(inspection.files.manifest, undefined));
+    }
   }
   for (const candidate of found) {
-    const id = candidate.location === undefined ? undefined : repositoryId(candidate.location);
-    if (candidate.kind !== 'marketplace' && id !== undefined && plugins.has(id)) candidate.container = id;
+    const container = candidate.location === undefined ? undefined : plugins.get(repositoryId(candidate.location));
+    if (candidate.kind !== 'marketplace' && container !== undefined) candidate.container = container;
   }
   return found;
 }

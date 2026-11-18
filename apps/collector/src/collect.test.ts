@@ -745,6 +745,55 @@ it("reads a marketplace entry's license as the manifest's of a plugin in its rep
   ]).toEqual([withheld, withheld, mit, mit, { class: 'none' }, { class: 'none' }]);
 });
 
+/** The licenses of the plugin `example-org/market` lists at `plugins/<name>` and of its agent, the repository without a root license. */
+async function marketPluginLicenses(world: Map<string, FakeRepository>, name: string, files: Record<string, string>) {
+  world.set('example-org/market', {
+    stars: 99_999,
+    unlicensed: true,
+    files: {
+      '.claude-plugin/marketplace.json': JSON.stringify({
+        name: 'market',
+        plugins: [{ name, source: `./plugins/${name}`, license: 'UNLICENSED' }],
+      }),
+      [`plugins/${name}/agents/${name}.md`]: agent(name),
+      ...files,
+    },
+  });
+  const { files: written } = await run(world, '2026-11-16');
+  return [
+    recordLicense(written, `records/plugin/gh.example-org.market.plugins.${name}.json`),
+    recordLicense(written, `records/agent/gh.example-org.market.plugins.${name}.agents.${name}.json`),
+  ];
+}
+
+it("reads the entry license in a plugin's own repository when another marketplace lists the plugin first", async () => {
+  const world = fakeWorld();
+  repositoryOf(world, 'anthropics/claude-plugins-official').files['.claude-plugin/marketplace.json'] = JSON.stringify({
+    name: 'claude-plugins-official',
+    plugins: [{ name: 'bare', source: { source: 'git-subdir', url: 'example-org/market', path: 'plugins/bare' } }],
+  });
+  expect(await marketPluginLicenses(world, 'bare', { 'plugins/bare/LICENSE': marker })).toEqual([withheld, withheld]);
+});
+
+it("reads a marketplace entry's license for a plugin whose plugin.json has no license field", async () => {
+  const manifest = JSON.stringify({ name: 'nameless', description: marker });
+  expect(
+    await marketPluginLicenses(fakeWorld(), 'nameless', { 'plugins/nameless/.claude-plugin/plugin.json': manifest }),
+  ).toEqual([withheld, withheld]);
+});
+
+/** Adds an entry to the listing of `example-org/market` and returns that repository. */
+function listInMarket(world: World, entry: unknown): FakeRepository {
+  const market = repositoryOf(world, 'example-org/market');
+  const listing = z
+    .object({ plugins: z.array(z.unknown()) })
+    .loose()
+    .parse(JSON.parse(market.files['.claude-plugin/marketplace.json'] ?? ''));
+  listing.plugins.push(entry);
+  market.files['.claude-plugin/marketplace.json'] = JSON.stringify(listing);
+  return market;
+}
+
 it('keeps the pinned manifest of a listed plugin that is also a topic repository', async () => {
   const world = fakeWorld();
   world.set('example-org/pinned', {
@@ -755,22 +804,30 @@ it('keeps the pinned manifest of a listed plugin that is also a topic repository
     },
     pinned: { '.claude-plugin/plugin.json': JSON.stringify({ name: 'pinned', license: 'UNLICENSED' }) },
   });
-  const market = repositoryOf(world, 'example-org/market');
-  const listing = z
-    .object({ plugins: z.array(z.unknown()) })
-    .loose()
-    .parse(JSON.parse(market.files['.claude-plugin/marketplace.json'] ?? ''));
-  listing.plugins.push({
+  listInMarket(world, {
     name: 'pinned',
     source: { source: 'github', repo: 'example-org/pinned', sha: 'd'.repeat(40) },
   });
-  market.files['.claude-plugin/marketplace.json'] = JSON.stringify(listing);
   const { files } = await run(world, '2026-11-16', new Map(), { topicRepositories: ['example-org/pinned'] });
   expect(
     z
       .object({ container: z.unknown(), license: z.unknown() })
       .parse(JSON.parse(files.get('records/agent/gh.example-org.pinned.agents.helper.json') ?? '')),
   ).toEqual({ container: 'gh.example-org.pinned', license: withheld });
+});
+
+it("records the entry license of a listed plugin at its marketplace's root for the items topic search finds", async () => {
+  const world = fakeWorld();
+  // Without the other plugins' agents, the market's agent is selected though its plugin is not inspected.
+  for (let index = 0; index < 1000; index += 1)
+    delete repositoryOf(world, `example-org/plugin-${index}`).files[`agents/agent-${index}.md`];
+  listInMarket(world, { name: 'self', source: './', license: 'UNLICENSED' }).files['agents/self.md'] = agent('self');
+  const { files } = await run(world, '2026-11-16', new Map(), { topicRepositories: ['example-org/market'] });
+  expect(
+    z
+      .object({ container: z.unknown(), license: z.unknown() })
+      .parse(JSON.parse(files.get('records/agent/gh.example-org.market.agents.self.json') ?? '')),
+  ).toEqual({ container: 'gh.example-org.market._.self', license: withheld });
 });
 
 it("records a plugin's manifest license, else its one license file in its folder, when the repository root has none", async () => {
