@@ -12,7 +12,6 @@ export const directoryPaths = {
   claudeSkills: '.claude/skills',
   agents: 'agents',
   claudeAgents: '.claude/agents',
-  commands: 'commands',
   outputStyles: 'output-styles',
   claudeOutputStyles: '.claude/output-styles',
   bin: 'bin',

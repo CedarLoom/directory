@@ -549,6 +549,50 @@ it('refuses a plugin with hooks on more than 64 events before selection, so the 
   });
 });
 
+it('counts the components at the manifest paths of a plugin, also in subfolders of a folder', async () => {
+  const world = fakeWorld();
+  const files = repositoryOf(world, 'example-org/plugin-2').files;
+  files['.claude-plugin/plugin.json'] = JSON.stringify({
+    name: 'plugin-2',
+    commands: './cmds',
+    agents: './crew/lead.md',
+    experimental: { monitors: './watch/monitors.json' },
+  });
+  Object.assign(files, {
+    'cmds/git/commit.md': marker,
+    'cmds/deploy.md': marker,
+    'crew/lead.md': marker,
+    'watch/monitors.json': JSON.stringify([{ name: 'deploys', command: 'watch.sh', description: marker }]),
+  });
+  const { files: written } = await run(world, '2026-11-16', new Map());
+  const record = z
+    .object({
+      components: z.object({ commands: z.number(), agents: z.number(), monitors: z.number() }),
+      flags: z.array(z.string()),
+    })
+    .parse(JSON.parse(written.get('records/plugin/gh.example-org.plugin-2.json') ?? '{}'));
+  expect([record.components, record.flags.includes('monitor-background-command')]).toEqual([
+    { commands: 2, agents: 1, monitors: 1 },
+    true,
+  ]);
+});
+
+it('refuses a plugin whose manifest names a configuration file over 256 KB', async () => {
+  const world = fakeWorld();
+  const files = repositoryOf(world, 'example-org/plugin-0').files;
+  files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-0', hooks: './config/hooks.json' });
+  files['config/hooks.json'] = JSON.stringify({ description: 'x'.repeat(256 * 1024), hooks: {} });
+  const lines: string[] = [];
+  const { files: written } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
+  expect({
+    record: written.has('records/plugin/gh.example-org.plugin-0.json'),
+    refusals: lines.filter((line) => line.startsWith('gh.example-org.plugin-0:')),
+  }).toEqual({
+    record: false,
+    refusals: ['gh.example-org.plugin-0: refused: a file is cut by GitHub or over the size cap'],
+  });
+});
+
 const isc = `ISC License
 
 Copyright (c) 2024 Example Org

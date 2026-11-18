@@ -17,7 +17,7 @@ const emptyPlugin: PluginFacts = {
     binFiles: 0,
   },
   modules: 0,
-  uncountedComponents: false,
+  themesOrWorkflows: false,
   hasEvals: false,
   hooks: [],
   mcpUnpinnedPackage: false,
@@ -52,7 +52,7 @@ it('flags monitors, LSP servers and mod modules', () => {
 
 it.each([
   [{}, false],
-  [{ uncountedComponents: true }, true],
+  [{ themesOrWorkflows: true }, true],
   [{ components: { ...emptyPlugin.components, binFiles: 1 } }, true],
 ])('tells a plugin with components from an empty one: %j', (facts, hasComponents) =>
   expect(pluginAssessment({ ...emptyPlugin, ...facts }).signals['hasComponents']).toBe(hasComponents),

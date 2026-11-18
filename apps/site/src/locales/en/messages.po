@@ -73,7 +73,7 @@ msgid "commits.5-or-more"
 msgstr "5 or more"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:250
+#: src/method/MethodPage.tsx:251
 msgid "method.intro"
 msgstr "A collector reads public sources once a week, records published facts about each item and scores it with the open rubric of its kind. The last run was on {runDate}. The CedarLoom Directory is not affiliated with or endorsed by Anthropic."
 
@@ -278,7 +278,7 @@ msgid "group.evals"
 msgstr "Evals"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:126
+#: src/method/MethodPage.tsx:127
 msgid "method.ownInterest.sameRubric"
 msgstr "Every item of a kind is scored with the same published rubric. No entry, score or position is paid for."
 
@@ -378,7 +378,7 @@ msgid "flag.unpinned-source"
 msgstr "Installs from a source not pinned to a commit or tag."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:137
+#: src/method/MethodPage.tsx:138
 msgid "method.ownInterest.ownItems"
 msgstr "Items of CedarLoom's maker get no exception: they are read from the same sources and scored with the same rubric as every other item, and no score is set by hand."
 
@@ -453,7 +453,7 @@ msgid "item.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:151
+#: src/method/MethodPage.tsx:152
 msgid "method.policiesHeading"
 msgstr "License, corrections and removal"
 
@@ -533,7 +533,7 @@ msgid "item.measured"
 msgstr "Measured"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:247
+#: src/method/MethodPage.tsx:248
 msgid "method.heading"
 msgstr "Method"
 
@@ -674,7 +674,7 @@ msgid "filter.noFlags"
 msgstr "Only items without safety flags"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:166
+#: src/method/MethodPage.tsx:167
 msgid "method.openIssue"
 msgstr "Open an issue"
 
@@ -710,8 +710,8 @@ msgstr "Plugin"
 
 #. js-lingui-explicit-id
 #: src/method/MethodPage.tsx:102
-msgid "method.notMeasured.componentPaths"
-msgstr "Plugin components that the manifest names by path, commands or agents in subfolders, and themes and workflows: they are not counted and raise no flag, and only keep the plugin from counting as empty."
+msgid "method.notMeasured.themesWorkflows"
+msgstr "Plugin themes and workflows: they are not counted and raise no flag, and only keep the plugin from counting as empty. Plugin files more than two subfolders below a component folder and manifest paths outside the plugin folder are not read."
 
 #. js-lingui-explicit-id
 #: src/labels.ts:18
@@ -769,7 +769,7 @@ msgid "item.historyRubric"
 msgstr "Rubric"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:226
+#: src/method/MethodPage.tsx:227
 msgid "method.rubricsHeading"
 msgstr "Rubrics"
 
@@ -984,7 +984,7 @@ msgid "footer.affiliation"
 msgstr "The CedarLoom Directory is not affiliated with or endorsed by Anthropic."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:131
+#: src/method/MethodPage.tsx:132
 msgid "method.ownInterest.fit"
 msgstr "The CedarLoom fit fact on item pages and in the list is not part of the score. It reads \"Not assessed\" for every item today."
 
@@ -999,12 +999,12 @@ msgid "source.community-marketplace"
 msgstr "The community plugin marketplace"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:120
+#: src/method/MethodPage.tsx:121
 msgid "method.ownInterest.maker"
 msgstr "The Directory is run by the maker of CedarLoom. CedarLoom is its maker's own Claude Code plugin, so the maker has an interest of its own in how other items compare with it."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:154
+#: src/method/MethodPage.tsx:155
 msgid "method.license"
 msgstr "The Directory's own data is released under CC0 1.0. Names and descriptions of listed items belong to their authors; the Directory links to them and copies no description."
 
@@ -1014,7 +1014,7 @@ msgid "licenseSource.frontmatter"
 msgstr "the license field of the frontmatter"
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:175
+#: src/method/MethodPage.tsx:176
 msgid "method.licenseFacts"
 msgstr "The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's own folder. A license file at the repository root that GitHub cannot name comes after the license field of a plugin's manifest and, without one, before a license file in the item's own folder; for a plugin or skill at the repository root it is named by its text like a license file in the item's folder when it is the only license file GitHub reads at the root, and otherwise it is recorded without an SPDX id. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the word proprietary alone, reads \"Withheld: no license granted\" in the list and on the item's page and scores as no license whatever the repository grants. A plugin manifest that withholds the license withholds it also for the skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license field still applies, and so does a license file in a skill's folder other than the plugin's. A plugin manifest's license field that states a license applies to these items as well when GitHub names no license at the repository root, again after a skill's own license field and a license file in a skill's folder other than the plugin's. A repository found by topic search is the plugin of its items when it is the one plugin listed at its root or, with none listed, has a plugin manifest; an item in a folder several listed plugins share belongs to the one whose entry lists it, else to none, with the license of the folder's plugin manifest. An item whose plugin manifest is cut by GitHub, over the size cap or not a JSON object is not listed, as its license cannot be read. For a plugin in its marketplace's own repository, the license field of its marketplace entry is read as the manifest's when it has no plugin.json or one with an empty or no license field, also when another marketplace lists it. The entry of a plugin in another repository is not read, as a marketplace may hold no rights to grant that plugin's license. A blank field and one that holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding license field does not count as filled, neither for a skill's license field nor among a plugin's manifest fields. A field that holds the full name of a license in the SPDX License List 3.29, other than a deprecated one, such as MIT License, in any case and spacing, is recorded with that license's SPDX id. A field that holds neither such a name nor an SPDX expression of listed license and exception ids, such as one with a LicenseRef or The MIT License, is recorded without an SPDX id. A license file in the item's folder is recorded with the SPDX id of the license whose template in the SPDX License List 3.29 its text matches once whitespace, case, dash and quote styles, the spaces next to punctuation, title lines that hold only words of the license's name or id and a version, and copyright notices are set aside as the SPDX matching guidelines describe; the templates are those of the licenses GitHub detects, their earlier versions and other licenses items state. A copyright notice opens with Copyright, (c) or © and may name its holders in any case or script. The next line is set aside with it when it holds no word of terms and continues the notice: the notice ends with a comma, and, the, of or &; or the notice ends with Inc., Corp., Ltd. or Co., or the line opens with a digit, and the line's first sentence holds a comma and each of its words opens with a capital or a digit, as in an address. Any other line after a notice is kept. A copyright line that holds a word of terms, such as only, commercial, NC, proprietary, confidential, evaluation, trial, expires, internal, not, prohibited, restricted or permission, is kept, so the text matches no template. Terms in other words, such as \"ask first\", pass as a holder's name and do not change the match. A part that a template leaves free, such as the copyright holders in MIT's warranty disclaimer, takes any text, so terms added there do not change the match. A license file that matches none of the templates, and one of several license files in the folder, is recorded without an SPDX id. SPDX ids match in any case and are recorded as the SPDX License List writes them. An expression takes the class of its most permissive part when OR joins its parts and of its least permissive part when AND joins them. \"No license detected\" means that none of these was found, not that the item has no license."
 
@@ -1044,7 +1044,7 @@ msgid "notFound.body"
 msgstr "This page does not exist."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:160
+#: src/method/MethodPage.tsx:161
 msgid "method.takedown"
 msgstr "To correct an entry or to have your item removed, open an issue with the correction or removal form. No reason is needed for a removal, and every request is answered within one month. A removed item stays out of later runs."
 
@@ -1079,7 +1079,7 @@ msgid "method.notMeasured.works"
 msgstr "Whether an item works or does what it describes: nothing is installed or run."
 
 #. js-lingui-explicit-id
-#: src/method/MethodPage.tsx:116
+#: src/method/MethodPage.tsx:117
 msgid "method.ownInterestHeading"
 msgstr "Who runs the Directory"
 

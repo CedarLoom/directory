@@ -16,6 +16,7 @@ import type { z } from 'zod';
 import { analyzeAgent } from './agent-analyzer.ts';
 import type { Candidate, Located } from './candidate.ts';
 import { repositoryId } from './github-location.ts';
+import type { ComponentReads } from './component-reads.ts';
 import type { HookFacts } from './hook-analyzer.ts';
 import type { SkillFolders } from './item-files.ts';
 import {
@@ -61,7 +62,7 @@ export type RecordInput = {
   folderLicenseText?: string | undefined;
 } & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
-  | { kind: 'plugin'; inspection: Inspection; source: { kind: SourceKind; pin: Pin } }
+  | { kind: 'plugin'; inspection: Inspection; components: ComponentReads; source: { kind: SourceKind; pin: Pin } }
   | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean; licenseFile: boolean }
   | { kind: 'agent'; text: string }
   | { kind: 'hook'; hooks: HookFacts }
@@ -153,13 +154,13 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
     mcpUnpinnedPackage,
     mcpSecretsRequired,
     modules,
-    uncountedComponents,
+    themesOrWorkflows,
     ...facts
-  } = analyzePlugin(input.inspection, input.candidate.entryLicense);
+  } = analyzePlugin(input.inspection, input.components, input.candidate.entryLicense);
   const assessment = pluginAssessment({
     ...facts,
     modules,
-    uncountedComponents,
+    themesOrWorkflows,
     name: manifestName ?? input.candidate.name,
     manifestFields,
     rootClaudeMd,

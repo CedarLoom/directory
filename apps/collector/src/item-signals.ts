@@ -124,8 +124,8 @@ export interface PluginFacts {
   };
   /** The mod modules the hooks configurations list. */
   modules: number;
-  /** Components at manifest paths or in subfolders, and themes or workflows, which the counts leave out. */
-  uncountedComponents: boolean;
+  /** The plugin holds theme or workflow files, which the counts leave out. */
+  themesOrWorkflows: boolean;
   hasEvals: boolean;
   /** The facts of each hook configuration: hooks/hooks.json and hooks inline in plugin.json. */
   hooks: readonly HookFacts[];
@@ -147,9 +147,9 @@ export function pluginAssessment(facts: PluginFacts): Assessment {
       nameValid: validName(facts.name),
       noRootClaudeMd: !facts.rootClaudeMd,
       alwaysOnComponents: components.skills + components.agents + components.commands,
-      // A plugin without a counted component, a mod module or a component the counts leave out is empty.
+      // A plugin without a counted component, a mod module, a theme or a workflow is empty.
       hasComponents:
-        facts.uncountedComponents ||
+        facts.themesOrWorkflows ||
         [
           components.skills,
           components.agents,
