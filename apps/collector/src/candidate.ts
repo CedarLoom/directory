@@ -24,7 +24,7 @@ export interface Candidate {
   source?: { kind: SourceKind; pin: Pin };
   /**
    * The license field of a plugin's marketplace entry when the plugin sits in the marketplace's own repository; it is the
-   * plugin manifest's license field when the plugin has no plugin.json or one without a license field.
+   * plugin manifest's license field when the plugin has no plugin.json or one with an empty or no license field.
    */
   entryLicense?: string;
   /** A marketplace's plugin entries. */
@@ -90,6 +90,7 @@ export function joinRootPlugins(candidates: readonly Candidate[]): Candidate[] {
   return candidates.map((candidate) => {
     const id = candidate.kind === 'plugin' ? ids.get(candidate.id) : undefined;
     const container = candidate.container === undefined ? undefined : ids.get(candidate.container);
+    if (id === undefined && container === undefined) return candidate;
     return { ...candidate, ...(id === undefined ? {} : { id }), ...(container === undefined ? {} : { container }) };
   });
 }

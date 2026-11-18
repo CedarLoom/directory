@@ -886,17 +886,23 @@ it.each([
 });
 
 it.each([
-  { name: 'several plugins and a plugin manifest', files: { '.claude-plugin/plugin.json': '{"name":"market"}' } },
-  { name: 'several plugins, one of them excluded', files: {}, excluded: new Set(['gh.example-org.market._.second']) },
-])('gives the items of a topic repository whose root holds $name no plugin', async ({ files, excluded }) => {
-  const world = marketAgentWorld();
-  listInMarket(world, { name: 'first', source: './' });
-  const market = listInMarket(world, { name: 'second', source: './' });
-  Object.assign(market.files, files, { 'agents/self.md': agent('self') });
-  expect((await marketAgent(world, excluded)).container).toBeUndefined();
-});
+  { name: 'several plugins', excluded: undefined },
+  { name: 'several plugins, one of them excluded', excluded: new Set(['gh.example-org.market._.second']) },
+])(
+  "gives the items of a topic repository whose root holds $name no plugin but its manifest's license",
+  async ({ excluded }) => {
+    const world = marketAgentWorld();
+    listInMarket(world, { name: 'first', source: './' });
+    const market = listInMarket(world, { name: 'second', source: './' });
+    Object.assign(market.files, {
+      '.claude-plugin/plugin.json': JSON.stringify({ name: 'market', license: 'UNLICENSED' }),
+      'agents/self.md': agent('self'),
+    });
+    expect(await marketAgent(world, excluded)).toEqual({ license: withheld });
+  },
+);
 
-it('gives the items in a folder that several plugins share the plugin whose entry lists them, else none', async () => {
+it("gives the items in a folder that several plugins share the plugin whose entry lists them, else none but the folder's license", async () => {
   const world = fakeWorld();
   world.set('example-org/market', {
     stars: 99_999,
@@ -908,19 +914,24 @@ it('gives the items in a folder that several plugins share the plugin whose entr
           { name: 'second', source: './' },
         ],
       }),
+      '.claude-plugin/plugin.json': JSON.stringify({ name: 'market', license: 'UNLICENSED' }),
       'skills/listed/SKILL.md': `---\nname: listed\ndescription: ${marker}\n---\n${marker}\n`,
       'skills/loose/SKILL.md': `---\nname: loose\ndescription: ${marker}\n---\n${marker}\n`,
       'agents/loose.md': agent('loose'),
     },
   });
   const { files } = await run(world, '2026-11-16');
-  const container = (path: string) =>
-    z.object({ container: z.string().optional() }).parse(JSON.parse(files.get(path) ?? ''));
+  const holder = (path: string) =>
+    z.object({ container: z.string().optional(), license: z.unknown() }).parse(JSON.parse(files.get(path) ?? ''));
   expect([
-    container('records/skill/gh.example-org.market.skills.listed.json'),
-    container('records/skill/gh.example-org.market.skills.loose.json'),
-    container('records/agent/gh.example-org.market.agents.loose_2emd.json'),
-  ]).toEqual([{ container: 'gh.example-org.market._.first' }, { container: undefined }, { container: undefined }]);
+    holder('records/skill/gh.example-org.market.skills.listed.json'),
+    holder('records/skill/gh.example-org.market.skills.loose.json'),
+    holder('records/agent/gh.example-org.market.agents.loose_2emd.json'),
+  ]).toEqual([
+    { container: 'gh.example-org.market._.first', license: withheld },
+    { license: withheld },
+    { license: withheld },
+  ]);
 });
 
 it('gives a skill folder and an agent file of one name ids of their own', async () => {

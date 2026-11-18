@@ -14,7 +14,7 @@ import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
 import { manifestLicense } from './plugin-analyzer.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
-import { inspectLocations, manifestPath } from './repository-tree.ts';
+import { type Inspection, inspectLocations, manifestPath } from './repository-tree.ts';
 import type { RunReport } from './run-report.ts';
 import type { SourceAdapter } from './source-adapter.ts';
 import { searchTopics } from './topic-search.ts';
@@ -131,6 +131,14 @@ const tooLarge = 'a file is cut by GitHub or over the size cap';
 // A plugin manifest whose license cannot be read refuses the items the plugin holds.
 const unreadManifest = { 'too-large': tooLarge, invalid: 'the manifest of its plugin is no JSON object' } as const;
 
+type ManifestRead = { license: string | undefined } | keyof typeof unreadManifest;
+
+/** The folder of the plugin that holds an item and the license field of that plugin's manifest, once read. */
+interface Holder {
+  location: GitHubLocation;
+  license: ManifestRead | undefined;
+}
+
 /**
  * The listed plugins and the topic repositories with a plugin manifest at their root, by id: where each lives and the
  * license field of each manifest read so far.
@@ -140,19 +148,27 @@ interface Containers {
   /** The license field of each listed plugin's marketplace entry, its manifest's when plugin.json states none. */
   entryLicenses: ReadonlyMap<string, string>;
   /** Filled before the items a plugin holds are built. */
-  licenses: Map<string, { license: string | undefined } | keyof typeof unreadManifest>;
+  licenses: Map<string, ManifestRead>;
   /** The ids of the plugins listed at each folder, by the folder's id, excluded ones too, as they share the folder. */
   folders: ReadonlyMap<string, readonly string[]>;
+  /**
+   * The shared folder of each item, by its id, found where several plugins share a folder and so held by none; the
+   * folder's manifest, without any entry license, still gives its license.
+   */
+  shared: Map<string, Holder>;
 }
 
 /** The ids of the plugins at each folder, by the folder's id. */
 function folderPlugins(candidates: readonly Candidate[]): Map<string, string[]> {
-  const folders = new Map<string, string[]>();
-  for (const { kind, id, location } of candidates) {
-    if (kind !== 'plugin' || location === undefined) continue;
-    folders.set(locationId(location), [...(folders.get(locationId(location)) ?? []), id]);
-  }
-  return folders;
+  const plugins = candidates.filter(
+    (candidate): candidate is Located => candidate.kind === 'plugin' && isLocated(candidate),
+  );
+  return new Map(
+    [...Map.groupBy(plugins, ({ location }) => locationId(location))].map(([folder, at]) => [
+      folder,
+      at.map(({ id }) => id),
+    ]),
+  );
 }
 
 /** The listed plugins as containers, before any manifest is read, and the folders of all plugins found in the sources. */
@@ -165,31 +181,39 @@ function listedContainers(listed: readonly Located[], sourced: readonly Candidat
       plugins.flatMap(({ id, entryLicense }) => (entryLicense === undefined ? [] : [[id, entryLicense]])),
     ),
     licenses: new Map(),
+    shared: new Map(),
   };
+}
+
+/** The folder and manifest license of the plugin that holds a candidate, or of the shared folder it was found in. */
+function holderOf({ id, container }: Located, { locations, licenses, shared }: Containers): Holder | undefined {
+  if (container === undefined) return shared.get(id);
+  const location = locations.get(container);
+  return location === undefined ? undefined : { location, license: licenses.get(container) };
 }
 
 /**
  * Builds a record, with the manifest license of the plugin that holds the item, or logs a refusal when its facts do not
  * fit the record, its license is unknown or its plugin's manifest is too large or no JSON object.
  */
-function recordBuilder(runDate: string, refuse: Refuse, { locations, licenses }: Containers): Build {
+function recordBuilder(runDate: string, refuse: Refuse, containers: Containers): Build {
   return (input) => {
-    const { container, id, location } = input.candidate;
-    const manifest = container === undefined ? undefined : licenses.get(container);
+    const { id, location } = input.candidate;
+    const holder = holderOf(input.candidate, containers);
+    const manifest = holder?.license;
     if (typeof manifest === 'string') {
       refuse(id, new Error(unreadManifest[manifest]));
       return 'refused';
     }
-    const plugin = container === undefined ? undefined : locations.get(container);
     try {
       // An item lives in its plugin's repository, so the same path is the plugin's own folder.
       return buildRecord(
-        plugin === undefined
+        holder === undefined
           ? input
           : {
               ...input,
               containerLicense: manifest?.license,
-              inContainerFolder: plugin.path === location.path,
+              inContainerFolder: holder.location.path === location.path,
             },
         runDate,
       );
@@ -223,7 +247,10 @@ function identified(repositories: readonly Repository[], refuse: Refuse): Reposi
   });
 }
 
-/** Inspects each place and returns the items they hold; a place with a file over its size cap is refused. */
+/**
+ * Inspects each place and returns the items they hold; a place with a layout file over its size cap is refused, and of
+ * a topic repository whose marketplace file is, only the marketplace.
+ */
 async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace[], refuse: Refuse) {
   const inspections = await inspectLocations(
     client,
@@ -290,15 +317,27 @@ async function buildRecords(
 
 /**
  * Leaves the items found in a folder that several plugins share without a container, as which plugin holds them cannot
- * be told; one that an entry lists keeps that entry's plugin, as the listing joins it.
+ * be told, and records the folder's manifest license for them; one that an entry lists keeps that entry's plugin, as
+ * the listing joins it.
  */
-function unshare(found: readonly Candidate[], batch: readonly Ranked[], folders: Containers['folders']): Candidate[] {
-  const shared = new Set(
-    batch.flatMap(({ candidate: { id, location } }) => (sole(folders.get(locationId(location)) ?? []) ? [] : [id])),
+function unshare(
+  inspected: Awaited<ReturnType<typeof inspectPlaces>>,
+  batch: readonly Ranked[],
+  { folders, shared }: Containers,
+): Candidate[] {
+  const holders = new Map(
+    batch.flatMap(({ candidate: { id, location } }, index): [string, Holder][] => {
+      const inspection = inspected.inspections[index];
+      if (typeof inspection !== 'object' || folders.get(locationId(location))?.length === 1) return [];
+      return [[id, { location, license: manifestLicense(inspection.files.manifest, undefined) }]];
+    }),
   );
-  return found.map(({ container, ...item }) =>
-    container === undefined || shared.has(container) ? item : { ...item, container },
-  );
+  return inspected.found.map(({ container, ...item }) => {
+    const holder = container === undefined ? undefined : holders.get(container);
+    if (holder === undefined) return container === undefined ? item : { ...item, container };
+    shared.set(item.id, holder);
+    return item;
+  });
 }
 
 /**
@@ -312,7 +351,7 @@ function pluginReader(reading: Reading, found: Candidate[]) {
       ({ candidate: { location, id, provenance } }): InspectedPlace => ({ location, container: id, provenance }),
     );
     const inspected = await inspectPlaces(client, places, refuse);
-    found.push(...unshare(inspected.found, batch, containers.folders));
+    found.push(...unshare(inspected, batch, containers));
     const unbuilt = batch.map(({ candidate, facts }, index): Unbuilt | 'refused' | undefined => {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
       if (inspection === 'too-large') return 'refused';
@@ -456,35 +495,44 @@ function topicPlaces(topicRepositories: readonly Repository[], facts: ReadonlyMa
 }
 
 /**
- * The items found in the topic repositories, those of a repository whose root is the one listed plugin there or, with
- * none listed, holds a plugin manifest with that plugin as their container, like the items of a listed plugin, and the
- * manifest license of an unlisted one added to the containers.
+ * The plugin that holds the items of a topic repository: the one listed at its root or, with none listed, the
+ * repository when it holds a plugin manifest, whose license is added to the containers; with several listed there, the
+ * root's manifest license is recorded as a shared folder's.
  */
+function topicHolder(
+  { locations, licenses, folders }: Containers,
+  location: GitHubLocation,
+  { files }: Inspection,
+): string | Holder | undefined {
+  const id = repositoryId(location);
+  // A listed plugin at the repository root keeps its own location and pin, whose manifest its reading records.
+  const listed = folders.get(id);
+  if (listed === undefined) {
+    if (files.manifest === undefined) return undefined;
+    locations.set(id, location);
+    licenses.set(id, manifestLicense(files.manifest, undefined));
+    return id;
+  }
+  return sole(listed) ?? { location, license: manifestLicense(files.manifest, undefined) };
+}
+
+/** The items found in the topic repositories, with the plugin that holds them as their container, like a listed plugin's. */
 async function topicItems(
-  { client, refuse, containers: { locations, licenses, folders } }: Reading,
+  { client, refuse, containers }: Reading,
   places: readonly InspectedPlace[],
 ): Promise<Candidate[]> {
   const { inspections, found } = await inspectPlaces(client, places, refuse);
-  const plugins = new Map<string, string>();
+  const holders = new Map<string, string | Holder>();
   for (const [index, { location }] of places.entries()) {
     const inspection = inspections[index];
-    if (typeof inspection !== 'object') continue;
-    const id = repositoryId(location);
-    // A listed plugin at the repository root keeps its own location and pin, whose manifest its reading records.
-    const listed = folders.get(id);
-    if (listed !== undefined) {
-      // Several plugins at one root leave no plugin to hold its items.
-      const holder = sole(listed);
-      if (holder !== undefined) plugins.set(id, holder);
-    } else if (inspection.files.manifest !== undefined) {
-      plugins.set(id, id);
-      locations.set(id, location);
-      licenses.set(id, manifestLicense(inspection.files.manifest, undefined));
-    }
+    const holder = typeof inspection === 'object' ? topicHolder(containers, location, inspection) : undefined;
+    if (holder !== undefined) holders.set(repositoryId(location), holder);
   }
   for (const candidate of found) {
-    const container = candidate.location === undefined ? undefined : plugins.get(repositoryId(candidate.location));
-    if (candidate.kind !== 'marketplace' && container !== undefined) candidate.container = container;
+    const holder = candidate.location === undefined ? undefined : holders.get(repositoryId(candidate.location));
+    if (candidate.kind === 'marketplace' || holder === undefined) continue;
+    if (typeof holder === 'string') candidate.container = holder;
+    else containers.shared.set(candidate.id, holder);
   }
   return found;
 }
