@@ -16,11 +16,13 @@ import {
   locateSource,
   locationId,
   locationLink,
+  repositoryId,
 } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
 import { issueSummary } from './issue-summary.ts';
 import { jsonText } from './json-text.ts';
 import { entrySources } from './marketplace-analyzer.ts';
+import { licenseField } from './plugin-analyzer.ts';
 import type { SourceAdapter, SourceResult } from './source-adapter.ts';
 
 const marketplacePath = '.claude-plugin/marketplace.json';
@@ -46,6 +48,15 @@ function skillCandidate(location: GitHubLocation, container: string, listing: Li
   };
 }
 
+/**
+ * The license field of an entry whose plugin sits in the marketplace's own repository; for another repository's plugin
+ * the marketplace may hold no rights to grant one.
+ */
+function ownLicense(value: unknown, location: GitHubLocation | undefined, listing: Listing): string | undefined {
+  const own = location !== undefined && repositoryId(location) === repositoryId(listing.marketplace);
+  return own ? licenseField(value) : undefined;
+}
+
 /** The plugin of one entry and the skills it lists; a plugin without a location of its own is identified by its name. */
 function entryCandidates(raw: unknown, listing: Listing): Candidate[] {
   const entry = marketplaceEntry.parse(raw);
@@ -55,6 +66,7 @@ function entryCandidates(raw: unknown, listing: Listing): Candidate[] {
   const id = located ? locationId(location) : entryNameId(listing.marketplace, entry.name);
   // A homepage off the allow-listed hosts is not stored.
   const homepage = httpsUrl.safeParse(entry.homepage);
+  const license = ownLicense(entry.license, location, listing);
   const plugin: Candidate = {
     kind: 'plugin',
     id,
@@ -67,6 +79,7 @@ function entryCandidates(raw: unknown, listing: Listing): Candidate[] {
     listedIn: [listing.marketplaceId],
     provenance: [listing.source],
     source,
+    ...(license === undefined ? {} : { entryLicense: license }),
   };
   const skills =
     location === undefined

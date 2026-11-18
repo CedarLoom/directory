@@ -177,13 +177,22 @@ function LicenseFacts() {
         The license of an item is the license field of a skill's frontmatter, else the license GitHub detects at the
         repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's own
         folder. A license file at the repository root that GitHub cannot name comes after the license field of a
-        plugin's manifest; for a plugin or skill at the repository root it is named by its text like a license file in
-        the item's folder when it is the only license file GitHub reads at the root, and otherwise it is recorded
-        without an SPDX id. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the
-        word proprietary alone, reads "Withheld: no license granted" in the list and on the item's page and scores as no
-        license whatever the repository grants. A plugin manifest that withholds the license withholds it also for the
-        skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license field still
-        applies, and so does a license file in a skill's folder other than the plugin's. A blank field and one that
+        plugin's manifest and, without one, before a license file in the item's own folder; for a plugin or skill at the
+        repository root it is named by its text like a license file in the item's folder when it is the only license
+        file GitHub reads at the root, and otherwise it is recorded without an SPDX id. A frontmatter or manifest field
+        that withholds the license, which is UNLICENSED, NONE or the word proprietary alone, reads "Withheld: no license
+        granted" in the list and on the item's page and scores as no license whatever the repository grants. A plugin
+        manifest that withholds the license withholds it also for the skills, agents, hooks and output styles found in
+        or listed for the plugin; a skill's own license field still applies, and so does a license file in a skill's
+        folder other than the plugin's. A plugin manifest's license field that states a license applies to these items
+        as well when GitHub names no license at the repository root, again after a skill's own license field and a
+        license file in a skill's folder other than the plugin's. A repository found by topic search is the plugin of
+        the items it holds when a plugin is listed or a plugin manifest sits at its root, unless only its own
+        marketplace lists plugins there and lists several. An item whose plugin manifest is cut by GitHub, over the size
+        cap or not a JSON object is not listed, as its license cannot be read. For a plugin in its marketplace's own
+        repository, the license field of its marketplace entry is read as the manifest's when it has no plugin.json or
+        one without a license field, also when another marketplace lists it. The entry of a plugin in another repository
+        is not read, as a marketplace may hold no rights to grant that plugin's license. A blank field and one that
         holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding
         license field does not count as filled, neither for a skill's license field nor among a plugin's manifest
         fields. A field that holds the full name of a license in the SPDX License List 3.29, other than a deprecated

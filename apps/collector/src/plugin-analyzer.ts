@@ -208,19 +208,36 @@ function manifestFields(plugin: z.infer<typeof manifest>, versioned: boolean): n
   ].filter(Boolean).length;
 }
 
-const licensed = z.object({ license: text });
+export const licenseField = (value: unknown): string | undefined => text.safeParse(value).data;
+const manifestObject = jsonText.pipe(manifest.pick({ license: true }));
+
+/** The license field of plugin.json, else that of the plugin's marketplace entry. */
+const pluginLicense = (field: unknown, entryLicense: string | undefined): string | undefined =>
+  licenseField(field) ?? entryLicense;
 
 /**
- * The license field of a plugin manifest, for the items the plugin holds; a manifest that is no JSON object gives none,
- * as the plugin's own record is refused for it.
+ * The manifest license of a plugin for the items it holds, or `invalid` for a manifest that is no JSON object, which
+ * refuses them as it refuses the plugin's own record.
  */
-export function manifestLicense(file: string | undefined): string | undefined {
-  return licensed.safeParse(jsonText.safeParse(file).data).data?.license;
+export function manifestLicense(
+  file: string | undefined,
+  entryLicense: string | undefined,
+): { license: string | undefined } | 'invalid' {
+  const parsed = file === undefined ? {} : manifestObject.safeParse(file).data;
+  return parsed === undefined ? 'invalid' : { license: pluginLicense(parsed.license, entryLicense) };
 }
 
-/** The facts of a plugin directory in the default layout; component paths a manifest adds are not followed. */
-export function analyzePlugin({ directories, files }: Inspection) {
-  const plugin = manifest.parse(parseFile(files.manifest) ?? {});
+/** The manifest's keys; only a missing file is an empty manifest, so JSON null, like any non-object, throws. */
+function readManifest(file: string | undefined): z.infer<typeof manifest> {
+  return manifest.parse(file === undefined ? {} : jsonText.parse(file));
+}
+
+/**
+ * The facts of a plugin directory in the default layout, with the license of the marketplace entry when plugin.json
+ * states none; component paths a manifest adds are not followed.
+ */
+export function analyzePlugin({ directories, files }: Inspection, entryLicense?: string) {
+  const plugin = readManifest(files.manifest);
   const version = versionLabel.safeParse(plugin.version);
   const inlineHooks = inline(plugin.hooks);
   // Hooks in plugin.json run like those in hooks/hooks.json; a malformed one throws, so the plugin gets no record.
@@ -254,7 +271,7 @@ export function analyzePlugin({ directories, files }: Inspection) {
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
     manifestFields: manifestFields(plugin, version.success),
-    manifestLicense: manifestLicense(files.manifest),
+    manifestLicense: pluginLicense(plugin.license, entryLicense),
     rootClaudeMd: directories.root?.some((entry) => entry.name === 'CLAUDE.md') ?? false,
     hooks: hookConfigs.map(hookFacts),
     mcpUnpinnedPackage: stdio.some(({ command, args = [] }) => command !== undefined && unpinnedPackage(command, args)),

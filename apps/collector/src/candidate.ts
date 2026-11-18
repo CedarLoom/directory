@@ -22,6 +22,11 @@ export interface Candidate {
   provenance: SourceId[];
   /** A plugin's source kind and pin as its marketplace entry sets them. */
   source?: { kind: SourceKind; pin: Pin };
+  /**
+   * The license field of a plugin's marketplace entry when the plugin sits in the marketplace's own repository; it is the
+   * plugin manifest's license field when the plugin has no plugin.json or one without a license field.
+   */
+  entryLicense?: string;
   /** A marketplace's plugin entries. */
   entries?: MarketplaceEntries;
   /** A hooks file's facts, read when the inspection found it. */
@@ -34,12 +39,16 @@ function union<T>(first: readonly T[], second: readonly T[]): T[] {
   return [...new Set([...first, ...second])];
 }
 
-/** Joins candidates of one kind and id, such as a plugin two marketplaces list, keeping the first one's facts. */
+/**
+ * Joins candidates of one kind and id, such as a plugin two marketplaces list, keeping the first one's facts but an entry
+ * license, which only the entry in the plugin's own repository carries.
+ */
 export function mergeCandidates(candidates: readonly Candidate[]): Candidate[] {
   const merged = new Map<string, Candidate>();
   for (const candidate of candidates) {
     const key = `${candidate.kind} ${candidate.id}`;
     const seen = merged.get(key);
+    const entryLicense = seen?.entryLicense ?? candidate.entryLicense;
     merged.set(
       key,
       seen === undefined
@@ -48,6 +57,7 @@ export function mergeCandidates(candidates: readonly Candidate[]): Candidate[] {
             ...seen,
             listedIn: union(seen.listedIn, candidate.listedIn),
             provenance: union(seen.provenance, candidate.provenance),
+            ...(entryLicense === undefined ? {} : { entryLicense }),
           },
     );
   }

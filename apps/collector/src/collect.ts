@@ -128,24 +128,43 @@ function refusalLogger(log: (line: string) => void, counter: { refused: number }
 type Build = (input: RecordInput) => ItemRecord | 'refused';
 
 const tooLarge = 'a file is cut by GitHub or over the size cap';
+// A plugin manifest whose license cannot be read refuses the items the plugin holds.
+const unreadManifest = { 'too-large': tooLarge, invalid: 'the manifest of its plugin is no JSON object' } as const;
 
-/** The listed plugins, by id: where each lives and the license field of each manifest read so far. */
+/**
+ * The listed plugins and the topic repositories with a plugin manifest at their root, by id: where each lives and the
+ * license field of each manifest read so far.
+ */
 interface Containers {
-  locations: ReadonlyMap<string, GitHubLocation>;
-  /** Filled before the items a plugin holds are built; too large when its manifest is. */
-  licenses: Map<string, { license: string | undefined } | 'too-large'>;
+  locations: Map<string, GitHubLocation>;
+  /** The license field of each listed plugin's marketplace entry, its manifest's when plugin.json states none. */
+  entryLicenses: ReadonlyMap<string, string>;
+  /** Filled before the items a plugin holds are built. */
+  licenses: Map<string, { license: string | undefined } | keyof typeof unreadManifest>;
+}
+
+/** The listed plugins as containers, before any manifest is read. */
+function listedContainers(listed: readonly Located[]): Containers {
+  const plugins = listed.filter(({ kind }) => kind === 'plugin');
+  return {
+    locations: new Map(plugins.map(({ id, location }) => [id, location])),
+    entryLicenses: new Map(
+      plugins.flatMap(({ id, entryLicense }) => (entryLicense === undefined ? [] : [[id, entryLicense]])),
+    ),
+    licenses: new Map(),
+  };
 }
 
 /**
  * Builds a record, with the manifest license of the plugin that holds the item, or logs a refusal when its facts do not
- * fit the record, its license is unknown or its plugin's manifest is too large.
+ * fit the record, its license is unknown or its plugin's manifest is too large or no JSON object.
  */
 function recordBuilder(runDate: string, refuse: Refuse, { locations, licenses }: Containers): Build {
   return (input) => {
     const { container, id, location } = input.candidate;
     const manifest = container === undefined ? undefined : licenses.get(container);
-    if (manifest === 'too-large') {
-      refuse(id, new Error(tooLarge));
+    if (typeof manifest === 'string') {
+      refuse(id, new Error(unreadManifest[manifest]));
       return 'refused';
     }
     const plugin = container === undefined ? undefined : locations.get(container);
@@ -267,7 +286,7 @@ function pluginReader(reading: Reading, found: Candidate[]) {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
       if (inspection === 'too-large') return 'refused';
       if (inspection === undefined) return undefined;
-      containers.licenses.set(candidate.id, { license: manifestLicense(inspection.files.manifest) });
+      containers.licenses.set(candidate.id, manifestLicense(inspection.files.manifest, candidate.entryLicense));
       if (source === undefined) return undefined;
       return {
         input: { kind: 'plugin', candidate, facts, inspection, source },
@@ -307,7 +326,7 @@ function fileInput(
  * plugin outside the selection whose marketplace entry lists skills.
  */
 async function readManifestLicenses({ client, containers }: Reading, batch: readonly Ranked[]): Promise<void> {
-  const { locations, licenses } = containers;
+  const { locations, entryLicenses, licenses } = containers;
   const unread = new Set(
     batch.flatMap(({ candidate: { container } }) =>
       container === undefined || licenses.has(container) ? [] : [container],
@@ -324,7 +343,7 @@ async function readManifestLicenses({ client, containers }: Reading, batch: read
   );
   for (const [index, { id }] of plugins.entries()) {
     const file = manifests[index]?.file;
-    licenses.set(id, file === 'too-large' ? file : { license: manifestLicense(file?.text) });
+    licenses.set(id, file === 'too-large' ? file : manifestLicense(file?.text, entryLicenses.get(id)));
   }
 }
 
@@ -360,17 +379,20 @@ function marketplaceRecords(
   });
 }
 
-/** Builds the records of a batch of hooks or MCP servers, whose facts were read with their candidates. */
-function listedReader({ build }: Reading) {
-  return (batch: readonly Ranked[]): Promise<Read[]> =>
-    Promise.resolve(
-      batch.map(({ candidate, facts }): Read => {
-        const { hooks, mcpServer } = candidate;
-        if (candidate.kind === 'hook')
-          return hooks === undefined ? undefined : build({ kind: 'hook', candidate, facts, hooks });
-        return mcpServer === undefined ? undefined : build({ kind: 'mcp-server', candidate, facts, mcpServer });
-      }),
-    );
+/**
+ * Builds the records of a batch of hooks or MCP servers, whose facts were read with their candidates, after reading the
+ * manifest license of each plugin that holds one and that no inspection read.
+ */
+function listedReader(reading: Reading) {
+  return async (batch: readonly Ranked[]): Promise<Read[]> => {
+    await readManifestLicenses(reading, batch);
+    return batch.map(({ candidate, facts }): Read => {
+      const { hooks, mcpServer } = candidate;
+      if (candidate.kind === 'hook')
+        return hooks === undefined ? undefined : reading.build({ kind: 'hook', candidate, facts, hooks });
+      return mcpServer === undefined ? undefined : reading.build({ kind: 'mcp-server', candidate, facts, mcpServer });
+    });
+  };
 }
 
 /**
@@ -403,6 +425,50 @@ function topicPlaces(topicRepositories: readonly Repository[], facts: ReadonlyMa
 }
 
 /**
+ * The id of the listed plugin at the root of a repository: the one whose id is the repository's, else the only one the
+ * repository's own marketplace lists there.
+ */
+function listedRootPlugin(locations: ReadonlyMap<string, GitHubLocation>, id: string): string | undefined {
+  if (locations.has(id)) return id;
+  const roots = [...locations.entries()].filter(
+    ([, location]) => location.path === '' && repositoryId(location) === id,
+  );
+  // Several plugins at one root leave no plugin to hold its items.
+  return roots.length === 1 ? roots[0]?.[0] : undefined;
+}
+
+/**
+ * The items found in the topic repositories, those of a repository whose root is a listed plugin or holds a plugin
+ * manifest with that plugin as their container, like the items of a listed plugin, and the manifest license of an
+ * unlisted one added to the containers.
+ */
+async function topicItems(
+  { client, refuse, containers: { locations, licenses } }: Reading,
+  places: readonly InspectedPlace[],
+): Promise<Candidate[]> {
+  const { inspections, found } = await inspectPlaces(client, places, refuse);
+  const plugins = new Map<string, string>();
+  for (const [index, { location }] of places.entries()) {
+    const inspection = inspections[index];
+    if (typeof inspection !== 'object') continue;
+    const id = repositoryId(location);
+    // A listed plugin at the repository root keeps its own location and pin, whose manifest its reading records.
+    const listed = listedRootPlugin(locations, id);
+    if (listed !== undefined) plugins.set(id, listed);
+    else if (inspection.files.manifest !== undefined) {
+      plugins.set(id, id);
+      locations.set(id, location);
+      licenses.set(id, manifestLicense(inspection.files.manifest, undefined));
+    }
+  }
+  for (const candidate of found) {
+    const container = candidate.location === undefined ? undefined : plugins.get(repositoryId(candidate.location));
+    if (candidate.kind !== 'marketplace' && container !== undefined) candidate.container = container;
+  }
+  return found;
+}
+
+/**
  * The run's records: every marketplace, the selected plugins and the most starred items of the other kinds; a refused
  * item frees its place.
  */
@@ -417,7 +483,7 @@ async function itemRecords(
   const select = (kind: ItemKind, limit: number) =>
     kind === 'skill' || kind === 'agent' || kind === 'output-style'
       ? fill(ranked(candidates, kind, facts), limit, fileReader(reading, kind))
-      : // Hooks and MCP servers were read with their candidates, so a refill makes no request and needs no bound.
+      : // A refill reads only manifests not read before, each once, so it needs no bound.
         fill(ranked(candidates, kind, facts), limit, listedReader(reading), Number.POSITIVE_INFINITY);
   const [skills, agents, hooks, mcpServers, outputStyles] = await Promise.all([
     select('skill', perKind),
@@ -464,17 +530,14 @@ export async function collect(
     (repository) => !excluded.has(repositoryId(repository)),
   );
   const facts = await readFacts(client, factsRepositories(listed, topicRepositories, log), runDate);
-  const containers: Containers = {
-    locations: new Map(listed.flatMap(({ kind, id, location }) => (kind === 'plugin' ? [[id, location]] : []))),
-    licenses: new Map(),
-  };
+  const containers = listedContainers(listed);
   const reading: Reading = { client, refuse, build: recordBuilder(runDate, refuse, containers), containers };
   const found: Candidate[] = [];
   const [plugins, topics] = await Promise.all([
     fill(ranked(listed, 'plugin', facts), perKind, pluginReader(reading, found)),
-    inspectPlaces(client, topicPlaces(topicRepositories, facts), refuse),
+    topicItems(reading, topicPlaces(topicRepositories, facts)),
   ]);
-  const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found, ...topics.found]);
+  const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found, ...topics]);
   const kept = applyExclusions(all, excluded);
   const records = await itemRecords(reading, { candidates: kept.filter(isLocated), facts, plugins });
   const report: RunReport = {

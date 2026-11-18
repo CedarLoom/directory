@@ -155,7 +155,7 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
     modules,
     uncountedComponents,
     ...facts
-  } = analyzePlugin(input.inspection);
+  } = analyzePlugin(input.inspection, input.candidate.entryLicense);
   const assessment = pluginAssessment({
     ...facts,
     modules,
