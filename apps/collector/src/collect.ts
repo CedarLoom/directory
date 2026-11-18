@@ -212,9 +212,9 @@ interface Unbuilt {
 }
 
 /**
- * Builds each record; one whose license is the license file in its subfolder, or at the repository root one whose
- * license file GitHub cannot name, is built again with the file's text when the folder holds just that one, so that only
- * a file that decides the record is read.
+ * Builds each record; one whose license is the license file in its folder, or at the repository root one whose license
+ * file GitHub cannot name, is built again with the file's text when the folder holds just that one, so that only a file
+ * that decides the record is read.
  */
 async function buildRecords(
   { client, build }: Reading,
@@ -229,9 +229,8 @@ async function buildRecords(
     const { license } = record.value;
     // GitHub's NOASSERTION is the only detected license without an SPDX id.
     const decides =
-      location.path === ''
-        ? license.source === 'github-detected' && license.spdx === undefined
-        : license.source === 'license-file';
+      license.source === 'license-file' ||
+      (location.path === '' && license.source === 'github-detected' && license.spdx === undefined);
     return decides && file !== undefined && others.length === 0 ? [{ index, input: item.input, location, file }] : [];
   });
   const reads = await readItemFiles(client, targets, false);

@@ -45,8 +45,14 @@ function uncommented(raw: string, template: boolean): string {
   return marks + line.slice(marks.length).replace(commentMark, '').trim();
 }
 
-// A notice wrapped onto a second line: the two lines, read as one, must still be a notice without terms.
-const continuesNotice = (notice: string, bare: string) => notice !== '' && bare !== '' && isNotice(`${notice} ${bare}`);
+// A notice wrapped onto a second line: the two lines, read as one, must still be a notice without terms. A period that
+// ends the first line, as in "Inc.", does not end the notice.
+const continuesNotice = (notice: string, bare: string) =>
+  notice !== '' && bare !== '' && isNotice(`${notice.replace(/\.$/, '')} ${bare}`);
+
+// Each part of a template line between its own optional marks becomes optional, so that its optional parts stay balanced.
+const optionalLine = (line: string) =>
+  line.replace(/(?:(?!<<(?:begin|end)Optional>>).)+/g, (part) => `<<beginOptional>>${part}<<endOptional>>`);
 
 function textLines(text: string, template: boolean): string[] {
   let notice = '';
@@ -58,11 +64,12 @@ function textLines(text: string, template: boolean): string[] {
       // A template's variable part reads as a placeholder, as an unfilled notice has.
       const bare = template ? line.replace(optionalMark, '').replace(templateToken, '[X]') : line;
       const own = isNotice(bare);
-      const dropped = own || rule.test(bare) || continuesNotice(notice, bare);
+      const continues = !own && continuesNotice(notice, bare);
       notice = own ? bare : '';
-      if (!dropped) return line;
-      // A template keeps the optional marks of a dropped line, so that its optional parts stay balanced.
-      return template ? (line.match(optionalMark) ?? []).join('') : '';
+      if (!own && !continues && !rule.test(bare)) return line;
+      if (!template) return '';
+      // A text may set the line a notice wraps onto apart from it with a blank line, so a template keeps it as optional.
+      return continues ? optionalLine(line) : (line.match(optionalMark) ?? []).join('');
     });
 }
 

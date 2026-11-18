@@ -101,8 +101,9 @@ function baseFields(
       ...license,
       container: containerLicense,
       containerFolder: inContainerFolder,
-      // At the repository root, the item's license file is the one GitHub reads.
-      ...(candidate.location.path === '' ? { rootLicenseText: folderLicenseText } : { folderLicenseText }),
+      folderLicenseText,
+      // At the repository root, the item's license file is also the one GitHub reads.
+      ...(candidate.location.path === '' ? { rootLicenseText: folderLicenseText } : {}),
     }),
     ...(facts.maintenance === undefined ? {} : { maintenance: facts.maintenance }),
     popularity: [

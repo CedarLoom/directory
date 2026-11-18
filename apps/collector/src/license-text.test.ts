@@ -48,9 +48,15 @@ it('names a license whose copyright notice wraps onto a second line, unless that
       mit('Copyright (C) 1991 Free Software Foundation, Inc.\n51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA'),
     ),
     licenseTextId(mit('Copyright (c) 2024 Jane Doe and the\nExample Project contributors')),
+    licenseTextId(mit('Copyright (c) 2009 Example Corp.\nMountain View, California')),
     licenseTextId(mit('Copyright (c) 2024 Jane Doe,\nfor non-commercial use only')),
     licenseTextId(mit('Copyright (c) 2024 Acme Corp and\nits affiliates. Proprietary and confidential.')),
-  ]).toEqual(['MIT', 'MIT', 'MIT', undefined, undefined]);
+  ]).toEqual(['MIT', 'MIT', 'MIT', 'MIT', undefined, undefined]);
+});
+
+it('names GPL-2.0 when a blank line sets its address apart from its copyright line', () => {
+  const text = templateLicenseText(templates['GPL-2.0']).replace('Inc. \n51 Franklin', 'Inc.\n\n51 Franklin');
+  expect(licenseTextId(text)).toBe('GPL-2.0');
 });
 
 it('names a license whatever the case or script of its holder', () => {
