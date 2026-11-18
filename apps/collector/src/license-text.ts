@@ -48,17 +48,22 @@ function uncommented(raw: string, template: boolean): string {
 // A notice line that goes on: it ends with a comma or a joining word.
 const openEnd = /(?:,|&|\b(?:and|the|of))$/i;
 const companyAbbreviation = /\b(?:inc|corp|ltd|co)\.$/i;
-// A name or an address, as in "Mountain View, California": each word of its first sentence opens with a capital or a digit.
-const isNameLine = (line: string) =>
-  (line.split(sentenceBreak)[0]?.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => /^[\p{Lu}\p{N}]/u.test(word));
+// An address, as in "Mountain View, California": its first sentence holds a comma and each of its words opens with a
+// capital or a digit; a Title Case line of terms, such as "For Personal Use", holds no comma.
+function isAddressLine(line: string): boolean {
+  const sentence = line.split(sentenceBreak)[0] ?? '';
+  return (
+    sentence.includes(',') && (sentence.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => /^[\p{Lu}\p{N}]/u.test(word))
+  );
+}
 
-// A notice wrapped onto a second line: the first line goes on, or it ends with a company abbreviation such as "Inc." or
-// the second opens with a digit and the second is a name or an address; and the two lines, read as one, are still a
-// notice without terms. Any other line after a notice is a sentence of its own.
+// A notice wrapped onto a second line: the first line goes on; or it ends with a company abbreviation such as "Inc." or
+// the second opens with a digit, and the second is an address; and the two lines, read as one, are still a notice
+// without terms. Any other line after a notice is a sentence of its own.
 function continuesNotice(notice: string, next: string): boolean {
   if (notice === '' || next === '') return false;
   const abbreviated = companyAbbreviation.test(notice);
-  const goesOn = openEnd.test(notice) || ((abbreviated || /^\d/.test(next)) && isNameLine(next));
+  const goesOn = openEnd.test(notice) || ((abbreviated || /^\d/.test(next)) && isAddressLine(next));
   return goesOn && isNotice(`${abbreviated ? notice.slice(0, -1) : notice} ${next}`);
 }
 

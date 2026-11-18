@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { ZodError } from 'zod';
 import { type Candidate, type Located, mergeCandidates } from './candidate.ts';
 import { type DataFiles, dataFiles } from './data-files.ts';
@@ -238,7 +239,7 @@ async function buildRecords(
       (location.path === '' &&
         license.source === 'github-detected' &&
         license.spdx === undefined &&
-        item.detectedLicenseFiles.length === 1);
+        isDeepStrictEqual(item.detectedLicenseFiles, [file]));
     return decides && file !== undefined && others.length === 0 ? [{ index, input: item.input, location, file }] : [];
   });
   const reads = await readItemFiles(client, targets, false);

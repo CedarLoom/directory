@@ -178,9 +178,9 @@ function LicenseFacts() {
         repository root, else the license field of a plugin's manifest, else a license file in a skill's or plugin's own
         folder. A license file at the repository root that GitHub cannot name comes after the license field of a
         plugin's manifest; for a plugin or skill at the repository root it is named by its text like a license file in
-        the item's folder when GitHub reads no other license file at the root, and otherwise it is recorded without an
-        SPDX id. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the word
-        proprietary alone, reads "Withheld: no license granted" in the list and on the item's page and scores as no
+        the item's folder when it is the only license file GitHub reads at the root, and otherwise it is recorded
+        without an SPDX id. A frontmatter or manifest field that withholds the license, which is UNLICENSED, NONE or the
+        word proprietary alone, reads "Withheld: no license granted" in the list and on the item's page and scores as no
         license whatever the repository grants. A plugin manifest that withholds the license withholds it also for the
         skills, agents, hooks and output styles found in or listed for the plugin; a skill's own license field still
         applies, and so does a license file in a skill's folder other than the plugin's. A blank field and one that
@@ -196,17 +196,17 @@ function LicenseFacts() {
         of the licenses GitHub detects, their earlier versions and other licenses items state. A copyright notice opens
         with Copyright, (c) or © and may name its holders in any case or script. The next line is set aside with it when
         it holds no word of terms and continues the notice: the notice ends with a comma, and, the, of or &; or the
-        notice ends with Inc., Corp., Ltd. or Co., or the line opens with a digit, and each of its words opens with a
-        capital or a digit, as in a name or an address. Any other line after a notice is kept. A copyright line that
-        holds a word of terms, such as only, commercial, NC, proprietary, confidential, evaluation, trial, expires,
-        internal, not, prohibited, restricted or permission, is kept, so the text matches no template. Terms in other
-        words, such as "ask first", pass as a holder's name and do not change the match. A part that a template leaves
-        free, such as the copyright holders in MIT's warranty disclaimer, takes any text, so terms added there do not
-        change the match. A license file that matches none of the templates, and one of several license files in the
-        folder, is recorded without an SPDX id. SPDX ids match in any case and are recorded as the SPDX License List
-        writes them. An expression takes the class of its most permissive part when OR joins its parts and of its least
-        permissive part when AND joins them. "No license detected" means that none of these was found, not that the item
-        has no license.
+        notice ends with Inc., Corp., Ltd. or Co., or the line opens with a digit, and the line's first sentence holds a
+        comma and each of its words opens with a capital or a digit, as in an address. Any other line after a notice is
+        kept. A copyright line that holds a word of terms, such as only, commercial, NC, proprietary, confidential,
+        evaluation, trial, expires, internal, not, prohibited, restricted or permission, is kept, so the text matches no
+        template. Terms in other words, such as "ask first", pass as a holder's name and do not change the match. A part
+        that a template leaves free, such as the copyright holders in MIT's warranty disclaimer, takes any text, so
+        terms added there do not change the match. A license file that matches none of the templates, and one of several
+        license files in the folder, is recorded without an SPDX id. SPDX ids match in any case and are recorded as the
+        SPDX License List writes them. An expression takes the class of its most permissive part when OR joins its parts
+        and of its least permissive part when AND joins them. "No license detected" means that none of these was found,
+        not that the item has no license.
       </Trans>
     </Text>
   );

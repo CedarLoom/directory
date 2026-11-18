@@ -49,9 +49,10 @@ it('names a license whose copyright notice wraps onto a second line, unless that
     ),
     licenseTextId(mit('Copyright (c) 2024 Jane Doe and the\nExample Project contributors')),
     licenseTextId(mit('Copyright (c) 2009 Example Corp.\nMountain View, California')),
+    licenseTextId(mit('Copyright (c) 2024 Jane Doe\n2 Main Street, Springfield')),
     licenseTextId(mit('Copyright (c) 2024 Jane Doe,\nfor non-commercial use only')),
     licenseTextId(mit('Copyright (c) 2024 Acme Corp and\nits affiliates. Proprietary and confidential.')),
-  ]).toEqual(['MIT', 'MIT', 'MIT', 'MIT', undefined, undefined]);
+  ]).toEqual(['MIT', 'MIT', 'MIT', 'MIT', 'MIT', undefined, undefined]);
 });
 
 it('names no license for a sentence of terms on the line after a copyright notice', () => {
@@ -63,9 +64,12 @@ it('names no license for a sentence of terms on the line after a copyright notic
       'Copyright (c) 2024 Jane Doe\nUse is subject to the terms at example.com/terms',
       'Copyright (c) 2024 Jane Doe\nNo use by companies with more than ten employees',
       'Copyright (c) 2024 Jane Doe\nAI training is banned',
+      'Copyright (c) 2024 Acme Inc.\nFor Personal Use',
+      'Copyright (c) 2024 Jane Doe\n10 Users Maximum',
     ].map((notice) => licenseTextId(mit(notice))),
     licenseTextId(gpl.replace(/^51 Franklin Street.*$/m, 'For personal and educational use')),
-  ]).toEqual(Array.from({ length: 6 }, () => undefined));
+    licenseTextId(gpl.replace(/^51 Franklin Street.*$/m, 'For Personal And Educational Use')),
+  ]).toEqual(Array.from({ length: 9 }, () => undefined));
 });
 
 it('names GPL-2.0 when a blank line sets its address apart from its copyright line', () => {
