@@ -667,6 +667,26 @@ it("records a plugin's manifest license, else its one license file in its folder
   ]);
 });
 
+it('records the root license file GitHub cannot name by its text, and keeps one that changes a term unnamed', async () => {
+  const world = fakeWorld();
+  for (const [name, text] of [
+    ['example-org/plugin-0', isc],
+    ['example-org/plugin-2', isc.replace('with or without fee', 'without fee')],
+  ] as const) {
+    const repository = repositoryOf(world, name);
+    repository.license = 'NOASSERTION';
+    repository.files['LICENSE'] = text;
+  }
+  const { files } = await run(world, '2026-11-16');
+  expect([
+    recordLicense(files, 'records/plugin/gh.example-org.plugin-0.json'),
+    recordLicense(files, 'records/plugin/gh.example-org.plugin-2.json'),
+  ]).toEqual([
+    { spdx: 'ISC', source: 'license-file', class: 'permissive' },
+    { source: 'github-detected', class: 'none' },
+  ]);
+});
+
 it('writes records, popularity files and the index, and no third-party text', async () => {
   const { files } = await run(fakeWorld(), '2026-11-16');
   const paths = [...files.keys()];

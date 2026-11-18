@@ -1,23 +1,7 @@
 import { expect, it } from 'vitest';
 import templates from './license-templates.json' with { type: 'json' };
 import { licenseTextId } from './license-text.ts';
-
-const variablePart = /<<var;name="([^"]*)";original="((?:[^"]|"(?!;match="))*)";match="(?:[^"]|"(?!>>))*">>/g;
-
-// The Creative Commons 4.0 templates give an empty original for parts their patterns require; a license file has its
-// copyright notice on a line of its own.
-function filled(name: string, original: string): string {
-  if (/^(?:copyright|©|\(c\))/i.test(original)) return `${original}\n`;
-  if (name === 'ccLicensed') return 'CC-licensed';
-  if (/^section\dTitleHyphens$/.test(name)) return '–';
-  return original;
-}
-
-/** The license text a template writes with its optional parts and the original of each variable part. */
-const textOf = (template: string) =>
-  template
-    .replace(/<<beginOptional>>|<<endOptional>>/g, '')
-    .replace(variablePart, (_part, name: string, original: string) => filled(name, original));
+import { templateLicenseText } from './template-license-text.ts';
 
 const mit = (notice: string) => `MIT License
 
@@ -43,7 +27,7 @@ SOFTWARE.
 `;
 
 it.each(Object.entries(templates))('names %s from its license text', (id, template) => {
-  expect(licenseTextId(textOf(template))).toBe(id);
+  expect(licenseTextId(templateLicenseText(template))).toBe(id);
 });
 
 it('names a license whatever its copyright lines say, and without them', () => {
@@ -53,6 +37,20 @@ it('names a license whatever its copyright lines say, and without them', () => {
     licenseTextId(mit('')),
     licenseTextId(`${mit('')}\nCopyright (c) 2025 Example Org\n`),
   ]).toEqual(['MIT', 'MIT', 'MIT', 'MIT']);
+});
+
+it('names a license whose copyright notice wraps onto a second line, unless that line adds terms', () => {
+  expect([
+    licenseTextId(
+      mit('Copyright (c) 1991 - 1995, Example Research Institute Amsterdam,\nThe Netherlands. All rights reserved.'),
+    ),
+    licenseTextId(
+      mit('Copyright (C) 1991 Free Software Foundation, Inc.\n51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA'),
+    ),
+    licenseTextId(mit('Copyright (c) 2024 Jane Doe and the\nExample Project contributors')),
+    licenseTextId(mit('Copyright (c) 2024 Jane Doe,\nfor non-commercial use only')),
+    licenseTextId(mit('Copyright (c) 2024 Acme Corp and\nits affiliates. Proprietary and confidential.')),
+  ]).toEqual(['MIT', 'MIT', 'MIT', undefined, undefined]);
 });
 
 it('names a license whatever the case or script of its holder', () => {

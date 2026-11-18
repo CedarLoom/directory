@@ -15,4 +15,5 @@ extend-exclude = [
   "LICENSE",
   "packages/contracts/schemas/",
   "apps/collector/src/license-templates.json",
+  "apps/collector/src/license-names.json",
 ]

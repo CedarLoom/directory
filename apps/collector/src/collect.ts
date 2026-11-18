@@ -212,8 +212,9 @@ interface Unbuilt {
 }
 
 /**
- * Builds each record; one whose license is the license file in its subfolder, when the folder holds just that one, is
- * built again with the file's text, so that only a file that decides the record is read.
+ * Builds each record; one whose license is the license file in its subfolder, or at the repository root one whose
+ * license file GitHub cannot name, is built again with the file's text when the folder holds just that one, so that only
+ * a file that decides the record is read.
  */
 async function buildRecords(
   { client, build }: Reading,
@@ -221,14 +222,17 @@ async function buildRecords(
 ): Promise<Read[]> {
   const records = items.map((item) => (typeof item === 'object' ? build(item.input) : item));
   const targets = items.flatMap((item, index) => {
-    if (typeof item !== 'object') return [];
+    const record = records[index];
+    if (typeof item !== 'object' || typeof record !== 'object') return [];
     const { location } = item.input.candidate;
     const [file, ...others] = item.licenseFiles;
-    const record = records[index];
-    const decides = typeof record === 'object' && record.value.license.source === 'license-file';
-    return decides && location.path !== '' && file !== undefined && others.length === 0
-      ? [{ index, input: item.input, location, file }]
-      : [];
+    const { license } = record.value;
+    // GitHub's NOASSERTION is the only detected license without an SPDX id.
+    const decides =
+      location.path === ''
+        ? license.source === 'github-detected' && license.spdx === undefined
+        : license.source === 'license-file';
+    return decides && file !== undefined && others.length === 0 ? [{ index, input: item.input, location, file }] : [];
   });
   const reads = await readItemFiles(client, targets, false);
   for (const [at, { index, input }] of targets.entries()) {

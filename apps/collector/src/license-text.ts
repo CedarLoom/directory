@@ -38,23 +38,32 @@ const dashes = /[-\u2010-\u2015\u2212]+/g;
 const quotes = /[‘’‚‛“”„‟`'"«»]+/g;
 const cjk = /(?<=[\p{Script=Han}\u3000-\u303f\uff00-\uffef]) (?=[\p{Script=Han}\u3000-\u303f\uff00-\uffef])/gu;
 
-function cleanLine(raw: string, template: boolean): string {
+function uncommented(raw: string, template: boolean): string {
   // Collapsed first, so that no pattern below meets a long run of whitespace.
   const line = raw.replace(/\s+/g, ' ').trim();
   const marks = template ? (leadingOptionalMarks.exec(line)?.[0] ?? '') : '';
-  const cleaned = marks + line.slice(marks.length).replace(commentMark, '').trim();
-  // A template's variable part reads as a placeholder, as an unfilled notice has.
-  const bare = template ? cleaned.replace(optionalMark, '').replace(templateToken, '[X]') : cleaned;
-  if (!rule.test(bare) && !isNotice(bare)) return cleaned;
-  // A template keeps the optional marks of a dropped line, so that its optional parts stay balanced.
-  return template ? (cleaned.match(optionalMark) ?? []).join('') : '';
+  return marks + line.slice(marks.length).replace(commentMark, '').trim();
 }
 
+// A notice wrapped onto a second line: the two lines, read as one, must still be a notice without terms.
+const continuesNotice = (notice: string, bare: string) => notice !== '' && bare !== '' && isNotice(`${notice} ${bare}`);
+
 function textLines(text: string, template: boolean): string[] {
+  let notice = '';
   return text
     .replace(/^\uFEFF/, '')
     .split(/\r\n?|\n/)
-    .map((line) => cleanLine(line, template));
+    .map((raw) => {
+      const line = uncommented(raw, template);
+      // A template's variable part reads as a placeholder, as an unfilled notice has.
+      const bare = template ? line.replace(optionalMark, '').replace(templateToken, '[X]') : line;
+      const own = isNotice(bare);
+      const dropped = own || rule.test(bare) || continuesNotice(notice, bare);
+      notice = own ? bare : '';
+      if (!dropped) return line;
+      // A template keeps the optional marks of a dropped line, so that its optional parts stay balanced.
+      return template ? (line.match(optionalMark) ?? []).join('') : '';
+    });
 }
 
 // B.4 to B.6 and B.14: whitespace, case, dashes, quotes, the copyright sign and http or https are equivalent.
