@@ -23,6 +23,13 @@ precedence = "override"
 SPDX-FileCopyrightText = "Linux Foundation and its Contributors"
 SPDX-License-Identifier = "CC-BY-3.0"
 
+# The SPDX License List full license names, copied from the list to read a license stated by its name.
+[[annotations]]
+path = "apps/collector/src/license-names.json"
+precedence = "override"
+SPDX-FileCopyrightText = "Linux Foundation and its Contributors"
+SPDX-License-Identifier = "CC-BY-3.0"
+
 [[annotations]]
 path = [
   "packages/contracts/schemas/v1/agent.schema.json",

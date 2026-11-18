@@ -6,6 +6,7 @@ import {
   spdxExpression,
   spdxText,
 } from '@directory/contracts';
+import { licenseNameId } from './license-name.ts';
 import { licenseTextId } from './license-text.ts';
 
 type LicenseClass = 'permissive' | 'copyleft' | 'source-available' | 'none';
@@ -205,6 +206,33 @@ export function licenseFileNames(entries: readonly { name: string; type: string 
   return entries?.filter(({ name, type }) => type === 'blob' && isLicenseFileName(name)).map(({ name }) => name) ?? [];
 }
 
+// The file names GitHub's license detection reads at a repository root: `FILENAME_REGEXES` with a score above 0 in
+// https://github.com/licensee/licensee/blob/main/lib/licensee/project_files/license_file.rb
+const anyExtension = String.raw`\.(?:[^./]|\.\d)+`;
+const otherExtension = String.raw`\.(?!xml|sh|go|gemspec)(?:[^./]|\.\d)+`;
+const detectedLicenseFileName = new RegExp(
+  [
+    String.raw`^(?:un)?licen[sc]e(?:\.(?!spdx|header)(?:[^./]|\.\d)+)?$`,
+    `^copying(?:${anyExtension})?$`,
+    `^(?:(?:un)?licen[sc]e|copying|copyright)[-_][^.]*(?:${otherExtension})?$`,
+    String.raw`^[\p{L}\p{N}_]+[-_](?:(?:un)?licen[sc]e|copying)[^.]*(?:${otherExtension})?$`,
+    `^(?:ofl|copyright|patents)(?:${otherExtension})?$`,
+  ].join('|'),
+  'iu',
+);
+
+/** The files of a repository root listing that GitHub's license detection reads, and its LICENSES folder. */
+export function detectedLicenseFileNames(entries: readonly { name: string; type: string }[] | undefined): string[] {
+  return (
+    entries
+      ?.filter(
+        ({ name, type }) =>
+          (type === 'blob' && detectedLicenseFileName.test(name)) || (type === 'tree' && name === 'LICENSES'),
+      )
+      .map(({ name }) => name) ?? []
+  );
+}
+
 function knownClass(id: string): LicenseClass | undefined {
   // GPL-3.0-only and GPL-3.0-or-later share the class of GitHub's GPL-3.0.
   return classes[id.replace(onlyOrLater, '')];
@@ -234,10 +262,19 @@ function expressionClass(expression: SpdxExpression): LicenseClass {
   return expression.parts.map(expressionClass).reduce(kept);
 }
 
-// A stated value that is no SPDX expression, such as a sentence, states terms of its own: class `none` without its text.
-// An SPDX id the class table lacks, such as Unicode-3.0, keeps its id with class `none` rather than refusing the item.
-function stated(value: string, source: 'manifest' | 'frontmatter'): License {
+// A license's full name, such as MIT License, states its id.
+function statedExpression(value: string): SpdxExpression | undefined {
   const expression = parseSpdxExpression(value.trim());
+  if (expression !== undefined) return expression;
+  const named = licenseNameId(value);
+  return named === undefined ? undefined : { license: named };
+}
+
+// A stated value that is neither an SPDX expression nor a license's name, such as a sentence, states terms of its own:
+// class `none` without its text. An SPDX id the class table lacks, such as Unicode-3.0, keeps its id with class `none`
+// rather than refusing the item.
+function stated(value: string, source: 'manifest' | 'frontmatter'): License {
+  const expression = statedExpression(value);
   if (expression === undefined) return { source, class: 'none' };
   const spdx = spdxText(expression);
   const licenseClass = expressionClass(expression);
@@ -270,12 +307,10 @@ function ownField(
   return given(manifest) && withholdsLicense.test(manifest) ? { value: manifest, source: 'manifest' } : undefined;
 }
 
-// A license file named by its text, else one whose terms the record does not name.
-function fileLicense(text: string | undefined): License {
+// A license file whose text matches an SPDX license.
+function namedFile(text: string | undefined): License | undefined {
   const id = text === undefined ? undefined : licenseTextId(text);
-  return id === undefined
-    ? { source: 'license-file', class: 'none' }
-    : { spdx: id, source: 'license-file', class: classOf(id) };
+  return id === undefined ? undefined : { spdx: id, source: 'license-file', class: classOf(id) };
 }
 
 // The repository's license does not cover an item its plugin withholds; only a license file in the item's own folder can.
@@ -294,12 +329,13 @@ function detectedOrStated(
   detected: string | undefined,
   manifest: string | undefined,
   folderLicense: () => License | undefined,
+  rootLicenseText: string | undefined,
 ): License {
   if (detected !== undefined && detected !== 'NOASSERTION')
     return { spdx: detected, source: 'github-detected', class: classOf(detected) };
   if (given(manifest)) return stated(manifest, 'manifest');
   // NOASSERTION: GitHub found a license file it could not name, which says less than a manifest value.
-  if (detected === 'NOASSERTION') return { source: 'github-detected', class: 'none' };
+  if (detected === 'NOASSERTION') return namedFile(rootLicenseText) ?? { source: 'github-detected', class: 'none' };
   return folderLicense() ?? { class: 'none' };
 }
 
@@ -309,7 +345,7 @@ function detectedOrStated(
  * plugin's folder (`containerFolder`), or that withheld value, else GitHub's detected one, else a manifest value, else a
  * license file in the item's folder, which GitHub does not name, as it reads the root only: by its text
  * (`folderLicenseText`) when that matches an SPDX license. A root license file GitHub cannot name (NOASSERTION) comes
- * after the manifest value.
+ * after the manifest value, named by its text (`rootLicenseText`) when that matches an SPDX license.
  */
 export function licenseOf(
   detected: string | undefined,
@@ -320,6 +356,7 @@ export function licenseOf(
     containerFolder,
     folderLicenseFile = false,
     folderLicenseText,
+    rootLicenseText,
   }: {
     declared?: string | undefined;
     manifest?: string | undefined;
@@ -327,6 +364,7 @@ export function licenseOf(
     containerFolder?: boolean | undefined;
     folderLicenseFile?: boolean;
     folderLicenseText?: string | undefined;
+    rootLicenseText?: string | undefined;
   } = {},
 ): License {
   const own = ownField(declared, manifest);
@@ -335,8 +373,9 @@ export function licenseOf(
     return withholdsLicense.test(value) ? { source, class: 'none', withheld: true } : stated(value, source);
   }
   // Matching a text takes milliseconds, so only a license the record uses is matched.
-  const folderLicense = () => (folderLicenseFile ? fileLicense(folderLicenseText) : undefined);
+  const folderLicense = (): License | undefined =>
+    folderLicenseFile ? (namedFile(folderLicenseText) ?? { source: 'license-file', class: 'none' }) : undefined;
   const inherited = withheldByContainer(container, folderLicense, containerFolder);
   if (inherited !== undefined) return inherited;
-  return detectedOrStated(detected, manifest, folderLicense);
+  return detectedOrStated(detected, manifest, folderLicense, rootLicenseText);
 }

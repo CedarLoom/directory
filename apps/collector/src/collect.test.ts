@@ -667,6 +667,58 @@ it("records a plugin's manifest license, else its one license file in its folder
   ]);
 });
 
+it('records a root license file GitHub cannot name or does not detect by its text, and keeps one that changes a term unnamed', async () => {
+  const world = fakeWorld();
+  for (const [name, text] of [
+    ['example-org/plugin-0', isc],
+    ['example-org/plugin-2', isc.replace('with or without fee', 'without fee')],
+  ] as const) {
+    const repository = repositoryOf(world, name);
+    repository.license = 'NOASSERTION';
+    repository.files['LICENSE'] = text;
+  }
+  const undetected = repositoryOf(world, 'example-org/plugin-3');
+  undetected.unlicensed = true;
+  undetected.files['LICENSE'] = isc;
+  const { files } = await run(world, '2026-11-16');
+  expect([
+    recordLicense(files, 'records/plugin/gh.example-org.plugin-0.json'),
+    recordLicense(files, 'records/plugin/gh.example-org.plugin-2.json'),
+    recordLicense(files, 'records/plugin/gh.example-org.plugin-3.json'),
+  ]).toEqual([
+    { spdx: 'ISC', source: 'license-file', class: 'permissive' },
+    { source: 'github-detected', class: 'none' },
+    { spdx: 'ISC', source: 'license-file', class: 'permissive' },
+  ]);
+});
+
+it('keeps a root license file GitHub cannot name unnamed beside another file GitHub reads for the license', async () => {
+  const world = fakeWorld();
+  const pairs = [
+    ...[
+      'PATENTS',
+      'COPYRIGHT',
+      'LICENSE-COMMERCIAL.md',
+      'OFL.txt',
+      'LICENSES/MIT.txt',
+      'MIT-LICENSE',
+      'COPYING.textile',
+    ].map((other) => ['LICENSE', other] as const),
+    // GitHub does not read this file, so PATENTS is the one it reads.
+    ['LICENSE-Apache-2.0.txt', 'PATENTS'] as const,
+  ];
+  for (const [index, [file, other]] of pairs.entries()) {
+    const repository = repositoryOf(world, `example-org/plugin-${index + 4}`);
+    repository.license = 'NOASSERTION';
+    repository.files[file] = isc;
+    repository.files[other] = marker;
+  }
+  const { files } = await run(world, '2026-11-16');
+  expect(
+    pairs.map((_pair, index) => recordLicense(files, `records/plugin/gh.example-org.plugin-${index + 4}.json`)),
+  ).toEqual(pairs.map(() => ({ source: 'github-detected', class: 'none' })));
+});
+
 it('writes records, popularity files and the index, and no third-party text', async () => {
   const { files } = await run(fakeWorld(), '2026-11-16');
   const paths = [...files.keys()];

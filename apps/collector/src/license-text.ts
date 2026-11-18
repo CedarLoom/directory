@@ -38,23 +38,63 @@ const dashes = /[-\u2010-\u2015\u2212]+/g;
 const quotes = /[‘’‚‛“”„‟`'"«»]+/g;
 const cjk = /(?<=[\p{Script=Han}\u3000-\u303f\uff00-\uffef]) (?=[\p{Script=Han}\u3000-\u303f\uff00-\uffef])/gu;
 
-function cleanLine(raw: string, template: boolean): string {
+function uncommented(raw: string, template: boolean): string {
   // Collapsed first, so that no pattern below meets a long run of whitespace.
   const line = raw.replace(/\s+/g, ' ').trim();
   const marks = template ? (leadingOptionalMarks.exec(line)?.[0] ?? '') : '';
-  const cleaned = marks + line.slice(marks.length).replace(commentMark, '').trim();
-  // A template's variable part reads as a placeholder, as an unfilled notice has.
-  const bare = template ? cleaned.replace(optionalMark, '').replace(templateToken, '[X]') : cleaned;
-  if (!rule.test(bare) && !isNotice(bare)) return cleaned;
-  // A template keeps the optional marks of a dropped line, so that its optional parts stay balanced.
-  return template ? (cleaned.match(optionalMark) ?? []).join('') : '';
+  return marks + line.slice(marks.length).replace(commentMark, '').trim();
+}
+
+// A notice line that goes on: it ends with a comma or a joining word.
+const openEnd = /(?:,|&|\b(?:and|the|of))$/i;
+const companyAbbreviation = /\b(?:inc|corp|ltd|co)\.$/i;
+// An address, as in "Mountain View, California": its first sentence holds a comma and each of its words opens with a
+// capital or a digit; a Title Case line of terms, such as "For Personal Use", holds no comma.
+function isAddressLine(line: string): boolean {
+  const sentence = line.split(sentenceBreak)[0] ?? '';
+  return (
+    sentence.includes(',') && (sentence.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => /^[\p{Lu}\p{N}]/u.test(word))
+  );
+}
+
+// A notice wrapped onto a second line: the first line goes on; or it ends with a company abbreviation such as "Inc." or
+// the second opens with a digit, and the second is an address; and the two lines, read as one, are still a notice
+// without terms. Any other line after a notice is a sentence of its own.
+function continuesNotice(notice: string, next: string): boolean {
+  if (notice === '' || next === '') return false;
+  const abbreviated = companyAbbreviation.test(notice);
+  const goesOn = openEnd.test(notice) || ((abbreviated || /^\d/.test(next)) && isAddressLine(next));
+  return goesOn && isNotice(`${abbreviated ? notice.slice(0, -1) : notice} ${next}`);
+}
+
+// Each part of a template line between its own optional marks becomes optional, so that its optional parts stay balanced.
+const optionalLine = (line: string) =>
+  line.replace(/(?:(?!<<(?:begin|end)Optional>>).)+/g, (part) => `<<beginOptional>>${part}<<endOptional>>`);
+
+// A template line with its variable parts as placeholders, as an unfilled notice has them, and as a license states it,
+// with each part's original, which tells whether a notice goes on.
+function templateReadings(line: string): [bare: string, stated: string] {
+  const unmarked = line.replace(optionalMark, '');
+  const stated = unmarked.replace(templateToken, (_token, original = '') => original);
+  return [unmarked.replace(templateToken, '[X]'), stated.replace(/\s+/g, ' ').trim()];
 }
 
 function textLines(text: string, template: boolean): string[] {
+  let notice = '';
   return text
     .replace(/^\uFEFF/, '')
     .split(/\r\n?|\n/)
-    .map((line) => cleanLine(line, template));
+    .map((raw) => {
+      const line = uncommented(raw, template);
+      const [bare, stated] = template ? templateReadings(line) : [line, line];
+      const own = isNotice(bare);
+      const continues = !own && continuesNotice(notice, stated);
+      notice = own ? stated : '';
+      if (!own && !continues && !rule.test(bare)) return line;
+      if (!template) return '';
+      // A text may set the line a notice wraps onto apart from it with a blank line, so a template keeps it as optional.
+      return continues ? optionalLine(line) : (line.match(optionalMark) ?? []).join('');
+    });
 }
 
 // B.4 to B.6 and B.14: whitespace, case, dashes, quotes, the copyright sign and http or https are equivalent.

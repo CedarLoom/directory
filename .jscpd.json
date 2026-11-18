@@ -5,6 +5,7 @@
     "**/pnpm-lock.yaml",
     "**/LICENSES/**",
     "apps/collector/src/license-templates.json",
+    "apps/collector/src/license-names.json",
     "packages/contracts/schemas/**",
     "packages/contracts/fixtures/**",
     "rubrics/**",

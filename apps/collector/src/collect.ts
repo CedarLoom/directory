@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { ZodError } from 'zod';
 import { type Candidate, type Located, mergeCandidates } from './candidate.ts';
 import { type DataFiles, dataFiles } from './data-files.ts';
@@ -8,7 +9,7 @@ import type { HttpClient } from './http-client.ts';
 import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
-import { licenseFileNames, UnknownLicenseError } from './license-class.ts';
+import { detectedLicenseFileNames, licenseFileNames, UnknownLicenseError } from './license-class.ts';
 import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
 import { manifestLicense } from './plugin-analyzer.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
@@ -205,15 +206,20 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
   return { inspections, found };
 }
 
-/** What a record is built from, and the license files in the item's own folder. */
+/**
+ * What a record is built from, the license files in the item's own folder and the files of that folder GitHub's license
+ * detection reads at a repository root.
+ */
 interface Unbuilt {
   input: RecordInput;
   licenseFiles: readonly string[];
+  detectedLicenseFiles: readonly string[];
 }
 
 /**
- * Builds each record; one whose license is the license file in its subfolder, when the folder holds just that one, is
- * built again with the file's text, so that only a file that decides the record is read.
+ * Builds each record; one whose license is the license file in its folder, or at the repository root one whose license
+ * file GitHub cannot name, is built again with the file's text when the folder holds just that one, so that only a file
+ * that decides the record is read.
  */
 async function buildRecords(
   { client, build }: Reading,
@@ -221,14 +227,20 @@ async function buildRecords(
 ): Promise<Read[]> {
   const records = items.map((item) => (typeof item === 'object' ? build(item.input) : item));
   const targets = items.flatMap((item, index) => {
-    if (typeof item !== 'object') return [];
+    const record = records[index];
+    if (typeof item !== 'object' || typeof record !== 'object') return [];
     const { location } = item.input.candidate;
     const [file, ...others] = item.licenseFiles;
-    const record = records[index];
-    const decides = typeof record === 'object' && record.value.license.source === 'license-file';
-    return decides && location.path !== '' && file !== undefined && others.length === 0
-      ? [{ index, input: item.input, location, file }]
-      : [];
+    const { license } = record.value;
+    // GitHub's NOASSERTION is the only detected license without an SPDX id. It may come from another file GitHub reads,
+    // such as PATENTS, so the one license file names the root only when it is the only file GitHub reads there.
+    const decides =
+      license.source === 'license-file' ||
+      (location.path === '' &&
+        license.source === 'github-detected' &&
+        license.spdx === undefined &&
+        isDeepStrictEqual(item.detectedLicenseFiles, [file]));
+    return decides && file !== undefined && others.length === 0 ? [{ index, input: item.input, location, file }] : [];
   });
   const reads = await readItemFiles(client, targets, false);
   for (const [at, { index, input }] of targets.entries()) {
@@ -260,6 +272,7 @@ function pluginReader(reading: Reading, found: Candidate[]) {
       return {
         input: { kind: 'plugin', candidate, facts, inspection, source },
         licenseFiles: licenseFileNames(inspection.directories.root),
+        detectedLicenseFiles: detectedLicenseFileNames(inspection.directories.root),
       };
     });
     return buildRecords(reading, unbuilt);
@@ -278,13 +291,14 @@ function fileInput(
   }
   const text = read?.file.text;
   if (read === undefined || text === undefined) return undefined;
-  const { folders, tests, licenseFiles } = read;
+  const { folders, tests, licenseFiles, detectedLicenseFiles } = read;
   return {
     input:
       kind === 'skill'
         ? { kind, candidate, facts, text, folders, tests, licenseFile: licenseFiles.length > 0 }
         : { kind, candidate, facts, text },
     licenseFiles,
+    detectedLicenseFiles,
   };
 }
 

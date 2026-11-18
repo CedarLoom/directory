@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { queryEach } from './github-graphql.ts';
 import type { GitHubLocation } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
-import { licenseFileNames } from './license-class.ts';
+import { detectedLicenseFileNames, licenseFileNames } from './license-class.ts';
 import { blob, expression, type FileRead, fileRead } from './repository-tree.ts';
 const subdirectory = z.object({
   entries: z
@@ -31,6 +31,8 @@ export interface ItemFile {
   tests: boolean;
   /** The names of the location's license files. */
   licenseFiles: string[];
+  /** The names of the location's files that GitHub's license detection reads at a repository root. */
+  detectedLicenseFiles: string[];
 }
 
 const testFolders: ReadonlySet<string> = new Set(['evals', 'tests', 'test']);
@@ -72,12 +74,14 @@ export async function readItemFiles(
   });
   return answers.map((raw) => {
     const read = answer.parse(raw);
-    const tests = read?.directory?.entries?.some(({ name, type }) => type === 'tree' && testFolders.has(name)) ?? false;
+    const entries = read?.directory?.entries;
+    const tests = entries?.some(({ name, type }) => type === 'tree' && testFolders.has(name)) ?? false;
     return {
       file: fileRead(read?.file),
       folders: folders(read?.directory),
       tests,
-      licenseFiles: licenseFileNames(read?.directory?.entries),
+      licenseFiles: licenseFileNames(entries),
+      detectedLicenseFiles: detectedLicenseFileNames(entries),
     };
   });
 }

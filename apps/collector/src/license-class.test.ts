@@ -1,5 +1,7 @@
 import { expect, it } from 'vitest';
 import { licenseFileNames, licenseOf } from './license-class.ts';
+import templates from './license-templates.json' with { type: 'json' };
+import { templateLicenseText } from './template-license-text.ts';
 
 it('classes an SPDX id with an -only or -or-later suffix like its base id', () => {
   expect([
@@ -326,5 +328,39 @@ it('names a folder license file by its text where it applies, also under a withh
     { spdx: 'Zlib', source: 'license-file', class: 'permissive' },
     { source: 'license-file', class: 'none' },
     { spdx: 'MIT', source: 'github-detected', class: 'permissive' },
+  ]);
+});
+
+const root = (id: keyof typeof templates) => templateLicenseText(templates[id]);
+
+it('names a root license file GitHub cannot name by its text, and keeps a changed text unnamed', () => {
+  expect([
+    licenseOf('NOASSERTION', { rootLicenseText: root('CC-BY-NC-4.0') }),
+    licenseOf('NOASSERTION', { rootLicenseText: root('PolyForm-Noncommercial-1.0.0') }),
+    licenseOf('NOASSERTION', { rootLicenseText: root('BUSL-1.1') }),
+    licenseOf('NOASSERTION', { rootLicenseText: root('Elastic-2.0') }),
+    licenseOf('NOASSERTION', { rootLicenseText: `${root('Elastic-2.0')}\nYou may not use the software on Sundays.\n` }),
+  ]).toEqual([
+    { spdx: 'CC-BY-NC-4.0', source: 'license-file', class: 'source-available' },
+    { spdx: 'PolyForm-Noncommercial-1.0.0', source: 'license-file', class: 'source-available' },
+    { spdx: 'BUSL-1.1', source: 'license-file', class: 'source-available' },
+    { spdx: 'Elastic-2.0', source: 'license-file', class: 'source-available' },
+    { source: 'github-detected', class: 'none' },
+  ]);
+});
+
+it('reads a stated license name in words as its SPDX id, but no other wording', () => {
+  expect([
+    licenseOf(undefined, { manifest: 'MIT License' }),
+    licenseOf(undefined, { declared: 'apache  license 2.0' }),
+    licenseOf(undefined, { declared: 'GNU General Public License v3.0 only' }),
+    licenseOf(undefined, { manifest: 'The MIT License' }),
+    licenseOf(undefined, { declared: 'MIT License (modified)' }),
+  ]).toEqual([
+    { spdx: 'MIT', source: 'manifest', class: 'permissive' },
+    { spdx: 'Apache-2.0', source: 'frontmatter', class: 'permissive' },
+    { spdx: 'GPL-3.0-only', source: 'frontmatter', class: 'copyleft' },
+    { source: 'manifest', class: 'none' },
+    { source: 'frontmatter', class: 'none' },
   ]);
 });

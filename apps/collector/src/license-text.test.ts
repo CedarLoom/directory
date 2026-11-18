@@ -1,23 +1,7 @@
 import { expect, it } from 'vitest';
 import templates from './license-templates.json' with { type: 'json' };
 import { licenseTextId } from './license-text.ts';
-
-const variablePart = /<<var;name="([^"]*)";original="((?:[^"]|"(?!;match="))*)";match="(?:[^"]|"(?!>>))*">>/g;
-
-// The Creative Commons 4.0 templates give an empty original for parts their patterns require; a license file has its
-// copyright notice on a line of its own.
-function filled(name: string, original: string): string {
-  if (/^(?:copyright|©|\(c\))/i.test(original)) return `${original}\n`;
-  if (name === 'ccLicensed') return 'CC-licensed';
-  if (/^section\dTitleHyphens$/.test(name)) return '–';
-  return original;
-}
-
-/** The license text a template writes with its optional parts and the original of each variable part. */
-const textOf = (template: string) =>
-  template
-    .replace(/<<beginOptional>>|<<endOptional>>/g, '')
-    .replace(variablePart, (_part, name: string, original: string) => filled(name, original));
+import { templateLicenseText } from './template-license-text.ts';
 
 const mit = (notice: string) => `MIT License
 
@@ -43,7 +27,7 @@ SOFTWARE.
 `;
 
 it.each(Object.entries(templates))('names %s from its license text', (id, template) => {
-  expect(licenseTextId(textOf(template))).toBe(id);
+  expect(licenseTextId(templateLicenseText(template))).toBe(id);
 });
 
 it('names a license whatever its copyright lines say, and without them', () => {
@@ -53,6 +37,44 @@ it('names a license whatever its copyright lines say, and without them', () => {
     licenseTextId(mit('')),
     licenseTextId(`${mit('')}\nCopyright (c) 2025 Example Org\n`),
   ]).toEqual(['MIT', 'MIT', 'MIT', 'MIT']);
+});
+
+it('names a license whose copyright notice wraps onto a second line, unless that line adds terms', () => {
+  expect([
+    licenseTextId(
+      mit('Copyright (c) 1991 - 1995, Example Research Institute Amsterdam,\nThe Netherlands. All rights reserved.'),
+    ),
+    licenseTextId(
+      mit('Copyright (C) 1991 Free Software Foundation, Inc.\n51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA'),
+    ),
+    licenseTextId(mit('Copyright (c) 2024 Jane Doe and the\nExample Project contributors')),
+    licenseTextId(mit('Copyright (c) 2009 Example Corp.\nMountain View, California')),
+    licenseTextId(mit('Copyright (c) 2024 Jane Doe\n2 Main Street, Springfield')),
+    licenseTextId(mit('Copyright (c) 2024 Jane Doe,\nfor non-commercial use only')),
+    licenseTextId(mit('Copyright (c) 2024 Acme Corp and\nits affiliates. Proprietary and confidential.')),
+  ]).toEqual(['MIT', 'MIT', 'MIT', 'MIT', 'MIT', undefined, undefined]);
+});
+
+it('names no license for a sentence of terms on the line after a copyright notice', () => {
+  const gpl = templateLicenseText(templates['GPL-2.0']);
+  expect([
+    ...[
+      'Copyright (c) 2024 Jane Doe\nFor personal and educational use',
+      'Copyright (c) 2024 Jane Doe.\nAuthor liability is unlimited',
+      'Copyright (c) 2024 Jane Doe\nUse is subject to the terms at example.com/terms',
+      'Copyright (c) 2024 Jane Doe\nNo use by companies with more than ten employees',
+      'Copyright (c) 2024 Jane Doe\nAI training is banned',
+      'Copyright (c) 2024 Acme Inc.\nFor Personal Use',
+      'Copyright (c) 2024 Jane Doe\n10 Users Maximum',
+    ].map((notice) => licenseTextId(mit(notice))),
+    licenseTextId(gpl.replace(/^51 Franklin Street.*$/m, 'For personal and educational use')),
+    licenseTextId(gpl.replace(/^51 Franklin Street.*$/m, 'For Personal And Educational Use')),
+  ]).toEqual(Array.from({ length: 9 }, () => undefined));
+});
+
+it('names GPL-2.0 when a blank line sets its address apart from its copyright line', () => {
+  const text = templateLicenseText(templates['GPL-2.0']).replace('Inc. \n51 Franklin', 'Inc.\n\n51 Franklin');
+  expect(licenseTextId(text)).toBe('GPL-2.0');
 });
 
 it('names a license whatever the case or script of its holder', () => {
