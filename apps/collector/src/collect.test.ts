@@ -625,6 +625,46 @@ it("records a skill listed in its withholding plugin's own folder as withheld, l
   ]).toEqual([withheld, withheld]);
 });
 
+it('records the withholding manifest license of a topic repository that is a plugin for the items it holds', async () => {
+  const { files } = await runWithTop({
+    '.claude-plugin/plugin.json': JSON.stringify({ name: 'top', license: 'UNLICENSED' }),
+    'SKILL.md': `---\nname: top\ndescription: ${marker}\n---\n${marker}\n`,
+    'skills/one/SKILL.md': `---\nname: one\ndescription: ${marker}\n---\n${marker}\n`,
+    'agents/helper.md': `---\nname: helper\ndescription: ${marker}\n---\n${marker}\n`,
+  });
+  const record = (path: string) =>
+    z.object({ container: z.unknown(), license: z.unknown() }).parse(JSON.parse(files.get(path) ?? ''));
+  expect([
+    record('records/skill/gh.example-org.top.json'),
+    record('records/skill/gh.example-org.top.skills.one.json'),
+    record('records/agent/gh.example-org.top.agents.helper.json'),
+  ]).toEqual([
+    { container: 'gh.example-org.top', license: withheld },
+    { container: 'gh.example-org.top', license: withheld },
+    { container: 'gh.example-org.top', license: withheld },
+  ]);
+});
+
+it('refuses the items of a plugin whose manifest is not a JSON object, as their license cannot be read', async () => {
+  const world = fakeWorld();
+  repositoryOf(world, 'example-org/plugin-0').files['.claude-plugin/plugin.json'] = '{ "name": "plugin-0",';
+  const lines: string[] = [];
+  const { files } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
+  expect({
+    records: [...files.keys()].filter((path) => path.includes('/gh.example-org.plugin-0.')),
+    refusals: lines.filter((line) => line.startsWith('gh.example-org.plugin-0')).toSorted(),
+  }).toEqual({
+    records: [],
+    refusals: [
+      'gh.example-org.plugin-0.agents.agent-0: refused: the manifest of its plugin is no JSON object',
+      'gh.example-org.plugin-0.hooks: refused: the manifest of its plugin is no JSON object',
+      'gh.example-org.plugin-0.output-styles.terse: refused: the manifest of its plugin is no JSON object',
+      'gh.example-org.plugin-0.skills.skill-0: refused: the manifest of its plugin is no JSON object',
+      'gh.example-org.plugin-0: refused: value custom',
+    ],
+  });
+});
+
 it("records a plugin's manifest license, else its one license file in its folder, when the repository root has none", async () => {
   const world = fakeWorld();
   world.set('example-org/market', {

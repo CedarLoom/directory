@@ -128,24 +128,29 @@ function refusalLogger(log: (line: string) => void, counter: { refused: number }
 type Build = (input: RecordInput) => ItemRecord | 'refused';
 
 const tooLarge = 'a file is cut by GitHub or over the size cap';
+// A plugin manifest whose license cannot be read refuses the items the plugin holds.
+const unreadManifest = { 'too-large': tooLarge, invalid: 'the manifest of its plugin is no JSON object' } as const;
 
-/** The listed plugins, by id: where each lives and the license field of each manifest read so far. */
+/**
+ * The listed plugins and the topic repositories with a plugin manifest at their root, by id: where each lives and the
+ * license field of each manifest read so far.
+ */
 interface Containers {
-  locations: ReadonlyMap<string, GitHubLocation>;
-  /** Filled before the items a plugin holds are built; too large when its manifest is. */
-  licenses: Map<string, { license: string | undefined } | 'too-large'>;
+  locations: Map<string, GitHubLocation>;
+  /** Filled before the items a plugin holds are built. */
+  licenses: Map<string, { license: string | undefined } | keyof typeof unreadManifest>;
 }
 
 /**
  * Builds a record, with the manifest license of the plugin that holds the item, or logs a refusal when its facts do not
- * fit the record, its license is unknown or its plugin's manifest is too large.
+ * fit the record, its license is unknown or its plugin's manifest is too large or no JSON object.
  */
 function recordBuilder(runDate: string, refuse: Refuse, { locations, licenses }: Containers): Build {
   return (input) => {
     const { container, id, location } = input.candidate;
     const manifest = container === undefined ? undefined : licenses.get(container);
-    if (manifest === 'too-large') {
-      refuse(id, new Error(tooLarge));
+    if (typeof manifest === 'string') {
+      refuse(id, new Error(unreadManifest[manifest]));
       return 'refused';
     }
     const plugin = container === undefined ? undefined : locations.get(container);
@@ -267,7 +272,7 @@ function pluginReader(reading: Reading, found: Candidate[]) {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
       if (inspection === 'too-large') return 'refused';
       if (inspection === undefined) return undefined;
-      containers.licenses.set(candidate.id, { license: manifestLicense(inspection.files.manifest) });
+      containers.licenses.set(candidate.id, manifestLicense(inspection.files.manifest));
       if (source === undefined) return undefined;
       return {
         input: { kind: 'plugin', candidate, facts, inspection, source },
@@ -324,7 +329,7 @@ async function readManifestLicenses({ client, containers }: Reading, batch: read
   );
   for (const [index, { id }] of plugins.entries()) {
     const file = manifests[index]?.file;
-    licenses.set(id, file === 'too-large' ? file : { license: manifestLicense(file?.text) });
+    licenses.set(id, file === 'too-large' ? file : manifestLicense(file?.text));
   }
 }
 
@@ -403,6 +408,31 @@ function topicPlaces(topicRepositories: readonly Repository[], facts: ReadonlyMa
 }
 
 /**
+ * The items found in the topic repositories, those of a repository with a plugin manifest at its root with that plugin as
+ * their container, like the items of a listed plugin, and its manifest license added to the containers.
+ */
+async function topicItems(
+  { client, refuse, containers: { locations, licenses } }: Reading,
+  places: readonly InspectedPlace[],
+): Promise<Candidate[]> {
+  const { inspections, found } = await inspectPlaces(client, places, refuse);
+  const plugins = new Set<string>();
+  for (const [index, { location }] of places.entries()) {
+    const inspection = inspections[index];
+    if (typeof inspection !== 'object' || inspection.files.manifest === undefined) continue;
+    const id = repositoryId(location);
+    locations.set(id, location);
+    licenses.set(id, manifestLicense(inspection.files.manifest));
+    plugins.add(id);
+  }
+  for (const candidate of found) {
+    const id = candidate.location === undefined ? undefined : repositoryId(candidate.location);
+    if (candidate.kind !== 'marketplace' && id !== undefined && plugins.has(id)) candidate.container = id;
+  }
+  return found;
+}
+
+/**
  * The run's records: every marketplace, the selected plugins and the most starred items of the other kinds; a refused
  * item frees its place.
  */
@@ -472,9 +502,9 @@ export async function collect(
   const found: Candidate[] = [];
   const [plugins, topics] = await Promise.all([
     fill(ranked(listed, 'plugin', facts), perKind, pluginReader(reading, found)),
-    inspectPlaces(client, topicPlaces(topicRepositories, facts), refuse),
+    topicItems(reading, topicPlaces(topicRepositories, facts)),
   ]);
-  const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found, ...topics.found]);
+  const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found, ...topics]);
   const kept = applyExclusions(all, excluded);
   const records = await itemRecords(reading, { candidates: kept.filter(isLocated), facts, plugins });
   const report: RunReport = {

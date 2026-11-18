@@ -208,14 +208,17 @@ function manifestFields(plugin: z.infer<typeof manifest>, versioned: boolean): n
   ].filter(Boolean).length;
 }
 
-const licensed = z.object({ license: text });
+const licenseField = (value: unknown): string | undefined => text.safeParse(value).data;
+const manifestObject = jsonText.pipe(z.object({ license: z.unknown().optional() }));
 
 /**
- * The license field of a plugin manifest, for the items the plugin holds; a manifest that is no JSON object gives none,
- * as the plugin's own record is refused for it.
+ * The license field of a plugin manifest, for the items the plugin holds, or `invalid` for a manifest that is no JSON
+ * object, which refuses them as it refuses the plugin's own record.
  */
-export function manifestLicense(file: string | undefined): string | undefined {
-  return licensed.safeParse(jsonText.safeParse(file).data).data?.license;
+export function manifestLicense(file: string | undefined): { license: string | undefined } | 'invalid' {
+  if (file === undefined) return { license: undefined };
+  const parsed = manifestObject.safeParse(file);
+  return parsed.success ? { license: licenseField(parsed.data.license) } : 'invalid';
 }
 
 /** The facts of a plugin directory in the default layout; component paths a manifest adds are not followed. */
@@ -254,7 +257,7 @@ export function analyzePlugin({ directories, files }: Inspection) {
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
     manifestFields: manifestFields(plugin, version.success),
-    manifestLicense: manifestLicense(files.manifest),
+    manifestLicense: licenseField(plugin.license),
     rootClaudeMd: directories.root?.some((entry) => entry.name === 'CLAUDE.md') ?? false,
     hooks: hookConfigs.map(hookFacts),
     mcpUnpinnedPackage: stdio.some(({ command, args = [] }) => command !== undefined && unpinnedPackage(command, args)),

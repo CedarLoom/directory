@@ -172,6 +172,20 @@ it("reads a containing plugin's withholding manifest value for an item without a
   ]);
 });
 
+it("reads a containing plugin's stated manifest value where GitHub names no root license, after the item's own license file", () => {
+  expect([
+    licenseOf(undefined, { container: 'MIT' }),
+    licenseOf('NOASSERTION', { container: 'Apache-2.0', rootLicenseText: 'Terms of our own' }),
+    licenseOf(undefined, { container: 'MIT', folderLicenseFile: true }),
+    licenseOf(undefined, { container: 'MIT', folderLicenseFile: true, containerFolder: true }),
+  ]).toEqual([
+    { spdx: 'MIT', source: 'manifest', class: 'permissive' },
+    { spdx: 'Apache-2.0', source: 'manifest', class: 'permissive' },
+    { source: 'license-file', class: 'none' },
+    { spdx: 'MIT', source: 'manifest', class: 'permissive' },
+  ]);
+});
+
 it('counts LICENSE-<suffix> for a full SPDX id, a license family with an optional version, or CODE', () => {
   expect(
     [
