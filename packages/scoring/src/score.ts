@@ -21,7 +21,7 @@ export interface Scorable {
 export interface Score {
   rubric: { kind: Rubric['kind']; version: string };
   total: number;
-  parts: { signal: string; points: number; max: number }[];
+  parts: { signal: string; points: number; max: number; closedGate?: string }[];
 }
 
 interface Context {
@@ -53,11 +53,11 @@ function signalValue({ record, signal }: Context): number | boolean {
   return recordSignal(record, signal.id);
 }
 
-/** A signal without a gate, or one whose gate signal is true or above 0, such as an item with a body. */
-function gateOpen({ record, signal }: Context): boolean {
-  if (signal.gate === undefined) return true;
+/** The gate of a signal whose gate signal is neither true nor above 0, such as an item without a body. */
+function closedGate({ record, signal }: Context): string | undefined {
+  if (signal.gate === undefined) return undefined;
   const value = recordSignal(record, signal.gate);
-  return value === true || (typeof value === 'number' && value > 0);
+  return value === true || (typeof value === 'number' && value > 0) ? undefined : signal.gate;
 }
 
 function numberSignal(context: Context): number {
@@ -115,9 +115,10 @@ export function score(record: Scorable, rubric: Rubric, now: string): Score {
   const archived = record.maintenance?.archived === true;
   const parts = rubric.signals.map((signal) => {
     const context = { record, rubric, signal, now: time };
-    const share =
-      (archived && signal.group === 'maintenance') || !gateOpen(context) ? 0 : shareOf(signal.scale, context);
-    return { signal: signal.id, points: hundredths(signal.max * share), max: signal.max };
+    if (archived && signal.group === 'maintenance') return { signal: signal.id, points: 0, max: signal.max };
+    const gate = closedGate(context);
+    if (gate !== undefined) return { signal: signal.id, points: 0, max: signal.max, closedGate: gate };
+    return { signal: signal.id, points: hundredths(signal.max * shareOf(signal.scale, context)), max: signal.max };
   });
   return {
     rubric: { kind: rubric.kind, version: rubric.version },

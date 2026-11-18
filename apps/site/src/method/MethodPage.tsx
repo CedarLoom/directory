@@ -2,11 +2,10 @@ import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { List, Stack, Text, Title } from '@mantine/core';
-import type { MetaFile } from '../data-types.ts';
+import type { MetaFile, Rubric } from '../data-types.ts';
 import { ExternalLink } from '../layout/ExternalLink.tsx';
 import { newIssueUrl } from '../new-issue-url.ts';
 import { RubricTable } from './RubricTable.tsx';
-import { rubrics } from './rubrics.ts';
 
 const sourceLabels: Readonly<Record<string, MessageDescriptor>> = {
   'official-marketplace': msg({
@@ -171,7 +170,7 @@ function Policies() {
   );
 }
 
-function Rubrics() {
+function Rubrics({ rubrics }: { rubrics: readonly Rubric[] }) {
   return (
     <section aria-labelledby="rubrics-heading">
       <Title order={2} id="rubrics-heading">
@@ -220,8 +219,8 @@ function Rubrics() {
   );
 }
 
-/** How the Directory collects and scores its items. */
-export function MethodPage({ meta }: { meta: MetaFile }) {
+/** How the Directory collects and scores its items, with the rubric of each kind that scored the data. */
+export function MethodPage({ meta, rubrics }: { meta: MetaFile; rubrics: readonly Rubric[] }) {
   const { i18n } = useLingui();
   const runDate = i18n.date(meta.runAt, { dateStyle: 'long', timeZone: 'UTC' });
   return (
@@ -237,7 +236,7 @@ export function MethodPage({ meta }: { meta: MetaFile }) {
         </Trans>
       </Text>
       <Sources meta={meta} />
-      <Rubrics />
+      <Rubrics rubrics={rubrics} />
       <NotMeasured />
       <OwnInterest />
       <Policies />

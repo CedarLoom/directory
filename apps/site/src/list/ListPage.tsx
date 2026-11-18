@@ -34,11 +34,49 @@ function parseSort(sort: string): SortingState[number] {
   return { id, desc: direction === 'desc' };
 }
 
+/** The filter fields of the search, as an object that a sort, column or page change leaves as it is. */
+function useFilters(search: ListSearch): Filters {
+  const {
+    q,
+    kinds,
+    tag,
+    license,
+    fit,
+    maintenance,
+    scoreMin,
+    scoreMax,
+    starsMin,
+    starsMax,
+    gainMin,
+    noFlags,
+    official,
+  } = search;
+  return useMemo(
+    () => ({
+      q,
+      kinds,
+      tag,
+      license,
+      fit,
+      maintenance,
+      scoreMin,
+      scoreMax,
+      starsMin,
+      starsMax,
+      gainMin,
+      noFlags,
+      official,
+    }),
+    [q, kinds, tag, license, fit, maintenance, scoreMin, scoreMax, starsMin, starsMax, gainMin, noFlags, official],
+  );
+}
+
 /** A list page: filters, column choice, the table and its pages, all held in the search parameters. */
 export function ListPage({ title, rows, showKinds, runAt, search, onSearchChange }: Props) {
   const { t, i18n } = useLingui();
   const tags = useMemo(() => [...new Set(rows.flatMap((row) => row.tags))].toSorted(), [rows]);
-  const shown = useMemo(() => filterRows(rows, search, runAt), [rows, search, runAt]);
+  const filters = useFilters(search);
+  const shown = useMemo(() => filterRows(rows, filters, runAt), [rows, filters, runAt]);
   const pages = Math.max(1, Math.ceil(shown.length / pageSize));
   const page = Math.min(search.page, pages);
   // A filter change returns to the first page.

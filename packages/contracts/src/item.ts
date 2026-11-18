@@ -96,7 +96,16 @@ const common = {
     .strictObject({
       rubric: z.strictObject({ kind, version: semver }),
       total: z.number().min(0).max(100),
-      parts: z.array(z.strictObject({ signal: keyword, points: z.number().min(0), max: z.number().min(0) })),
+      parts: z.array(
+        z.strictObject({
+          signal: keyword,
+          points: z.number().min(0),
+          max: z.number().min(0),
+          closedGate: keyword
+            .optional()
+            .describe('The gate signal of the rubric that was not true or above 0, so the signal gave 0 points.'),
+        }),
+      ),
     })
     .optional()
     .describe('Stored apart from the raw signals; optional, and absent while no rubric has scored the record.'),

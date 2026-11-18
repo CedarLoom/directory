@@ -392,6 +392,11 @@
               "max": {
                 "type": "number",
                 "minimum": 0
+              },
+              "closedGate": {
+                "description": "The gate signal of the rubric that was not true or above 0, so the signal gave 0 points.",
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
               }
             },
             "required": [
