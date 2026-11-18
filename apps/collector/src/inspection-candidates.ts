@@ -5,7 +5,7 @@ import { type GitHubLocation, joinPath, locationId, locationLink, repositoryId }
 import { analyzeHooks } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
 import { entrySources } from './marketplace-analyzer.ts';
-import { type DirectoryKey, directoryPaths, type Inspection } from './repository-tree.ts';
+import { type DirectoryKey, directoryPaths, hooksPath, type Inspection } from './repository-tree.ts';
 
 /** The place an inspection read: a listed plugin, whose skills and agents it contains, or a topic repository. */
 export interface InspectedPlace {
@@ -20,11 +20,10 @@ export type FileKind = 'skill' | 'agent' | 'output-style';
 
 function itemCandidate(place: InspectedPlace, kind: FileKind, path: string, name: string): Candidate {
   const location = { ...place.location, path };
-  // An agent or output style is one file; its id leaves out the .md extension.
-  const idLocation = kind === 'skill' ? location : { ...location, path: path.slice(0, -'.md'.length) };
   return {
     kind,
-    id: locationId(idLocation),
+    // The path of a skill's folder or of an agent's or output style's file, which no folder's path can be.
+    id: locationId(location),
     name: itemName.parse(name),
     links: { source: locationLink(location) },
     location,
@@ -72,6 +71,7 @@ function itemPaths(place: InspectedPlace, inspection: Inspection): ItemPath[] {
   const rootSkill =
     place.container === undefined &&
     inspection.files.marketplace === undefined &&
+    inspection.marketplaceTooLarge !== true &&
     inspection.directories.root?.some((entry) => entry.name === 'SKILL.md' && entry.type === 'blob') === true;
   return [
     ...skills,
@@ -104,7 +104,7 @@ function hookCandidate(place: InspectedPlace, id: string, text: string): Candida
     kind: 'hook',
     id,
     name: itemName.parse(location.path.split('/').at(-1) || location.repo),
-    links: { source: locationLink({ ...location, path: joinPath(location.path, 'hooks/hooks.json') }) },
+    links: { source: locationLink({ ...location, path: joinPath(location.path, hooksPath) }) },
     location,
     ...(place.container === undefined ? {} : { container: place.container }),
     listedIn: [],
@@ -128,7 +128,7 @@ function attempt<T>(id: string, refuse: Refuse, build: () => T | undefined): T[]
 function hookCandidates(place: InspectedPlace, text: string, refuse: Refuse): Candidate[] {
   const { location } = place;
   const [id] = attempt(`${repositoryId(location)} hook`, refuse, () =>
-    locationId({ ...location, path: joinPath(location.path, 'hooks') }),
+    locationId({ ...location, path: joinPath(location.path, hooksPath) }),
   );
   return id === undefined ? [] : attempt(id, refuse, () => hookCandidate(place, id, text));
 }

@@ -19,11 +19,12 @@ export const directoryPaths = {
 } as const;
 
 export const manifestPath = '.claude-plugin/plugin.json';
+export const hooksPath = 'hooks/hooks.json';
 
 const files = {
   manifest: manifestPath,
   marketplace: '.claude-plugin/marketplace.json',
-  hooks: 'hooks/hooks.json',
+  hooks: hooksPath,
   mcp: '.mcp.json',
   lsp: '.lsp.json',
   monitors: 'monitors/monitors.json',
@@ -59,6 +60,8 @@ export interface Inspection {
   directories: Partial<Record<DirectoryKey, Entry[]>>;
   /** The text of each layout file; a binary file has none. */
   files: Partial<Record<FileKey, string>>;
+  /** The marketplace file is cut by GitHub or over the size cap; no fact of the other items comes from it. */
+  marketplaceTooLarge?: true;
 }
 
 /** A Git object expression `<ref>:<path>`, the form GraphQL's `object(expression:)` reads. */
@@ -70,20 +73,24 @@ function keysOf<T extends object>(value: T): Extract<keyof T, string>[] {
   return Object.keys(value).filter((key): key is Extract<keyof T, string> => key in value);
 }
 
-/** The text of each layout file, or too large when one of them is. */
-function layoutFiles(answer: Readonly<Record<string, unknown>>): Inspection['files'] | 'too-large' {
+/** The text of each layout file, or too large when one of them other than the marketplace file is. */
+function layoutFiles(
+  answer: Readonly<Record<string, unknown>>,
+): Pick<Inspection, 'files' | 'marketplaceTooLarge'> | 'too-large' {
   const found: Inspection['files'] = {};
+  let marketplaceTooLarge = false;
   for (const key of keysOf(files)) {
     const read = fileRead(blob.parse(answer[key]));
-    if (read === 'too-large') return read;
-    if (read.text !== undefined) found[key] = read.text;
+    if (read === 'too-large' && key === 'marketplace') marketplaceTooLarge = true;
+    else if (read === 'too-large') return read;
+    else if (read.text !== undefined) found[key] = read.text;
   }
-  return found;
+  return marketplaceTooLarge ? { files: found, marketplaceTooLarge: true } : { files: found };
 }
 
 /**
- * The layout a location holds; a missing location gives undefined and a layout file that is too large gives
- * 'too-large', so no record is built from part of it.
+ * The layout a location holds; a missing location gives undefined and a layout file other than the marketplace file
+ * that is too large gives 'too-large', so no record is built from part of it.
  */
 function toInspection(raw: unknown): Inspection | 'too-large' | undefined {
   if (raw === null) return undefined;
@@ -91,7 +98,7 @@ function toInspection(raw: unknown): Inspection | 'too-large' | undefined {
   const found = layoutFiles(answer);
   if (directory.parse(answer['root']) === null) return undefined;
   if (found === 'too-large') return found;
-  const inspection: Inspection = { directories: {}, files: found };
+  const inspection: Inspection = { directories: {}, ...found };
   for (const key of keysOf(directoryPaths)) {
     const entries = directory.parse(answer[key])?.entries;
     if (entries !== undefined) inspection.directories[key] = entries;

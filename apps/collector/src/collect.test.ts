@@ -235,13 +235,20 @@ interface RunOptions {
   registry?: readonly unknown[];
   log?: (line: string) => void;
   time?: string;
+  excluded?: ReadonlySet<string>;
 }
 
 async function run(
   world: World,
   runDate: string,
   previous: ReadonlyMap<string, string> = new Map(),
-  { topicRepositories = [], registry = registryEntries, log = () => undefined, time = '06:00:00' }: RunOptions = {},
+  {
+    topicRepositories = [],
+    registry = registryEntries,
+    log = () => undefined,
+    time = '06:00:00',
+    excluded = new Set(['gh.example-org.plugin-1']),
+  }: RunOptions = {},
 ) {
   const client = createHttpClient({
     fetch: fakeFetch(world, [
@@ -274,7 +281,7 @@ async function run(
     ],
     registryClient,
     topics: ['claude-code-marketplace'],
-    excluded: new Set(['gh.example-org.plugin-1']),
+    excluded,
     previous,
     runAt: `${runDate}T${time}Z`,
     log,
@@ -455,6 +462,33 @@ async function runWithTop(files: Record<string, string>) {
   return { ...result, refusals: lines.filter((line) => line.includes(': refused: ')) };
 }
 
+it('refuses only the marketplace of a topic repository whose marketplace file passes the size cap', async () => {
+  const { files, refusals } = await runWithTop({
+    '.claude-plugin/marketplace.json': JSON.stringify({
+      name: 'top',
+      description: 'x'.repeat(256 * 1024),
+      plugins: [],
+    }),
+    // A repository with a marketplace file keeps its id for the marketplace, also when that file is refused.
+    'SKILL.md': `---\nname: top\ndescription: ${marker}\n---\n${marker}\n`,
+    'skills/tool/SKILL.md': `---\nname: tool\ndescription: ${marker}\n---\n${marker}\n`,
+    'agents/helper.md': `---\nname: helper\ndescription: ${marker}\n---\n${marker}\n`,
+  });
+  expect({
+    marketplace: files.has('records/marketplace/gh.example-org.top.json'),
+    rootSkill: files.has('records/skill/gh.example-org.top.json'),
+    skill: files.has('records/skill/gh.example-org.top.skills.tool.json'),
+    agent: files.has('records/agent/gh.example-org.top.agents.helper_2emd.json'),
+    refusals,
+  }).toEqual({
+    marketplace: false,
+    rootSkill: false,
+    skill: true,
+    agent: true,
+    refusals: ['gh.example-org.top: refused: a file is cut by GitHub or over the size cap'],
+  });
+});
+
 it('refuses a skill with more than 64 frontmatter fields before selection, so the next skill takes its place', async () => {
   const skills = Object.fromEntries(
     Array.from({ length: 60 }, (_, index) => [`skills/skill-${String(index).padStart(2, '0')}/SKILL.md`, marker]),
@@ -478,12 +512,12 @@ it('refuses an output style with more than 64 frontmatter fields before selectio
   const { report, files, refusals } = await runWithTop({ 'output-styles/a-wide.md': wideFrontmatter, ...styles });
   expect({
     outputStyles: report.items['output-style'],
-    last: files.has('records/output-style/gh.example-org.top.output-styles.style-19.json'),
+    last: files.has('records/output-style/gh.example-org.top.output-styles.style-19_2emd.json'),
     refusals,
   }).toEqual({
     outputStyles: 20,
     last: true,
-    refusals: ['gh.example-org.top.output-styles.a-wide: refused: frontmatterFields too_big'],
+    refusals: ['gh.example-org.top.output-styles.a-wide_2emd: refused: frontmatterFields too_big'],
   });
 });
 
@@ -491,9 +525,9 @@ it('refuses a hooks file with more than 64 events before selection, so the next 
   const { report, files, refusals } = await runWithTop({ 'hooks/hooks.json': JSON.stringify({ hooks: wideHooks }) });
   expect({
     hooks: report.items.hook,
-    last: files.has('records/hook/gh.example-org.plugin-20.hooks.json'),
+    last: files.has('records/hook/gh.example-org.plugin-20.hooks.hooks_2ejson.json'),
     refusals,
-  }).toEqual({ hooks: 20, last: true, refusals: ['gh.example-org.top.hooks: refused: events too_big'] });
+  }).toEqual({ hooks: 20, last: true, refusals: ['gh.example-org.top.hooks.hooks_2ejson: refused: events too_big'] });
 });
 
 it('refuses a plugin with hooks on more than 64 events before selection, so the next plugin takes its place', async () => {
@@ -581,10 +615,10 @@ it("records a plugin's withholding manifest license for the items it holds, and 
   const { files } = await run(world, '2026-11-16');
   const license = (path: string) => recordLicense(files, path);
   expect([
-    license('records/agent/gh.example-org.plugin-0.agents.agent-0.json'),
-    license('records/hook/gh.example-org.plugin-0.hooks.json'),
-    license('records/output-style/gh.example-org.plugin-0.output-styles.terse.json'),
-    license('records/agent/gh.example-org.plugin-2.agents.agent-2.json'),
+    license('records/agent/gh.example-org.plugin-0.agents.agent-0_2emd.json'),
+    license('records/hook/gh.example-org.plugin-0.hooks.hooks_2ejson.json'),
+    license('records/output-style/gh.example-org.plugin-0.output-styles.terse_2emd.json'),
+    license('records/agent/gh.example-org.plugin-2.agents.agent-2_2emd.json'),
   ]).toEqual([withheld, withheld, withheld, { spdx: 'MIT', source: 'github-detected', class: 'permissive' }]);
 });
 
@@ -639,7 +673,7 @@ it('records the withholding manifest license of a topic repository that is a plu
   expect([
     record('records/skill/gh.example-org.top.json'),
     record('records/skill/gh.example-org.top.skills.one.json'),
-    record('records/agent/gh.example-org.top.agents.helper.json'),
+    record('records/agent/gh.example-org.top.agents.helper_2emd.json'),
   ]).toEqual([
     { container: 'gh.example-org.top', license: withheld },
     { container: 'gh.example-org.top', license: withheld },
@@ -663,9 +697,9 @@ it.each([
     }).toEqual({
       records: [],
       refusals: [
-        'gh.example-org.plugin-0.agents.agent-0: refused: the manifest of its plugin is no JSON object',
-        'gh.example-org.plugin-0.hooks: refused: the manifest of its plugin is no JSON object',
-        'gh.example-org.plugin-0.output-styles.terse: refused: the manifest of its plugin is no JSON object',
+        'gh.example-org.plugin-0.agents.agent-0_2emd: refused: the manifest of its plugin is no JSON object',
+        'gh.example-org.plugin-0.hooks.hooks_2ejson: refused: the manifest of its plugin is no JSON object',
+        'gh.example-org.plugin-0.output-styles.terse_2emd: refused: the manifest of its plugin is no JSON object',
         'gh.example-org.plugin-0.skills.skill-0: refused: the manifest of its plugin is no JSON object',
         `gh.example-org.plugin-0: refused: ${refusal}`,
       ],
@@ -690,8 +724,8 @@ async function listedTopicPlugin(manifestLicense: string, repository: { unlicens
   const record = (path: string) =>
     z.object({ container: z.unknown(), license: z.unknown() }).parse(JSON.parse(files.get(path) ?? ''));
   return [
-    record('records/agent/gh.example-org.plugin-500.agents.agent-500.json'),
-    record('records/hook/gh.example-org.plugin-500.hooks.json'),
+    record('records/agent/gh.example-org.plugin-500.agents.agent-500_2emd.json'),
+    record('records/hook/gh.example-org.plugin-500.hooks.hooks_2ejson.json'),
   ];
 }
 
@@ -737,11 +771,11 @@ it("reads a marketplace entry's license as the manifest's of a plugin in its rep
   const mit = { spdx: 'MIT', source: 'manifest', class: 'permissive' };
   expect([
     license('records/plugin/gh.example-org.market.plugins.bare.json'),
-    license('records/agent/gh.example-org.market.plugins.bare.agents.bare.json'),
+    license('records/agent/gh.example-org.market.plugins.bare.agents.bare_2emd.json'),
     license('records/plugin/gh.example-org.market.plugins.filed.json'),
-    license('records/agent/gh.example-org.market.plugins.filed.agents.filed.json'),
+    license('records/agent/gh.example-org.market.plugins.filed.agents.filed_2emd.json'),
     license('records/plugin/gh.example-org.other.json'),
-    license('records/agent/gh.example-org.other.agents.other.json'),
+    license('records/agent/gh.example-org.other.agents.other_2emd.json'),
   ]).toEqual([withheld, withheld, mit, mit, { class: 'none' }, { class: 'none' }]);
 });
 
@@ -762,7 +796,7 @@ async function marketPluginLicenses(world: Map<string, FakeRepository>, name: st
   const { files: written } = await run(world, '2026-11-16');
   return [
     recordLicense(written, `records/plugin/gh.example-org.market.plugins.${name}.json`),
-    recordLicense(written, `records/agent/gh.example-org.market.plugins.${name}.agents.${name}.json`),
+    recordLicense(written, `records/agent/gh.example-org.market.plugins.${name}.agents.${name}_2emd.json`),
   ];
 }
 
@@ -812,22 +846,107 @@ it('keeps the pinned manifest of a listed plugin that is also a topic repository
   expect(
     z
       .object({ container: z.unknown(), license: z.unknown() })
-      .parse(JSON.parse(files.get('records/agent/gh.example-org.pinned.agents.helper.json') ?? '')),
+      .parse(JSON.parse(files.get('records/agent/gh.example-org.pinned.agents.helper_2emd.json') ?? '')),
   ).toEqual({ container: 'gh.example-org.pinned', license: withheld });
 });
 
-it("records the entry license of a listed plugin at its marketplace's root for the items topic search finds", async () => {
+/** The fake world without the listed plugins' agents, so the agent of `example-org/market` is selected though its plugin is not inspected. */
+function marketAgentWorld(): Map<string, FakeRepository> {
   const world = fakeWorld();
-  // Without the other plugins' agents, the market's agent is selected though its plugin is not inspected.
   for (let index = 0; index < 1000; index += 1)
     delete repositoryOf(world, `example-org/plugin-${index}`).files[`agents/agent-${index}.md`];
+  return world;
+}
+
+/** The container and license of the agent `agents/self.md` of `example-org/market`, found by topic search. */
+async function marketAgent(world: World, excluded?: ReadonlySet<string>) {
+  const { files } = await run(world, '2026-11-16', new Map(), {
+    topicRepositories: ['example-org/market'],
+    ...(excluded === undefined ? {} : { excluded }),
+  });
+  return z
+    .object({ container: z.string().optional(), license: z.unknown() })
+    .parse(JSON.parse(files.get('records/agent/gh.example-org.market.agents.self_2emd.json') ?? ''));
+}
+
+it.each([
+  { name: 'for the items topic search finds', listings: [] },
+  {
+    name: 'also when another marketplace lists its repository',
+    listings: [{ name: 'market', source: { source: 'github', repo: 'example-org/market' } }],
+  },
+])("records the entry license of a listed plugin at its marketplace's root $name", async ({ listings }) => {
+  const world = marketAgentWorld();
+  repositoryOf(world, 'anthropics/claude-plugins-official').files['.claude-plugin/marketplace.json'] = JSON.stringify({
+    name: 'claude-plugins-official',
+    plugins: listings,
+  });
   listInMarket(world, { name: 'self', source: './', license: 'UNLICENSED' }).files['agents/self.md'] = agent('self');
-  const { files } = await run(world, '2026-11-16', new Map(), { topicRepositories: ['example-org/market'] });
+  expect(await marketAgent(world)).toEqual({ container: 'gh.example-org.market._.self', license: withheld });
+});
+
+it.each([
+  { name: 'several plugins and a plugin manifest', files: { '.claude-plugin/plugin.json': '{"name":"market"}' } },
+  { name: 'several plugins, one of them excluded', files: {}, excluded: new Set(['gh.example-org.market._.second']) },
+])('gives the items of a topic repository whose root holds $name no plugin', async ({ files, excluded }) => {
+  const world = marketAgentWorld();
+  listInMarket(world, { name: 'first', source: './' });
+  const market = listInMarket(world, { name: 'second', source: './' });
+  Object.assign(market.files, files, { 'agents/self.md': agent('self') });
+  expect((await marketAgent(world, excluded)).container).toBeUndefined();
+});
+
+it('gives the items in a folder that several plugins share the plugin whose entry lists them, else none', async () => {
+  const world = fakeWorld();
+  world.set('example-org/market', {
+    stars: 99_999,
+    files: {
+      '.claude-plugin/marketplace.json': JSON.stringify({
+        name: 'market',
+        plugins: [
+          { name: 'first', source: './', skills: ['./skills/listed'] },
+          { name: 'second', source: './' },
+        ],
+      }),
+      'skills/listed/SKILL.md': `---\nname: listed\ndescription: ${marker}\n---\n${marker}\n`,
+      'skills/loose/SKILL.md': `---\nname: loose\ndescription: ${marker}\n---\n${marker}\n`,
+      'agents/loose.md': agent('loose'),
+    },
+  });
+  const { files } = await run(world, '2026-11-16');
+  const container = (path: string) =>
+    z.object({ container: z.string().optional() }).parse(JSON.parse(files.get(path) ?? ''));
+  expect([
+    container('records/skill/gh.example-org.market.skills.listed.json'),
+    container('records/skill/gh.example-org.market.skills.loose.json'),
+    container('records/agent/gh.example-org.market.agents.loose_2emd.json'),
+  ]).toEqual([{ container: 'gh.example-org.market._.first' }, { container: undefined }, { container: undefined }]);
+});
+
+it('gives a skill folder and an agent file of one name ids of their own', async () => {
+  const world = fakeWorld();
+  world.set('example-org/market', {
+    stars: 99_999,
+    files: {
+      '.claude-plugin/marketplace.json': JSON.stringify({
+        name: 'market',
+        plugins: [{ name: 'kit', source: './', skills: ['./agents/helper'] }],
+      }),
+      'agents/helper/SKILL.md': `---\nname: helper\ndescription: ${marker}\n---\n${marker}\n`,
+      'agents/helper.md': agent('helper'),
+    },
+  });
+  const { files } = await run(world, '2026-11-16');
+  const rows = indexFile.parse(JSON.parse(files.get('index.json') ?? '')).items;
   expect(
-    z
-      .object({ container: z.unknown(), license: z.unknown() })
-      .parse(JSON.parse(files.get('records/agent/gh.example-org.market.agents.self.json') ?? '')),
-  ).toEqual({ container: 'gh.example-org.market._.self', license: withheld });
+    rows
+      .filter((row) => row.id.startsWith('gh.example-org.market.agents.'))
+      .map(({ kind, id }) => ({ kind, id }))
+      .toSorted((a, b) => a.kind.localeCompare(b.kind)),
+  ).toEqual([
+    { kind: 'agent', id: 'gh.example-org.market.agents.helper_2emd' },
+    { kind: 'skill', id: 'gh.example-org.market.agents.helper' },
+  ]);
 });
 
 it("records a plugin's manifest license, else its one license file in its folder, when the repository root has none", async () => {
@@ -1051,7 +1170,7 @@ const expectedFacts = [
     files: { scripts: 1, references: 1, assets: 0 },
   },
   {
-    id: 'gh.example-org.plugin-0.agents.agent-0',
+    id: 'gh.example-org.plugin-0.agents.agent-0_2emd',
     name: 'agent-0',
     kind: 'agent',
     container: 'gh.example-org.plugin-0',
@@ -1065,7 +1184,7 @@ const expectedFacts = [
     tokens: { metadata: 34, body: 15 },
   },
   {
-    id: 'gh.example-org.plugin-0.hooks',
+    id: 'gh.example-org.plugin-0.hooks.hooks_2ejson',
     name: 'plugin-0',
     kind: 'hook',
     container: 'gh.example-org.plugin-0',
@@ -1095,7 +1214,7 @@ const expectedFacts = [
     remoteHosts: 1,
   },
   {
-    id: 'gh.example-org.plugin-0.output-styles.terse',
+    id: 'gh.example-org.plugin-0.output-styles.terse_2emd',
     name: 'terse',
     kind: 'output-style',
     container: 'gh.example-org.plugin-0',
@@ -1114,10 +1233,10 @@ it('records the facts read for each kind', async () => {
     ownFields(files, 'records/marketplace/gh.example-org.market-3.json'),
     ownFields(files, 'records/plugin/gh.example-org.plugin-0.json'),
     ownFields(files, 'records/skill/gh.example-org.plugin-0.skills.skill-0.json'),
-    ownFields(files, 'records/agent/gh.example-org.plugin-0.agents.agent-0.json'),
-    ownFields(files, 'records/hook/gh.example-org.plugin-0.hooks.json'),
+    ownFields(files, 'records/agent/gh.example-org.plugin-0.agents.agent-0_2emd.json'),
+    ownFields(files, 'records/hook/gh.example-org.plugin-0.hooks.hooks_2ejson.json'),
     ownFields(files, 'records/mcp-server/io.github.example-org.mcp-0.json'),
-    ownFields(files, 'records/output-style/gh.example-org.plugin-0.output-styles.terse.json'),
+    ownFields(files, 'records/output-style/gh.example-org.plugin-0.output-styles.terse_2emd.json'),
   ]).toEqual(expectedFacts);
 });
 
@@ -1125,10 +1244,10 @@ const scoredPaths = [
   'records/marketplace/gh.example-org.market-3.json',
   'records/plugin/gh.example-org.plugin-0.json',
   'records/skill/gh.example-org.plugin-0.skills.skill-0.json',
-  'records/agent/gh.example-org.plugin-0.agents.agent-0.json',
-  'records/hook/gh.example-org.plugin-0.hooks.json',
+  'records/agent/gh.example-org.plugin-0.agents.agent-0_2emd.json',
+  'records/hook/gh.example-org.plugin-0.hooks.hooks_2ejson.json',
   'records/mcp-server/io.github.example-org.mcp-0.json',
-  'records/output-style/gh.example-org.plugin-0.output-styles.terse.json',
+  'records/output-style/gh.example-org.plugin-0.output-styles.terse_2emd.json',
 ];
 const scoredFields = z.object({ signals: z.unknown(), flags: z.unknown(), score: z.object({ total: z.number() }) });
 
@@ -1309,7 +1428,7 @@ it('accepts the name of a skill that is a whole repository without comparing it 
 });
 
 it('adds a history entry once the push age crosses a step and keeps the history while it does not', async () => {
-  const path = 'history/hook/gh.example-org.plugin-0.hooks.json';
+  const path = 'history/hook/gh.example-org.plugin-0.hooks.hooks_2ejson.json';
   const first = await run(fakeWorld(), '2026-11-16');
   // Pushed on 2026-11-10 at 09:00: the age reaches 91 whole days on 2027-02-10.
   const same = await run(fakeWorld(), '2027-02-09', first.files);
@@ -1321,7 +1440,7 @@ it('adds a history entry once the push age crosses a step and keeps the history 
     same: true,
     later: {
       schemaVersion: 1,
-      id: 'gh.example-org.plugin-0.hooks',
+      id: 'gh.example-org.plugin-0.hooks.hooks_2ejson',
       kind: 'hook',
       entries: [
         { date: '2026-11-16', rubric: '1.0.0', total: 73 },

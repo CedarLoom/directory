@@ -1,10 +1,10 @@
 import { isDeepStrictEqual } from 'node:util';
 import { ZodError } from 'zod';
-import { type Candidate, type Located, mergeCandidates } from './candidate.ts';
+import { type Candidate, joinRootPlugins, type Located, mergeCandidates, sole } from './candidate.ts';
 import { type DataFiles, dataFiles } from './data-files.ts';
 import { applyExclusions, type Exclusions } from './exclusions.ts';
 import type { Repository } from './github-contents.ts';
-import { type GitHubLocation, repositoryId } from './github-location.ts';
+import { type GitHubLocation, locationId, repositoryId } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
 import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
 import { issueSummary } from './issue-summary.ts';
@@ -141,12 +141,25 @@ interface Containers {
   entryLicenses: ReadonlyMap<string, string>;
   /** Filled before the items a plugin holds are built. */
   licenses: Map<string, { license: string | undefined } | keyof typeof unreadManifest>;
+  /** The ids of the plugins listed at each folder, by the folder's id, excluded ones too, as they share the folder. */
+  folders: ReadonlyMap<string, readonly string[]>;
 }
 
-/** The listed plugins as containers, before any manifest is read. */
-function listedContainers(listed: readonly Located[]): Containers {
+/** The ids of the plugins at each folder, by the folder's id. */
+function folderPlugins(candidates: readonly Candidate[]): Map<string, string[]> {
+  const folders = new Map<string, string[]>();
+  for (const { kind, id, location } of candidates) {
+    if (kind !== 'plugin' || location === undefined) continue;
+    folders.set(locationId(location), [...(folders.get(locationId(location)) ?? []), id]);
+  }
+  return folders;
+}
+
+/** The listed plugins as containers, before any manifest is read, and the folders of all plugins found in the sources. */
+function listedContainers(listed: readonly Located[], sourced: readonly Candidate[]): Containers {
   const plugins = listed.filter(({ kind }) => kind === 'plugin');
   return {
+    folders: folderPlugins(sourced),
     locations: new Map(plugins.map(({ id, location }) => [id, location])),
     entryLicenses: new Map(
       plugins.flatMap(({ id, entryLicense }) => (entryLicense === undefined ? [] : [[id, entryLicense]])),
@@ -220,7 +233,12 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
   for (const [index, place] of places.entries()) {
     const inspection = inspections[index];
     if (inspection === 'too-large') refuse(place.container ?? repositoryId(place.location), new Error(tooLarge));
-    else if (inspection !== undefined) found.push(...inspectionCandidates(place, inspection, refuse));
+    else if (inspection !== undefined) {
+      // Only a topic repository's marketplace is an item; the other items of the place keep theirs.
+      if (inspection.marketplaceTooLarge === true && place.container === undefined)
+        refuse(repositoryId(place.location), new Error(tooLarge));
+      found.push(...inspectionCandidates(place, inspection, refuse));
+    }
   }
   return { inspections, found };
 }
@@ -271,6 +289,19 @@ async function buildRecords(
 }
 
 /**
+ * Leaves the items found in a folder that several plugins share without a container, as which plugin holds them cannot
+ * be told; one that an entry lists keeps that entry's plugin, as the listing joins it.
+ */
+function unshare(found: readonly Candidate[], batch: readonly Ranked[], folders: Containers['folders']): Candidate[] {
+  const shared = new Set(
+    batch.flatMap(({ candidate: { id, location } }) => (sole(folders.get(locationId(location)) ?? []) ? [] : [id])),
+  );
+  return found.map(({ container, ...item }) =>
+    container === undefined || shared.has(container) ? item : { ...item, container },
+  );
+}
+
+/**
  * Inspects a batch of plugins and adds the items they hold to `found` and their manifest licenses to the containers,
  * also those of a plugin refused for its own facts.
  */
@@ -281,7 +312,7 @@ function pluginReader(reading: Reading, found: Candidate[]) {
       ({ candidate: { location, id, provenance } }): InspectedPlace => ({ location, container: id, provenance }),
     );
     const inspected = await inspectPlaces(client, places, refuse);
-    found.push(...inspected.found);
+    found.push(...unshare(inspected.found, batch, containers.folders));
     const unbuilt = batch.map(({ candidate, facts }, index): Unbuilt | 'refused' | undefined => {
       const [inspection, source] = [inspected.inspections[index], candidate.source];
       if (inspection === 'too-large') return 'refused';
@@ -425,25 +456,12 @@ function topicPlaces(topicRepositories: readonly Repository[], facts: ReadonlyMa
 }
 
 /**
- * The id of the listed plugin at the root of a repository: the one whose id is the repository's, else the only one the
- * repository's own marketplace lists there.
- */
-function listedRootPlugin(locations: ReadonlyMap<string, GitHubLocation>, id: string): string | undefined {
-  if (locations.has(id)) return id;
-  const roots = [...locations.entries()].filter(
-    ([, location]) => location.path === '' && repositoryId(location) === id,
-  );
-  // Several plugins at one root leave no plugin to hold its items.
-  return roots.length === 1 ? roots[0]?.[0] : undefined;
-}
-
-/**
- * The items found in the topic repositories, those of a repository whose root is a listed plugin or holds a plugin
- * manifest with that plugin as their container, like the items of a listed plugin, and the manifest license of an
- * unlisted one added to the containers.
+ * The items found in the topic repositories, those of a repository whose root is the one listed plugin there or, with
+ * none listed, holds a plugin manifest with that plugin as their container, like the items of a listed plugin, and the
+ * manifest license of an unlisted one added to the containers.
  */
 async function topicItems(
-  { client, refuse, containers: { locations, licenses } }: Reading,
+  { client, refuse, containers: { locations, licenses, folders } }: Reading,
   places: readonly InspectedPlace[],
 ): Promise<Candidate[]> {
   const { inspections, found } = await inspectPlaces(client, places, refuse);
@@ -453,9 +471,12 @@ async function topicItems(
     if (typeof inspection !== 'object') continue;
     const id = repositoryId(location);
     // A listed plugin at the repository root keeps its own location and pin, whose manifest its reading records.
-    const listed = listedRootPlugin(locations, id);
-    if (listed !== undefined) plugins.set(id, listed);
-    else if (inspection.files.manifest !== undefined) {
+    const listed = folders.get(id);
+    if (listed !== undefined) {
+      // Several plugins at one root leave no plugin to hold its items.
+      const holder = sole(listed);
+      if (holder !== undefined) plugins.set(id, holder);
+    } else if (inspection.files.manifest !== undefined) {
       plugins.set(id, id);
       locations.set(id, location);
       licenses.set(id, manifestLicense(inspection.files.manifest, undefined));
@@ -522,22 +543,22 @@ export async function collect(
     throw error;
   });
   counter.refused += results.reduce((sum, result) => sum + result.refused, 0);
-  const listed = applyExclusions(mergeCandidates(results.flatMap((result) => result.candidates)), excluded).filter(
-    isLocated,
-  );
+  const sourced = joinRootPlugins(results.flatMap((result) => result.candidates));
+  const merged = mergeCandidates(sourced);
+  const listed = applyExclusions(merged, excluded).filter(isLocated);
   // An excluded repository found by topic is not inspected, so the items it holds stay out too.
   const topicRepositories = identified(await searchTopics(client, options.topics, perTopic), refuse).filter(
     (repository) => !excluded.has(repositoryId(repository)),
   );
   const facts = await readFacts(client, factsRepositories(listed, topicRepositories, log), runDate);
-  const containers = listedContainers(listed);
+  const containers = listedContainers(listed, merged);
   const reading: Reading = { client, refuse, build: recordBuilder(runDate, refuse, containers), containers };
   const found: Candidate[] = [];
   const [plugins, topics] = await Promise.all([
     fill(ranked(listed, 'plugin', facts), perKind, pluginReader(reading, found)),
     topicItems(reading, topicPlaces(topicRepositories, facts)),
   ]);
-  const all = mergeCandidates([...results.flatMap((result) => result.candidates), ...found, ...topics]);
+  const all = mergeCandidates([...sourced, ...found, ...topics]);
   const kept = applyExclusions(all, excluded);
   const records = await itemRecords(reading, { candidates: kept.filter(isLocated), facts, plugins });
   const report: RunReport = {

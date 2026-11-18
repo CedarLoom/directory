@@ -187,35 +187,35 @@ function LicenseFacts() {
         folder other than the plugin's. A plugin manifest's license field that states a license applies to these items
         as well when GitHub names no license at the repository root, again after a skill's own license field and a
         license file in a skill's folder other than the plugin's. A repository found by topic search is the plugin of
-        the items it holds when a plugin is listed or a plugin manifest sits at its root, unless only its own
-        marketplace lists plugins there and lists several. An item whose plugin manifest is cut by GitHub, over the size
-        cap or not a JSON object is not listed, as its license cannot be read. For a plugin in its marketplace's own
-        repository, the license field of its marketplace entry is read as the manifest's when it has no plugin.json or
-        one without a license field, also when another marketplace lists it. The entry of a plugin in another repository
-        is not read, as a marketplace may hold no rights to grant that plugin's license. A blank field and one that
-        holds NOASSERTION state nothing, so the next of these sources applies. A blank, NOASSERTION or withholding
-        license field does not count as filled, neither for a skill's license field nor among a plugin's manifest
-        fields. A field that holds the full name of a license in the SPDX License List 3.29, other than a deprecated
-        one, such as MIT License, in any case and spacing, is recorded with that license's SPDX id. A field that holds
-        neither such a name nor an SPDX expression of listed license and exception ids, such as one with a LicenseRef or
-        The MIT License, is recorded without an SPDX id. A license file in the item's folder is recorded with the SPDX
-        id of the license whose template in the SPDX License List 3.29 its text matches once whitespace, case, dash and
-        quote styles, the spaces next to punctuation, title lines that hold only words of the license's name or id and a
-        version, and copyright notices are set aside as the SPDX matching guidelines describe; the templates are those
-        of the licenses GitHub detects, their earlier versions and other licenses items state. A copyright notice opens
-        with Copyright, (c) or © and may name its holders in any case or script. The next line is set aside with it when
-        it holds no word of terms and continues the notice: the notice ends with a comma, and, the, of or &; or the
-        notice ends with Inc., Corp., Ltd. or Co., or the line opens with a digit, and the line's first sentence holds a
-        comma and each of its words opens with a capital or a digit, as in an address. Any other line after a notice is
-        kept. A copyright line that holds a word of terms, such as only, commercial, NC, proprietary, confidential,
-        evaluation, trial, expires, internal, not, prohibited, restricted or permission, is kept, so the text matches no
-        template. Terms in other words, such as "ask first", pass as a holder's name and do not change the match. A part
-        that a template leaves free, such as the copyright holders in MIT's warranty disclaimer, takes any text, so
-        terms added there do not change the match. A license file that matches none of the templates, and one of several
-        license files in the folder, is recorded without an SPDX id. SPDX ids match in any case and are recorded as the
-        SPDX License List writes them. An expression takes the class of its most permissive part when OR joins its parts
-        and of its least permissive part when AND joins them. "No license detected" means that none of these was found,
-        not that the item has no license.
+        its items when it is the one plugin listed at its root or, with none listed, has a plugin manifest; an item in a
+        folder several listed plugins share belongs to the one whose entry lists it, else to none. An item whose plugin
+        manifest is cut by GitHub, over the size cap or not a JSON object is not listed, as its license cannot be read.
+        For a plugin in its marketplace's own repository, the license field of its marketplace entry is read as the
+        manifest's when it has no plugin.json or one with an empty or no license field, also when another marketplace
+        lists it. The entry of a plugin in another repository is not read, as a marketplace may hold no rights to grant
+        that plugin's license. A blank field and one that holds NOASSERTION state nothing, so the next of these sources
+        applies. A blank, NOASSERTION or withholding license field does not count as filled, neither for a skill's
+        license field nor among a plugin's manifest fields. A field that holds the full name of a license in the SPDX
+        License List 3.29, other than a deprecated one, such as MIT License, in any case and spacing, is recorded with
+        that license's SPDX id. A field that holds neither such a name nor an SPDX expression of listed license and
+        exception ids, such as one with a LicenseRef or The MIT License, is recorded without an SPDX id. A license file
+        in the item's folder is recorded with the SPDX id of the license whose template in the SPDX License List 3.29
+        its text matches once whitespace, case, dash and quote styles, the spaces next to punctuation, title lines that
+        hold only words of the license's name or id and a version, and copyright notices are set aside as the SPDX
+        matching guidelines describe; the templates are those of the licenses GitHub detects, their earlier versions and
+        other licenses items state. A copyright notice opens with Copyright, (c) or © and may name its holders in any
+        case or script. The next line is set aside with it when it holds no word of terms and continues the notice: the
+        notice ends with a comma, and, the, of or &; or the notice ends with Inc., Corp., Ltd. or Co., or the line opens
+        with a digit, and the line's first sentence holds a comma and each of its words opens with a capital or a digit,
+        as in an address. Any other line after a notice is kept. A copyright line that holds a word of terms, such as
+        only, commercial, NC, proprietary, confidential, evaluation, trial, expires, internal, not, prohibited,
+        restricted or permission, is kept, so the text matches no template. Terms in other words, such as "ask first",
+        pass as a holder's name and do not change the match. A part that a template leaves free, such as the copyright
+        holders in MIT's warranty disclaimer, takes any text, so terms added there do not change the match. A license
+        file that matches none of the templates, and one of several license files in the folder, is recorded without an
+        SPDX id. SPDX ids match in any case and are recorded as the SPDX License List writes them. An expression takes
+        the class of its most permissive part when OR joins its parts and of its least permissive part when AND joins
+        them. "No license detected" means that none of these was found, not that the item has no license.
       </Trans>
     </Text>
   );

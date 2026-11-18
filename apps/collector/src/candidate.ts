@@ -1,5 +1,5 @@
 import type { Pin, SourceId, SourceKind } from '@directory/contracts';
-import type { GitHubLocation } from './github-location.ts';
+import { type GitHubLocation, repositoryId } from './github-location.ts';
 import type { HookFacts } from './hook-analyzer.ts';
 import type { MarketplaceEntries } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
@@ -62,4 +62,34 @@ export function mergeCandidates(candidates: readonly Candidate[]): Candidate[] {
     );
   }
   return [...merged.values()];
+}
+
+/** The only value of a list, or undefined for an empty list or one of several values. */
+export function sole<T>(values: readonly T[]): T | undefined {
+  const [only, ...others] = values;
+  return others.length === 0 ? only : undefined;
+}
+
+/**
+ * Gives a plugin listed at the root of a repository whose own marketplace lists one plugin there that plugin's id, and
+ * its listed skills that container, so both listings join; with several there, which one it is cannot be told.
+ */
+export function joinRootPlugins(candidates: readonly Candidate[]): Candidate[] {
+  const own = new Map<string, Set<string>>();
+  for (const { kind, id, location } of candidates) {
+    // At a repository root only an entry of the repository's own marketplace has an id other than the repository's.
+    if (kind !== 'plugin' || location?.path !== '' || id === repositoryId(location)) continue;
+    own.set(repositoryId(location), (own.get(repositoryId(location)) ?? new Set()).add(id));
+  }
+  const ids = new Map(
+    [...own].flatMap(([repository, named]) => {
+      const only = sole([...named]);
+      return only === undefined ? [] : [[repository, only] as const];
+    }),
+  );
+  return candidates.map((candidate) => {
+    const id = candidate.kind === 'plugin' ? ids.get(candidate.id) : undefined;
+    const container = candidate.container === undefined ? undefined : ids.get(candidate.container);
+    return { ...candidate, ...(id === undefined ? {} : { id }), ...(container === undefined ? {} : { container }) };
+  });
 }
