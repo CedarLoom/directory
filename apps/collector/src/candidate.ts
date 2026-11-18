@@ -22,6 +22,11 @@ export interface Candidate {
   provenance: SourceId[];
   /** A plugin's source kind and pin as its marketplace entry sets them. */
   source?: { kind: SourceKind; pin: Pin };
+  /**
+   * The license field of a plugin's marketplace entry when the plugin sits in the marketplace's own repository; it is the
+   * plugin manifest's license field when the plugin has no plugin.json.
+   */
+  entryLicense?: string;
   /** A marketplace's plugin entries. */
   entries?: MarketplaceEntries;
   /** A hooks file's facts, read when the inspection found it. */

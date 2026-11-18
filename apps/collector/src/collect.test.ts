@@ -17,6 +17,8 @@ interface FakeRepository {
   unlicensed?: true;
   /** The license id GitHub detects at the repository root, MIT when not set. */
   license?: string;
+  /** Files that differ at a commit other than HEAD, by path. */
+  pinned?: Record<string, string>;
 }
 
 function pluginRepository(index: number): FakeRepository {
@@ -161,8 +163,8 @@ type World = ReadonlyMap<string, FakeRepository>;
 
 /** A Git object as GraphQL returns it for `<ref>:<path>`: a blob with its text or a tree two levels deep. */
 function gitObject(repository: FakeRepository, expression: string, depth = 2): unknown {
-  const path = expression.slice(expression.indexOf(':') + 1);
-  const text = repository.files[path];
+  const [ref, path] = [expression.slice(0, expression.indexOf(':')), expression.slice(expression.indexOf(':') + 1)];
+  const text = (ref === 'HEAD' ? undefined : repository.pinned?.[path]) ?? repository.files[path];
   if (text !== undefined) return { text };
   const prefix = path === '' ? '' : `${path}/`;
   const names = new Set(
@@ -645,24 +647,130 @@ it('records the withholding manifest license of a topic repository that is a plu
   ]);
 });
 
-it('refuses the items of a plugin whose manifest is not a JSON object, as their license cannot be read', async () => {
+it.each([
+  { name: 'cut JSON', manifest: '{ "name": "plugin-0",', refusal: 'value custom' },
+  { name: 'JSON null', manifest: 'null', refusal: 'value invalid_type' },
+])(
+  'refuses a plugin whose manifest is $name and the items it holds, as their license cannot be read',
+  async ({ manifest, refusal }) => {
+    const world = fakeWorld();
+    repositoryOf(world, 'example-org/plugin-0').files['.claude-plugin/plugin.json'] = manifest;
+    const lines: string[] = [];
+    const { files } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
+    expect({
+      records: [...files.keys()].filter((path) => path.includes('/gh.example-org.plugin-0.')),
+      refusals: lines.filter((line) => line.startsWith('gh.example-org.plugin-0')).toSorted(),
+    }).toEqual({
+      records: [],
+      refusals: [
+        'gh.example-org.plugin-0.agents.agent-0: refused: the manifest of its plugin is no JSON object',
+        'gh.example-org.plugin-0.hooks: refused: the manifest of its plugin is no JSON object',
+        'gh.example-org.plugin-0.output-styles.terse: refused: the manifest of its plugin is no JSON object',
+        'gh.example-org.plugin-0.skills.skill-0: refused: the manifest of its plugin is no JSON object',
+        `gh.example-org.plugin-0: refused: ${refusal}`,
+      ],
+    });
+  },
+);
+
+/** The agent and hook records of plugin-500, listed past the inspected plugins and found by topic search. */
+async function listedTopicPlugin(manifestLicense: string, repository: { unlicensed?: true }) {
   const world = fakeWorld();
-  repositoryOf(world, 'example-org/plugin-0').files['.claude-plugin/plugin.json'] = '{ "name": "plugin-0",';
-  const lines: string[] = [];
-  const { files } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
-  expect({
-    records: [...files.keys()].filter((path) => path.includes('/gh.example-org.plugin-0.')),
-    refusals: lines.filter((line) => line.startsWith('gh.example-org.plugin-0')).toSorted(),
-  }).toEqual({
-    records: [],
-    refusals: [
-      'gh.example-org.plugin-0.agents.agent-0: refused: the manifest of its plugin is no JSON object',
-      'gh.example-org.plugin-0.hooks: refused: the manifest of its plugin is no JSON object',
-      'gh.example-org.plugin-0.output-styles.terse: refused: the manifest of its plugin is no JSON object',
-      'gh.example-org.plugin-0.skills.skill-0: refused: the manifest of its plugin is no JSON object',
-      'gh.example-org.plugin-0: refused: value custom',
-    ],
+  // Without the other plugins' hooks and agents, plugin-500's are selected though the plugin is not inspected.
+  for (let index = 0; index < 1000; index += 1) {
+    if (index === 500) continue;
+    const { files } = repositoryOf(world, `example-org/plugin-${index}`);
+    delete files['hooks/hooks.json'];
+    delete files[`agents/agent-${index}.md`];
+  }
+  const plugin = repositoryOf(world, 'example-org/plugin-500');
+  Object.assign(plugin, repository);
+  plugin.files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-500', license: manifestLicense });
+  const { files } = await run(world, '2026-11-16', new Map(), { topicRepositories: ['example-org/plugin-500'] });
+  const record = (path: string) =>
+    z.object({ container: z.unknown(), license: z.unknown() }).parse(JSON.parse(files.get(path) ?? ''));
+  return [
+    record('records/agent/gh.example-org.plugin-500.agents.agent-500.json'),
+    record('records/hook/gh.example-org.plugin-500.hooks.json'),
+  ];
+}
+
+it('records the withholding manifest license for the hook of a listed plugin found by topic search', async () => {
+  expect(await listedTopicPlugin('UNLICENSED', {})).toEqual([
+    { container: 'gh.example-org.plugin-500', license: withheld },
+    { container: 'gh.example-org.plugin-500', license: withheld },
+  ]);
+});
+
+it('records the stated manifest license for the hook of a listed plugin found by topic search', async () => {
+  const mit = { spdx: 'MIT', source: 'manifest', class: 'permissive' };
+  expect(await listedTopicPlugin('MIT', { unlicensed: true })).toEqual([
+    { container: 'gh.example-org.plugin-500', license: mit },
+    { container: 'gh.example-org.plugin-500', license: mit },
+  ]);
+});
+
+const agent = (name: string) => `---\nname: ${name}\ndescription: ${marker}\n---\n${marker}\n`;
+
+it("reads a marketplace entry's license as the manifest's of a plugin in its repository without plugin.json", async () => {
+  const world = fakeWorld();
+  world.set('example-org/market', {
+    stars: 99_999,
+    unlicensed: true,
+    files: {
+      '.claude-plugin/marketplace.json': JSON.stringify({
+        name: 'market',
+        plugins: [
+          { name: 'bare', source: './plugins/bare', license: 'UNLICENSED' },
+          { name: 'filed', source: './plugins/filed', license: 'UNLICENSED' },
+          { name: 'other', source: { source: 'github', repo: 'example-org/other' }, license: 'UNLICENSED' },
+        ],
+      }),
+      'plugins/bare/agents/bare.md': agent('bare'),
+      'plugins/filed/.claude-plugin/plugin.json': JSON.stringify({ name: 'filed', license: 'MIT' }),
+      'plugins/filed/agents/filed.md': agent('filed'),
+    },
   });
+  world.set('example-org/other', { stars: 99_998, unlicensed: true, files: { 'agents/other.md': agent('other') } });
+  const { files } = await run(world, '2026-11-16');
+  const license = (path: string) => recordLicense(files, path);
+  const mit = { spdx: 'MIT', source: 'manifest', class: 'permissive' };
+  expect([
+    license('records/plugin/gh.example-org.market.plugins.bare.json'),
+    license('records/agent/gh.example-org.market.plugins.bare.agents.bare.json'),
+    license('records/plugin/gh.example-org.market.plugins.filed.json'),
+    license('records/agent/gh.example-org.market.plugins.filed.agents.filed.json'),
+    license('records/plugin/gh.example-org.other.json'),
+    license('records/agent/gh.example-org.other.agents.other.json'),
+  ]).toEqual([withheld, withheld, mit, mit, { class: 'none' }, { class: 'none' }]);
+});
+
+it('keeps the pinned manifest of a listed plugin that is also a topic repository', async () => {
+  const world = fakeWorld();
+  world.set('example-org/pinned', {
+    stars: 99_999,
+    files: {
+      '.claude-plugin/plugin.json': JSON.stringify({ name: 'pinned', license: 'MIT' }),
+      'agents/helper.md': `---\nname: helper\ndescription: ${marker}\n---\n${marker}\n`,
+    },
+    pinned: { '.claude-plugin/plugin.json': JSON.stringify({ name: 'pinned', license: 'UNLICENSED' }) },
+  });
+  const market = repositoryOf(world, 'example-org/market');
+  const listing = z
+    .object({ plugins: z.array(z.unknown()) })
+    .loose()
+    .parse(JSON.parse(market.files['.claude-plugin/marketplace.json'] ?? ''));
+  listing.plugins.push({
+    name: 'pinned',
+    source: { source: 'github', repo: 'example-org/pinned', sha: 'd'.repeat(40) },
+  });
+  market.files['.claude-plugin/marketplace.json'] = JSON.stringify(listing);
+  const { files } = await run(world, '2026-11-16', new Map(), { topicRepositories: ['example-org/pinned'] });
+  expect(
+    z
+      .object({ container: z.unknown(), license: z.unknown() })
+      .parse(JSON.parse(files.get('records/agent/gh.example-org.pinned.agents.helper.json') ?? '')),
+  ).toEqual({ container: 'gh.example-org.pinned', license: withheld });
 });
 
 it("records a plugin's manifest license, else its one license file in its folder, when the repository root has none", async () => {

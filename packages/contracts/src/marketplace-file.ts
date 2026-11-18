@@ -19,6 +19,8 @@ export const marketplaceEntry = z.object({
   name: itemName,
   source: z.unknown(),
   homepage: z.string().optional(),
+  // Read like a plugin manifest's license field, so a value of another type refuses nothing.
+  license: z.unknown().optional(),
   skills: z.array(relativePath).optional(),
 });
 
