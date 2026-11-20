@@ -12,7 +12,6 @@ export const directoryPaths = {
   claudeSkills: '.claude/skills',
   agents: 'agents',
   claudeAgents: '.claude/agents',
-  commands: 'commands',
   outputStyles: 'output-styles',
   claudeOutputStyles: '.claude/output-styles',
   bin: 'bin',
@@ -21,7 +20,8 @@ export const directoryPaths = {
 export const manifestPath = '.claude-plugin/plugin.json';
 export const hooksPath = 'hooks/hooks.json';
 
-const files = {
+/** The layout files an inspection reads, by key. */
+export const filePaths = {
   manifest: manifestPath,
   marketplace: '.claude-plugin/marketplace.json',
   hooks: hooksPath,
@@ -31,7 +31,7 @@ const files = {
 } as const;
 
 export type DirectoryKey = keyof typeof directoryPaths;
-type FileKey = keyof typeof files;
+type FileKey = keyof typeof filePaths;
 
 const entry = z.object({ name: z.string(), type: z.enum(['blob', 'tree', 'commit']) });
 export type Entry = z.infer<typeof entry>;
@@ -79,7 +79,7 @@ function layoutFiles(
 ): Pick<Inspection, 'files' | 'marketplaceTooLarge'> | 'too-large' {
   const found: Inspection['files'] = {};
   let marketplaceTooLarge = false;
-  for (const key of keysOf(files)) {
+  for (const key of keysOf(filePaths)) {
     const read = fileRead(blob.parse(answer[key]));
     if (read === 'too-large' && key === 'marketplace') marketplaceTooLarge = true;
     else if (read === 'too-large') return read;
@@ -111,7 +111,7 @@ export async function inspectLocations(
   client: HttpClient,
   locations: readonly GitHubLocation[],
 ): Promise<(Inspection | 'too-large' | undefined)[]> {
-  const paths: Record<string, string> = { ...directoryPaths, ...files };
+  const paths: Record<string, string> = { ...directoryPaths, ...filePaths };
   const answers = await queryEach(client, locations, {
     name: 'Inspect',
     variables: {
@@ -122,7 +122,7 @@ export async function inspectLocations(
     field: (variable) => {
       const objects = [
         ...Object.keys(directoryPaths).map((key) => `${key}: object(expression: ${variable(key)}) { ...Dir }`),
-        ...Object.keys(files).map((key) => `${key}: object(expression: ${variable(key)}) { ...File }`),
+        ...Object.keys(filePaths).map((key) => `${key}: object(expression: ${variable(key)}) { ...File }`),
       ];
       return `repository(owner: ${variable('owner')}, name: ${variable('name')}) { ${objects.join(' ')} }`;
     },

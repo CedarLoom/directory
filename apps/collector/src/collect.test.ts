@@ -161,8 +161,8 @@ function fakeWorld() {
 
 type World = ReadonlyMap<string, FakeRepository>;
 
-/** A Git object as GraphQL returns it for `<ref>:<path>`: a blob with its text or a tree two levels deep. */
-function gitObject(repository: FakeRepository, expression: string, depth = 2): unknown {
+/** A Git object as GraphQL returns it for `<ref>:<path>`: a blob with its text or a tree `depth` levels deep. */
+function gitObject(repository: FakeRepository, expression: string, depth: number): unknown {
   const [ref, path] = [expression.slice(0, expression.indexOf(':')), expression.slice(expression.indexOf(':') + 1)];
   const text = (ref === 'HEAD' ? undefined : repository.pinned?.[path]) ?? repository.files[path];
   if (text !== undefined) return { text };
@@ -176,10 +176,20 @@ function gitObject(repository: FakeRepository, expression: string, depth = 2): u
   return {
     entries: [...names].map((name) => {
       const type = repository.files[`${prefix}${name}`] === undefined ? 'tree' : 'blob';
-      const object = depth > 1 ? gitObject(repository, `HEAD:${prefix}${name}`, depth - 1) : {};
-      return { name, type, object: type === 'tree' ? object : {} };
+      if (depth === 1) return { name, type };
+      return { name, type, object: type === 'tree' ? gitObject(repository, `HEAD:${prefix}${name}`, depth - 1) : {} };
     }),
   };
+}
+
+const entrySelections = (text: string) => text.split('entries').length - 1;
+
+/** How many folder levels a query lists: the `entries` selections of its first alias and of its fragments. */
+function listingDepth(query: string): number {
+  const fragmentsAt = query.indexOf(' fragment ');
+  const fields = fragmentsAt === -1 ? query : query.slice(0, fragmentsAt);
+  const fragments = fragmentsAt === -1 ? '' : query.slice(fragmentsAt);
+  return entrySelections(fields.split(' a1: ')[0] ?? '') + entrySelections(fragments);
 }
 
 function facts(repository: FakeRepository) {
@@ -199,6 +209,8 @@ function graphql(world: World, body: string): unknown {
   const { query, variables } = z
     .object({ query: z.string(), variables: z.record(z.string(), z.string()) })
     .parse(JSON.parse(body));
+  // GitHub refuses a selection set without a field as invalid GraphQL.
+  if (/\{\s*\}/.test(query)) return { errors: [{ type: 'PARSE_ERROR' }] };
   const data: Record<string, unknown> = {};
   for (let index = 0; `owner${index}` in variables; index += 1) {
     const repository = world.get(`${variables[`owner${index}`]}/${variables[`name${index}`]}`);
@@ -209,7 +221,10 @@ function graphql(world: World, body: string): unknown {
       repository === undefined || query.startsWith('query Facts')
         ? repository && facts(repository)
         : Object.fromEntries(
-            own.map(([key, value]) => [key.slice(0, -String(index).length), gitObject(repository, value)]),
+            own.map(([key, value]) => [
+              key.slice(0, -String(index).length),
+              gitObject(repository, value, listingDepth(query)),
+            ]),
           );
   }
   return { data };
@@ -546,6 +561,51 @@ it('refuses a plugin with hooks on more than 64 events before selection, so the 
     refused: false,
     next: true,
     refusals: ['gh.example-org.plugin-0: refused: hooksByEvent too_big'],
+  });
+});
+
+it('counts the components at the manifest paths of a plugin, also in subfolders of a folder', async () => {
+  const world = fakeWorld();
+  const files = repositoryOf(world, 'example-org/plugin-2').files;
+  files['.claude-plugin/plugin.json'] = JSON.stringify({
+    name: 'plugin-2',
+    commands: './cmds',
+    agents: './crew/lead.md',
+    experimental: { monitors: './watch/monitors.json' },
+  });
+  Object.assign(files, {
+    'cmds/git/commit.md': marker,
+    'cmds/git/review/pr.md': marker,
+    'cmds/deploy.md': marker,
+    'crew/lead.md': marker,
+    'watch/monitors.json': JSON.stringify([{ name: 'deploys', command: 'watch.sh', description: marker }]),
+  });
+  const { files: written } = await run(world, '2026-11-16', new Map());
+  const record = z
+    .object({
+      components: z.object({ commands: z.number(), agents: z.number(), monitors: z.number() }),
+      flags: z.array(z.string()),
+    })
+    .parse(JSON.parse(written.get('records/plugin/gh.example-org.plugin-2.json') ?? '{}'));
+  expect([record.components, record.flags.includes('monitor-background-command')]).toEqual([
+    { commands: 3, agents: 1, monitors: 1 },
+    true,
+  ]);
+});
+
+it('refuses a plugin whose manifest names a configuration file over 256 KB', async () => {
+  const world = fakeWorld();
+  const files = repositoryOf(world, 'example-org/plugin-0').files;
+  files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-0', hooks: './config/hooks.json' });
+  files['config/hooks.json'] = JSON.stringify({ description: 'x'.repeat(256 * 1024), hooks: {} });
+  const lines: string[] = [];
+  const { files: written } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
+  expect({
+    record: written.has('records/plugin/gh.example-org.plugin-0.json'),
+    refusals: lines.filter((line) => line.startsWith('gh.example-org.plugin-0:')),
+  }).toEqual({
+    record: false,
+    refusals: ['gh.example-org.plugin-0: refused: a file is cut by GitHub or over the size cap'],
   });
 });
 

@@ -7,11 +7,12 @@ import type { Repository } from './github-contents.ts';
 import { type GitHubLocation, locationId, repositoryId } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
 import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
+import { componentTargets, manifestLicense } from './plugin-analyzer.ts';
+import { readComponents } from './component-reads.ts';
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
 import { detectedLicenseFileNames, licenseFileNames, UnknownLicenseError } from './license-class.ts';
 import { mcpRegistryAdapter } from './mcp-registry-adapter.ts';
-import { manifestLicense } from './plugin-analyzer.ts';
 import { buildRecord, type ItemKind, type ItemRecord, type RecordInput } from './records.ts';
 import { type RepositoryFacts, readFacts } from './repository-facts.ts';
 import { type Inspection, inspectLocations, manifestPath } from './repository-tree.ts';
@@ -352,14 +353,27 @@ function pluginReader(reading: Reading, found: Candidate[]) {
     );
     const inspected = await inspectPlaces(client, places, refuse);
     found.push(...unshare(inspected, batch, containers));
+    // Only a plugin that gets a record has its component locations read.
+    const components = await readComponents(
+      client,
+      batch.map(({ candidate: { location, source } }, index) => {
+        const inspection = inspected.inspections[index];
+        const read = typeof inspection === 'object' && source !== undefined;
+        return { location, ...(read ? componentTargets(inspection) : { folders: [], texts: [] }) };
+      }),
+    );
     const unbuilt = batch.map(({ candidate, facts }, index): Unbuilt | 'refused' | undefined => {
-      const [inspection, source] = [inspected.inspections[index], candidate.source];
+      const [inspection, source, read] = [inspected.inspections[index], candidate.source, components[index]];
       if (inspection === 'too-large') return 'refused';
       if (inspection === undefined) return undefined;
       containers.licenses.set(candidate.id, manifestLicense(inspection.files.manifest, candidate.entryLicense));
-      if (source === undefined) return undefined;
+      if (source === undefined || read === undefined) return undefined;
+      if (read === 'too-large') {
+        refuse(candidate.id, new Error(tooLarge));
+        return 'refused';
+      }
       return {
-        input: { kind: 'plugin', candidate, facts, inspection, source },
+        input: { kind: 'plugin', candidate, facts, inspection, components: read, source },
         licenseFiles: licenseFileNames(inspection.directories.root),
         detectedLicenseFiles: detectedLicenseFileNames(inspection.directories.root),
       };
