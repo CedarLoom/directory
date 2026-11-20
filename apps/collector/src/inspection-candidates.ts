@@ -5,6 +5,7 @@ import { type GitHubLocation, joinPath, locationId, locationLink, repositoryId }
 import { analyzeHooks } from './hook-analyzer.ts';
 import { jsonText } from './json-text.ts';
 import { entrySources } from './marketplace-analyzer.ts';
+import type { ComponentItems } from './plugin-analyzer.ts';
 import { type DirectoryKey, directoryPaths, hooksPath, type Inspection } from './repository-tree.ts';
 
 /** The place an inspection read: a listed plugin, whose skills and agents it contains, or a topic repository. */
@@ -60,13 +61,33 @@ function markdownFiles(place: InspectedPlace, inspection: Inspection, keys: read
     .map(({ path, name }) => ({ kind, path, name: name.slice(0, -'.md'.length) }));
 }
 
-/** Each skill folder, agent file and output style file the place holds, as paths and names; the files are read later. */
-function itemPaths(place: InspectedPlace, inspection: Inspection): ItemPath[] {
-  const skills = folderEntries(place, inspection, skillFolders)
+/** The items at a plugin's component locations, named by their folder or file stem. */
+function componentPaths(place: InspectedPlace, { skills, agents, outputStyles }: ComponentItems): ItemPath[] {
+  const item = (kind: FileKind, relative: string, extension = ''): ItemPath => {
+    const path = joinPath(place.location.path, relative);
+    const base = path.split('/').at(-1) || place.location.repo;
+    return { kind, path, name: base.slice(0, base.length - extension.length) };
+  };
+  return [
+    // A skill at the plugin folder would take the plugin's id.
+    ...skills.filter((path) => path !== '').map((path) => item('skill', path)),
+    ...agents.map((path) => item('agent', path, '.md')),
+    ...outputStyles.map((path) => item('output-style', path, '.md')),
+  ];
+}
+
+/**
+ * Each skill folder, agent file and output style file the place holds, as paths and names; the files are read later. A
+ * plugin whose component locations were read holds them there, in place of the default folders.
+ */
+function itemPaths(place: InspectedPlace, inspection: Inspection, components: ComponentItems | undefined): ItemPath[] {
+  const keys = (all: readonly DirectoryKey[]) =>
+    components === undefined ? all : all.filter((key) => key.startsWith('claude'));
+  const skills = folderEntries(place, inspection, keys(skillFolders))
     .filter((entry) => entry.type === 'tree')
     .map(({ path, name }) => ({ kind: 'skill' as const, path, name }));
-  const agents = markdownFiles(place, inspection, agentFolders, 'agent');
-  const outputStyles = markdownFiles(place, inspection, outputStyleFolders, 'output-style');
+  const agents = markdownFiles(place, inspection, keys(agentFolders), 'agent');
+  const outputStyles = markdownFiles(place, inspection, keys(outputStyleFolders), 'output-style');
   // A repository that is one skill holds SKILL.md at its root; a marketplace repository keeps its id for the marketplace.
   const rootSkill =
     place.container === undefined &&
@@ -77,6 +98,7 @@ function itemPaths(place: InspectedPlace, inspection: Inspection): ItemPath[] {
     ...skills,
     ...agents,
     ...outputStyles,
+    ...(components === undefined ? [] : componentPaths(place, components)),
     ...(rootSkill ? [{ kind: 'skill' as const, path: place.location.path, name: place.location.repo }] : []),
   ];
 }
@@ -133,11 +155,19 @@ function hookCandidates(place: InspectedPlace, text: string, refuse: Refuse): Ca
   return id === undefined ? [] : attempt(id, refuse, () => hookCandidate(place, id, text));
 }
 
-/** The skills, agents, output styles, hooks file and, at a topic repository's root, the marketplace an inspection found. */
-export function inspectionCandidates(place: InspectedPlace, inspection: Inspection, refuse: Refuse): Candidate[] {
+/**
+ * The skills, agents, output styles, hooks file and, at a topic repository's root, the marketplace an inspection found,
+ * with the items at the plugin's component locations when they were read.
+ */
+export function inspectionCandidates(
+  place: InspectedPlace,
+  inspection: Inspection,
+  refuse: Refuse,
+  components?: ComponentItems,
+): Candidate[] {
   const { marketplace, hooks } = inspection.files;
   const items = [
-    ...itemPaths(place, inspection).flatMap(({ kind, path, name }) =>
+    ...itemPaths(place, inspection, components).flatMap(({ kind, path, name }) =>
       attempt(`${repositoryId(place.location)} ${kind}`, refuse, () => itemCandidate(place, kind, path, name)),
     ),
     ...(hooks === undefined ? [] : hookCandidates(place, hooks, refuse)),

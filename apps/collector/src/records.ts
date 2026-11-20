@@ -33,7 +33,7 @@ import { licenseFileNames, licenseOf } from './license-class.ts';
 import { analyzeMarketplace, type MarketplaceEntries } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
 import { analyzeOutputStyle } from './output-style-analyzer.ts';
-import { analyzePlugin } from './plugin-analyzer.ts';
+import { analyzePlugin, type PluginManifest } from './plugin-analyzer.ts';
 import type { RepositoryFacts } from './repository-facts.ts';
 import type { Inspection } from './repository-tree.ts';
 import { analyzeSkill } from './skill-analyzer.ts';
@@ -62,7 +62,13 @@ export type RecordInput = {
   folderLicenseText?: string | undefined;
 } & (
   | { kind: 'marketplace'; entries: MarketplaceEntries }
-  | { kind: 'plugin'; inspection: Inspection; components: ComponentReads; source: { kind: SourceKind; pin: Pin } }
+  | {
+      kind: 'plugin';
+      inspection: Inspection;
+      manifest: PluginManifest;
+      components: ComponentReads;
+      source: { kind: SourceKind; pin: Pin };
+    }
   | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean; licenseFile: boolean }
   | { kind: 'agent'; text: string }
   | { kind: 'hook'; hooks: HookFacts }
@@ -156,7 +162,7 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
     modules,
     themesOrWorkflows,
     ...facts
-  } = analyzePlugin(input.inspection, input.components, input.candidate.entryLicense);
+  } = analyzePlugin(input.inspection, input.manifest, input.components, input.candidate.entryLicense);
   const assessment = pluginAssessment({
     ...facts,
     modules,

@@ -9,7 +9,7 @@ import { expression } from './repository-tree.ts';
 
 /** What a plugin's component locations hold, by path relative to the plugin folder. */
 export interface ComponentReads {
-  /** The files of each folder location, by path relative to it, three levels deep; a location that is a file holds its own name. */
+  /** The files of each folder location, by path relative to it, three levels deep; a location that is a file holds the empty path. */
   files: ReadonlyMap<string, readonly string[]>;
   /** The text of each configuration file the manifest names. */
   texts: ReadonlyMap<string, string>;
@@ -90,7 +90,7 @@ export async function readComponents(
   const reads = plugins.map(() => ({ files: new Map<string, string[]>(), texts: new Map<string, string>() }));
   const tooLarge = new Set<number>();
   for (const [index, { plugin, path }] of folderTargets.entries()) {
-    const files = folderFiles(folders[index], path);
+    const files = folderFiles(folders[index]);
     if (files !== undefined) reads[plugin]?.files.set(path, files);
   }
   for (const [index, { plugin, path }] of textTargets.entries()) {
@@ -101,9 +101,9 @@ export async function readComponents(
   return reads.map((own, plugin) => (tooLarge.has(plugin) ? 'too-large' : own));
 }
 
-/** The files a folder location holds, its own name for a location that is a file, or undefined for a missing path. */
-function folderFiles(answer: unknown, path: string): string[] | undefined {
+/** The files a folder location holds, the empty path for a location that is a file, or undefined for a missing path. */
+function folderFiles(answer: unknown): string[] | undefined {
   const found = folderAnswer.parse(answer)?.path;
   if (found === null || found === undefined) return undefined;
-  return found.entries === undefined ? [path.split('/').at(-1) ?? path] : blobPaths(found.entries, '');
+  return found.entries === undefined ? [''] : blobPaths(found.entries, '');
 }
