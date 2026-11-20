@@ -381,15 +381,18 @@ function pluginReader(reading: Reading, found: Candidate[]) {
         return { location, ...(read ? componentTargets(inspection, manifest) : { folders: [], texts: [] }) };
       }),
     );
-    // A plugin refused for its component reads holds no items, also none in the default folders its manifest replaces.
     const items = readable.map((manifest, index) => {
       const read = components[index];
-      if (manifest === undefined) return undefined;
-      return typeof read === 'object' && !(read instanceof Error)
+      return manifest !== undefined && typeof read === 'object' && !(read instanceof Error)
         ? componentItems(manifest, read)
-        : { skills: [], agents: [], outputStyles: [] };
+        : undefined;
     });
-    found.push(...unshare({ inspections, found: placeItems(places, inspections, refuse, items) }, batch, containers));
+    // A plugin refused for its component reads holds no items: none in any folder and no hooks file.
+    const held = inspections.map((inspection, index) => {
+      const read = components[index];
+      return read === 'too-large' || read instanceof Error ? undefined : inspection;
+    });
+    found.push(...unshare({ inspections, found: placeItems(places, held, refuse, items) }, batch, containers));
     const unbuilt = batch.map((plugin, index) =>
       pluginInput(
         plugin,

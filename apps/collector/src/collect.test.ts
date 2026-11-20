@@ -629,13 +629,19 @@ it('refuses only the plugin whose component folder GraphQL refuses to list and r
   const files = repositoryOf(world, 'example-org/plugin-2').files;
   files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-2', skills: './huge' });
   files['huge/lint/SKILL.md'] = marker;
+  // Valid items in the folders a manifest does not replace, besides the plugin's hooks file.
+  files['.claude/skills/review/SKILL.md'] = `---\nname: review\ndescription: Reviews a change.\n---\n${marker}\n`;
+  files['.claude/agents/lead.md'] = `---\nname: lead\ndescription: Leads a change.\n---\n${marker}\n`;
+  files['.claude/output-styles/brief.md'] = `---\nname: Brief\ndescription: Answers briefly.\n---\n${marker}\n`;
   const lines: string[] = [];
   const { files: written } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
   expect({
     records: ['plugin-0', 'plugin-2', 'plugin-3'].filter((name) =>
       written.has(`records/plugin/gh.example-org.${name}.json`),
     ),
-    held: [...written.keys()].filter((path) => path.startsWith('records/agent/gh.example-org.plugin-2.')),
+    held: [...written.keys()].filter((path) =>
+      /^records\/(?:skill|agent|output-style|hook)\/gh\.example-org\.plugin-2\./.test(path),
+    ),
     refusals: lines.filter((line) => line.startsWith('gh.example-org.plugin-2:')),
   }).toEqual({
     records: ['plugin-0', 'plugin-3'],
