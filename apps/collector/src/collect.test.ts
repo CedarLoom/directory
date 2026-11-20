@@ -1570,7 +1570,7 @@ it('publishes meta.json with the run time, the versions, the sources read and th
     schemaVersions: versions(1),
     rubricVersions: {
       marketplace: '1.0.0',
-      plugin: '1.1.0',
+      plugin: '1.2.0',
       skill: '1.1.0',
       agent: '1.1.0',
       hook: '1.0.0',
