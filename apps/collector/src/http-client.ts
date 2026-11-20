@@ -12,6 +12,11 @@ export class RequestCapError extends RequestError {
   override name = 'RequestCapError';
 }
 
+/** An answer body over its size cap. */
+export class BodyCapError extends RequestError {
+  override name = 'BodyCapError';
+}
+
 export interface HttpClientOptions {
   fetch: typeof fetch;
   clock: Clock;
@@ -30,6 +35,8 @@ export interface HttpClientOptions {
 interface TextRequest {
   accept: string;
   maxBytes: number;
+  /** False for a caller that handles a body over `maxBytes`, so later requests still go out. */
+  oversizeStops?: boolean;
   /** Names the request in the log and in errors instead of its URL, for a URL that carries third-party text. */
   label?: string;
 }
@@ -48,7 +55,7 @@ async function readText(response: Response, label: string, maxBytes: number): Pr
   const declared = Number(response.headers.get('content-length') ?? 0);
   if (declared > maxBytes) {
     await response.body?.cancel();
-    throw new RequestError(`${label}: the body has ${declared} bytes, more than the cap of ${maxBytes}`);
+    throw new BodyCapError(`${label}: the body has ${declared} bytes, more than the cap of ${maxBytes}`);
   }
   const decoder = new TextDecoder('utf-8', { fatal: true });
   let size = 0;
@@ -56,7 +63,7 @@ async function readText(response: Response, label: string, maxBytes: number): Pr
   // Leaving the loop by a throw cancels the stream.
   for await (const chunk of response.body ?? []) {
     size += chunk.byteLength;
-    if (size > maxBytes) throw new RequestError(`${label}: the body has more than the cap of ${maxBytes} bytes`);
+    if (size > maxBytes) throw new BodyCapError(`${label}: the body has more than the cap of ${maxBytes} bytes`);
     text += decoder.decode(chunk, { stream: true });
   }
   return text + decoder.decode();
@@ -122,7 +129,7 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
       // A network error, a cut connection or invalid UTF-8 also stops the run as a failed request.
       const failure =
         error instanceof RequestError ? error : new RequestError(`${callLine(call)} failed`, { cause: error });
-      stopped ??= failure;
+      if (!(failure instanceof BodyCapError && textRequest.oversizeStops === false)) stopped ??= failure;
       throw failure;
     }
   }

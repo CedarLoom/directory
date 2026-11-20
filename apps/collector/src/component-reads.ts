@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { queryEach } from './github-graphql.ts';
+import { type ItemAnswer, queryEachApart } from './github-graphql.ts';
 import type { GitHubLocation } from './github-location.ts';
-import type { HttpClient } from './http-client.ts';
+import type { HttpClient, RequestError } from './http-client.ts';
 import { readItemFiles } from './item-files.ts';
 import { expression } from './repository-tree.ts';
 
@@ -55,8 +55,8 @@ function blobPaths(entries: readonly TreeEntry[], prefix: string): string[] {
 
 type Target = { location: GitHubLocation; path: string };
 
-function readFolders(client: HttpClient, targets: readonly Target[]): Promise<unknown[]> {
-  return queryEach(client, targets, {
+function readFolders(client: HttpClient, targets: readonly Target[]): Promise<ItemAnswer[]> {
+  return queryEachApart(client, targets, {
     name: 'ComponentFolders',
     variables: { owner: 'String!', name: 'String!', path: 'String!' },
     // Three levels hold a command or agent two subfolders down and a skill folder's SKILL.md.
@@ -68,14 +68,33 @@ function readFolders(client: HttpClient, targets: readonly Target[]): Promise<un
   });
 }
 
+type Reads = { files: Map<string, string[]>; texts: Map<string, string> };
+
+/** Adds each folder's files to its plugin's reads; returns the error of each plugin with a folder that fails alone. */
+function addFolders(
+  reads: readonly Reads[],
+  targets: readonly { plugin: number; path: string }[],
+  answers: readonly ItemAnswer[],
+): Map<number, RequestError> {
+  const failed = new Map<number, RequestError>();
+  for (const [index, { plugin, path }] of targets.entries()) {
+    const answer = answers[index];
+    if (answer !== undefined && 'error' in answer) failed.set(plugin, answer.error);
+    const files = answer !== undefined && 'field' in answer ? folderFiles(answer.field) : undefined;
+    if (files !== undefined) reads[plugin]?.files.set(path, files);
+  }
+  return failed;
+}
+
 /**
  * Reads the component folders and configuration files of each plugin, 25 to a query; a plugin with a file that GitHub
- * cuts or that passes the size cap gives 'too-large', so no record is built from part of it.
+ * cuts or that passes the size cap gives 'too-large', and one with a folder whose own read fails gives that error, so
+ * no record is built from part of it.
  */
 export async function readComponents(
   client: HttpClient,
   plugins: readonly ComponentTargets[],
-): Promise<(ComponentReads | 'too-large')[]> {
+): Promise<(ComponentReads | 'too-large' | RequestError)[]> {
   const flat = (key: 'folders' | 'texts') =>
     plugins.flatMap(({ location, ...paths }, plugin) => paths[key].map((path) => ({ plugin, location, path })));
   const [folderTargets, textTargets] = [flat('folders'), flat('texts')];
@@ -87,18 +106,15 @@ export async function readComponents(
       false,
     ),
   ]);
-  const reads = plugins.map(() => ({ files: new Map<string, string[]>(), texts: new Map<string, string>() }));
+  const reads = plugins.map((): Reads => ({ files: new Map(), texts: new Map() }));
+  const failed = addFolders(reads, folderTargets, folders);
   const tooLarge = new Set<number>();
-  for (const [index, { plugin, path }] of folderTargets.entries()) {
-    const files = folderFiles(folders[index]);
-    if (files !== undefined) reads[plugin]?.files.set(path, files);
-  }
   for (const [index, { plugin, path }] of textTargets.entries()) {
     const file = texts[index]?.file;
     if (file === 'too-large') tooLarge.add(plugin);
     else if (file?.text !== undefined) reads[plugin]?.texts.set(path, file.text);
   }
-  return reads.map((own, plugin) => (tooLarge.has(plugin) ? 'too-large' : own));
+  return reads.map((own, plugin) => failed.get(plugin) ?? (tooLarge.has(plugin) ? 'too-large' : own));
 }
 
 /** The files a folder location holds, the empty path for a location that is a file, or undefined for a missing path. */
