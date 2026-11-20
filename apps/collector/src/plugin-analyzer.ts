@@ -298,6 +298,7 @@ export function analyzePlugin(
   const stdio = serverList.filter(({ type = 'stdio' }) => type === 'stdio');
   const secrets = secretReferences(plugin);
   const items = componentItems(plugin, reads);
+  const workflowCode = filesAt(reads, folders.workflows, '.js', true).length > 0;
   return {
     ...(version.success ? { version: version.data } : {}),
     components: {
@@ -312,8 +313,8 @@ export function analyzePlugin(
       binFiles: countEntries(directories.bin),
     },
     modules: hookModules([...parsed(configs.hooks), ...inlineHooks]),
-    themesOrWorkflows:
-      filesAt(reads, folders.themes, '.json', true).length + filesAt(reads, folders.workflows, '.js', true).length > 0,
+    themesOrWorkflows: workflowCode || filesAt(reads, folders.themes, '.json', true).length > 0,
+    workflowCode,
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
     manifestFields: manifestFields(plugin, version.success),

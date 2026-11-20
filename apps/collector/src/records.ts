@@ -161,12 +161,14 @@ function plugin(input: InputOf<'plugin'>, runDate: string) {
     mcpSecretsRequired,
     modules,
     themesOrWorkflows,
+    workflowCode,
     ...facts
   } = analyzePlugin(input.inspection, input.manifest, input.components, input.candidate.entryLicense);
   const assessment = pluginAssessment({
     ...facts,
     modules,
     themesOrWorkflows,
+    workflowCode,
     name: manifestName ?? input.candidate.name,
     manifestFields,
     rootClaudeMd,

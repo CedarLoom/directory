@@ -92,6 +92,7 @@ export const flagLabels = {
     message: 'Starts a language server program.',
   }),
   'mod-module': msg({ id: 'flag.mod-module', message: 'Loads code modules into Claude Code as a mod.' }),
+  'workflow-code': msg({ id: 'flag.workflow-code', message: 'Ships workflow scripts that Claude Code runs as code.' }),
   'bin-executables': msg({ id: 'flag.bin-executables', message: 'Ships executables that are added to the path.' }),
   'scripts-present': msg({ id: 'flag.scripts-present', message: 'Ships scripts that the model may run.' }),
   'network-indicator': msg({

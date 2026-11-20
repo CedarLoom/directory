@@ -94,6 +94,7 @@ const flags = [
   'monitor-background-command',
   'lsp-server-command',
   'mod-module',
+  'workflow-code',
   'bin-executables',
   'scripts-present',
   'network-indicator',
