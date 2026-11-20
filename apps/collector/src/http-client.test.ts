@@ -95,6 +95,17 @@ it('refuses a body whose declared length passes the size cap without reading it'
   await expect(http.getText('https://a.test/1', request)).rejects.toThrow(/more than the cap/);
 });
 
+it('sends the next request after a body over the size cap only for a caller that handles it', async () => {
+  const handled = client([new Response('x'.repeat(101)), new Response('b')]).http;
+  await expect(handled.getText('https://a.test/1', { ...request, oversizeStops: false })).rejects.toThrow(/the cap/);
+  const stopping = client([new Response('x'.repeat(101)), new Response('b')]).http;
+  await expect(stopping.getText('https://a.test/1', request)).rejects.toThrow(/the cap/);
+  expect({
+    handled: await handled.getText('https://a.test/2', request),
+    stopping: await stopping.getText('https://a.test/2', request).catch((error: Error) => error.message),
+  }).toEqual({ handled: 'b', stopping: 'https://a.test/1: the body has more than the cap of 100 bytes' });
+});
+
 it('stops at a redirect instead of following it past the cap', async () => {
   const sent: string[] = [];
   // Follows a redirect as the platform's fetch does unless the request asks for `manual`.

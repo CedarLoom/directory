@@ -1,4 +1,5 @@
 import { indexFile } from '@directory/contracts';
+import { GraphQLError, parse } from 'graphql';
 import { expect, it, onTestFinished, vi } from 'vitest';
 import { z } from 'zod';
 import { collect } from './collect.ts';
@@ -209,8 +210,16 @@ function graphql(world: World, body: string): unknown {
   const { query, variables } = z
     .object({ query: z.string(), variables: z.record(z.string(), z.string()) })
     .parse(JSON.parse(body));
-  // GitHub refuses a selection set without a field as invalid GraphQL.
-  if (/\{\s*\}/.test(query)) return { errors: [{ type: 'PARSE_ERROR' }] };
+  // GitHub refuses a query that is no valid GraphQL, such as a selection set without a field.
+  try {
+    parse(query);
+  } catch (error) {
+    if (!(error instanceof GraphQLError)) throw error;
+    return { errors: [{ type: 'PARSE_ERROR' }] };
+  }
+  // GitHub refuses a whole query when one listing in it passes its resource limits.
+  if (query.startsWith('query ComponentFolders') && Object.values(variables).some((value) => value.endsWith(':huge')))
+    return { errors: [{ type: 'RESOURCE_LIMITS_EXCEEDED' }] };
   const data: Record<string, unknown> = {};
   for (let index = 0; `owner${index}` in variables; index += 1) {
     const repository = world.get(`${variables[`owner${index}`]}/${variables[`name${index}`]}`);
@@ -613,6 +622,34 @@ it('lists no skill at the folder of a plugin whose manifest names that folder a 
   const { files: written } = await run(world, '2026-11-16', new Map());
   const rows = indexFile.parse(JSON.parse(written.get('index.json') ?? '')).items;
   expect(rows.filter((row) => row.id === 'gh.example-org.plugin-2').map(({ kind }) => kind)).toEqual(['plugin']);
+});
+
+it('refuses only the plugin whose component folder GraphQL refuses to list and reads the others of its query', async () => {
+  const world = fakeWorld();
+  const files = repositoryOf(world, 'example-org/plugin-2').files;
+  files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-2', skills: './huge' });
+  files['huge/lint/SKILL.md'] = marker;
+  // Valid items in the folders a manifest does not replace, besides the plugin's hooks file.
+  files['.claude/skills/review/SKILL.md'] = `---\nname: review\ndescription: Reviews a change.\n---\n${marker}\n`;
+  files['.claude/agents/lead.md'] = `---\nname: lead\ndescription: Leads a change.\n---\n${marker}\n`;
+  files['.claude/output-styles/brief.md'] = `---\nname: Brief\ndescription: Answers briefly.\n---\n${marker}\n`;
+  const lines: string[] = [];
+  const { files: written } = await run(world, '2026-11-16', new Map(), { log: (line) => lines.push(line) });
+  expect({
+    records: ['plugin-0', 'plugin-2', 'plugin-3'].filter((name) =>
+      written.has(`records/plugin/gh.example-org.${name}.json`),
+    ),
+    held: [...written.keys()].filter((path) =>
+      /^records\/(?:skill|agent|output-style|hook)\/gh\.example-org\.plugin-2\./.test(path),
+    ),
+    refusals: lines.filter((line) => line.startsWith('gh.example-org.plugin-2:')),
+  }).toEqual({
+    records: ['plugin-0', 'plugin-3'],
+    held: [],
+    refusals: [
+      'gh.example-org.plugin-2: refused: a component location cannot be read: GraphQL answered RESOURCE_LIMITS_EXCEEDED at the query',
+    ],
+  });
 });
 
 it('refuses a plugin whose manifest names a configuration file over 256 KB', async () => {

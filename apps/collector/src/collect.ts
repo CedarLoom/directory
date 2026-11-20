@@ -383,9 +383,16 @@ function pluginReader(reading: Reading, found: Candidate[]) {
     );
     const items = readable.map((manifest, index) => {
       const read = components[index];
-      return manifest !== undefined && typeof read === 'object' ? componentItems(manifest, read) : undefined;
+      return manifest !== undefined && typeof read === 'object' && !(read instanceof Error)
+        ? componentItems(manifest, read)
+        : undefined;
     });
-    found.push(...unshare({ inspections, found: placeItems(places, inspections, refuse, items) }, batch, containers));
+    // A plugin refused for its component reads holds no items: none in any folder and no hooks file.
+    const held = inspections.map((inspection, index) => {
+      const read = components[index];
+      return read === 'too-large' || read instanceof Error ? undefined : inspection;
+    });
+    found.push(...unshare({ inspections, found: placeItems(places, held, refuse, items) }, batch, containers));
     const unbuilt = batch.map((plugin, index) =>
       pluginInput(
         plugin,
@@ -418,6 +425,10 @@ function pluginInput(
   if (source === undefined || manifest === undefined || read === undefined) return undefined;
   if (read === 'too-large') {
     refuse(candidate.id, new Error(tooLarge));
+    return 'refused';
+  }
+  if (read instanceof Error) {
+    refuse(candidate.id, new Error(`a component location cannot be read: ${read.message}`));
     return 'refused';
   }
   // A manifest that is no JSON object gets the plugin no record.
