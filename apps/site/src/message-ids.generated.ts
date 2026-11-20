@@ -53,6 +53,7 @@ declare module '@lingui/core' {
       | 'flag.network-indicator'
       | 'flag.scripts-present'
       | 'flag.unpinned-source'
+      | 'flag.workflow-code'
       | 'footer.affiliation'
       | 'footer.run'
       | 'group.evals'

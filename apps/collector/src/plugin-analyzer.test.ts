@@ -249,6 +249,13 @@ it.each([
   expect(analyzeManifest(fields, holding(files)).themesOrWorkflows).toBe(found),
 );
 
+it.each([
+  [{ workflows: ['run.js'] }, true],
+  [{ workflows: ['lib/run.js', 'run.md'], themes: ['dark.json'] }, false],
+])('tells workflow code: files %j', (files, found) =>
+  expect(analyzeManifest({}, holding(files)).workflowCode).toBe(found),
+);
+
 const manifestFields = (fields: object) => analyzeManifest(fields).manifestFields;
 
 it('counts only manifest fields that hold a value', () => {

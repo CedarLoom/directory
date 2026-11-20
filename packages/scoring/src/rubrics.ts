@@ -10,6 +10,7 @@ import outputStyle from '../../../rubrics/output-style/1.0.0.json' with { type: 
 import outputStyle110 from '../../../rubrics/output-style/1.1.0.json' with { type: 'json' };
 import plugin from '../../../rubrics/plugin/1.0.0.json' with { type: 'json' };
 import plugin110 from '../../../rubrics/plugin/1.1.0.json' with { type: 'json' };
+import plugin120 from '../../../rubrics/plugin/1.2.0.json' with { type: 'json' };
 import skill from '../../../rubrics/skill/1.0.0.json' with { type: 'json' };
 import skill110 from '../../../rubrics/skill/1.1.0.json' with { type: 'json' };
 
@@ -44,6 +45,7 @@ const released = lockedRubrics(
     'output-style/1.1.0.json': outputStyle110,
     'plugin/1.0.0.json': plugin,
     'plugin/1.1.0.json': plugin110,
+    'plugin/1.2.0.json': plugin120,
     'skill/1.0.0.json': skill,
     'skill/1.1.0.json': skill110,
   },

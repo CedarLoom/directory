@@ -126,6 +126,8 @@ export interface PluginFacts {
   modules: number;
   /** The plugin holds theme or workflow files, which the counts leave out. */
   themesOrWorkflows: boolean;
+  /** A workflow location holds a `.js` file, which Claude Code runs as code. */
+  workflowCode: boolean;
   hasEvals: boolean;
   /** The facts of each hook configuration: hooks/hooks.json and hooks inline in plugin.json. */
   hooks: readonly HookFacts[];
@@ -169,6 +171,7 @@ export function pluginAssessment(facts: PluginFacts): Assessment {
       ['monitor-background-command', components.monitors > 0],
       ['lsp-server-command', components.lspServers > 0],
       ['mod-module', facts.modules > 0],
+      ['workflow-code', facts.workflowCode],
       ['bin-executables', components.binFiles > 0],
       ['network-indicator', hooks.some(({ networkIndicator }) => networkIndicator)],
       ['mcp-stdio-unpinned-package', facts.mcpUnpinnedPackage],

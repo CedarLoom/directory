@@ -100,9 +100,9 @@ function NotMeasured() {
         </List.Item>
         <List.Item>
           <Trans id="method.notMeasured.themesWorkflows">
-            Plugin themes and workflows: they are not counted and raise no flag, and only keep the plugin from counting
-            as empty. Plugin files more than two subfolders below a component folder and manifest paths outside the
-            plugin folder are not read.
+            Plugin themes and workflows: they are not counted and only keep the plugin from counting as empty; a .js
+            file directly in a workflow folder raises a flag, as Claude Code runs it as code. Plugin files more than two
+            subfolders below a component folder and manifest paths outside the plugin folder are not read.
           </Trans>
         </List.Item>
       </List>
