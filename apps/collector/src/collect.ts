@@ -7,7 +7,13 @@ import type { Repository } from './github-contents.ts';
 import { type GitHubLocation, locationId, repositoryId } from './github-location.ts';
 import type { HttpClient } from './http-client.ts';
 import { type FileKind, type InspectedPlace, inspectionCandidates } from './inspection-candidates.ts';
-import { componentTargets, manifestLicense } from './plugin-analyzer.ts';
+import {
+  type ComponentItems,
+  componentItems,
+  componentTargets,
+  manifestLicense,
+  readManifest,
+} from './plugin-analyzer.ts';
 import { readComponents } from './component-reads.ts';
 import { issueSummary } from './issue-summary.ts';
 import { type ItemFile, readItemFiles } from './item-files.ts';
@@ -248,15 +254,19 @@ function identified(repositories: readonly Repository[], refuse: Refuse): Reposi
   });
 }
 
+type Inspected = Awaited<ReturnType<typeof inspectLocations>>;
+type ComponentRead = Awaited<ReturnType<typeof readComponents>>[number];
+
 /**
- * Inspects each place and returns the items they hold; a place with a layout file over its size cap is refused, and of
- * a topic repository whose marketplace file is, only the marketplace.
+ * The items the inspected places hold, those of a plugin at the component locations read for it; a place with a layout
+ * file over its size cap is refused, and of a topic repository whose marketplace file is, only the marketplace.
  */
-async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace[], refuse: Refuse) {
-  const inspections = await inspectLocations(
-    client,
-    places.map((place) => place.location),
-  );
+function placeItems(
+  places: readonly InspectedPlace[],
+  inspections: Inspected,
+  refuse: Refuse,
+  components: readonly (ComponentItems | undefined)[] = [],
+) {
   const found: Candidate[] = [];
   for (const [index, place] of places.entries()) {
     const inspection = inspections[index];
@@ -265,10 +275,10 @@ async function inspectPlaces(client: HttpClient, places: readonly InspectedPlace
       // Only a topic repository's marketplace is an item; the other items of the place keep theirs.
       if (inspection.marketplaceTooLarge === true && place.container === undefined)
         refuse(repositoryId(place.location), new Error(tooLarge));
-      found.push(...inspectionCandidates(place, inspection, refuse));
+      found.push(...inspectionCandidates(place, inspection, refuse, components[index]));
     }
   }
-  return { inspections, found };
+  return found;
 }
 
 /**
@@ -322,7 +332,7 @@ async function buildRecords(
  * the listing joins it.
  */
 function unshare(
-  inspected: Awaited<ReturnType<typeof inspectPlaces>>,
+  inspected: { inspections: Inspected; found: readonly Candidate[] },
   batch: readonly Ranked[],
   { folders, shared }: Containers,
 ): Candidate[] {
@@ -351,34 +361,74 @@ function pluginReader(reading: Reading, found: Candidate[]) {
     const places = batch.map(
       ({ candidate: { location, id, provenance } }): InspectedPlace => ({ location, container: id, provenance }),
     );
-    const inspected = await inspectPlaces(client, places, refuse);
-    found.push(...unshare(inspected, batch, containers));
-    // Only a plugin that gets a record has its component locations read.
+    const inspections = await inspectLocations(
+      client,
+      places.map((place) => place.location),
+    );
+    const manifests = inspections.map((inspection) =>
+      typeof inspection === 'object' ? readManifest(inspection.files.manifest) : undefined,
+    );
+    // Only a plugin that gets a record has its component locations read, and its skills, agents and output styles found there.
+    const readable = batch.map(({ candidate }, index) => {
+      const manifest = manifests[index];
+      return candidate.source !== undefined && manifest?.success === true ? manifest.data : undefined;
+    });
     const components = await readComponents(
       client,
-      batch.map(({ candidate: { location, source } }, index) => {
-        const inspection = inspected.inspections[index];
-        const read = typeof inspection === 'object' && source !== undefined;
-        return { location, ...(read ? componentTargets(inspection) : { folders: [], texts: [] }) };
+      batch.map(({ candidate: { location } }, index) => {
+        const [inspection, manifest] = [inspections[index], readable[index]];
+        const read = typeof inspection === 'object' && manifest !== undefined;
+        return { location, ...(read ? componentTargets(inspection, manifest) : { folders: [], texts: [] }) };
       }),
     );
-    const unbuilt = batch.map(({ candidate, facts }, index): Unbuilt | 'refused' | undefined => {
-      const [inspection, source, read] = [inspected.inspections[index], candidate.source, components[index]];
-      if (inspection === 'too-large') return 'refused';
-      if (inspection === undefined) return undefined;
-      containers.licenses.set(candidate.id, manifestLicense(inspection.files.manifest, candidate.entryLicense));
-      if (source === undefined || read === undefined) return undefined;
-      if (read === 'too-large') {
-        refuse(candidate.id, new Error(tooLarge));
-        return 'refused';
-      }
-      return {
-        input: { kind: 'plugin', candidate, facts, inspection, components: read, source },
-        licenseFiles: licenseFileNames(inspection.directories.root),
-        detectedLicenseFiles: detectedLicenseFileNames(inspection.directories.root),
-      };
+    const items = readable.map((manifest, index) => {
+      const read = components[index];
+      return manifest !== undefined && typeof read === 'object' ? componentItems(manifest, read) : undefined;
     });
+    found.push(...unshare({ inspections, found: placeItems(places, inspections, refuse, items) }, batch, containers));
+    const unbuilt = batch.map((plugin, index) =>
+      pluginInput(
+        plugin,
+        { inspection: inspections[index], manifest: manifests[index], read: components[index] },
+        reading,
+      ),
+    );
     return buildRecords(reading, unbuilt);
+  };
+}
+
+/** What a plugin's record is built from, after its manifest license is recorded for the items it holds. */
+function pluginInput(
+  { candidate, facts }: Ranked,
+  {
+    inspection,
+    manifest,
+    read,
+  }: {
+    inspection: Inspected[number];
+    manifest: ReturnType<typeof readManifest> | undefined;
+    read: ComponentRead | undefined;
+  },
+  { refuse, containers }: Reading,
+): Unbuilt | 'refused' | undefined {
+  const { source } = candidate;
+  if (inspection === 'too-large') return 'refused';
+  if (inspection === undefined) return undefined;
+  containers.licenses.set(candidate.id, manifestLicense(inspection.files.manifest, candidate.entryLicense));
+  if (source === undefined || manifest === undefined || read === undefined) return undefined;
+  if (read === 'too-large') {
+    refuse(candidate.id, new Error(tooLarge));
+    return 'refused';
+  }
+  // A manifest that is no JSON object gets the plugin no record.
+  if (!manifest.success) {
+    refuse(candidate.id, manifest.error);
+    return 'refused';
+  }
+  return {
+    input: { kind: 'plugin', candidate, facts, inspection, manifest: manifest.data, components: read, source },
+    licenseFiles: licenseFileNames(inspection.directories.root),
+    detectedLicenseFiles: detectedLicenseFileNames(inspection.directories.root),
   };
 }
 
@@ -535,7 +585,11 @@ async function topicItems(
   { client, refuse, containers }: Reading,
   places: readonly InspectedPlace[],
 ): Promise<Candidate[]> {
-  const { inspections, found } = await inspectPlaces(client, places, refuse);
+  const inspections = await inspectLocations(
+    client,
+    places.map((place) => place.location),
+  );
+  const found = placeItems(places, inspections, refuse);
   const holders = new Map<string, string | Holder>();
   for (const [index, { location }] of places.entries()) {
     const inspection = inspections[index];

@@ -10,6 +10,7 @@ import {
 } from './hook-analyzer.ts';
 import { componentLocations, isObject, pluginPath } from './component-locations.ts';
 import type { ComponentReads } from './component-reads.ts';
+import { joinPath } from './github-location.ts';
 import { jsonText } from './json-text.ts';
 import { isLicenseValue } from './license-class.ts';
 import { unpinnedPackage } from './package-pin.ts';
@@ -43,6 +44,7 @@ const manifest = z.object({
   userConfig,
   channels: z.array(z.object({ userConfig })).optional(),
 });
+export type PluginManifest = z.infer<typeof manifest>;
 const strings = z.record(z.string(), z.string()).optional();
 const server = z.object({
   type: z.string().optional(),
@@ -133,42 +135,64 @@ function validCommand(entry: unknown): boolean {
   return source === undefined ? content !== undefined : content === undefined && pluginPath(source) !== undefined;
 }
 
-/** The files the locations hold, by path relative to each location. */
-const locationFiles = (reads: ComponentReads, paths: readonly string[]): string[] =>
-  paths.flatMap((path) => reads.files.get(path) ?? []);
-
-const ownFiles = (files: readonly string[], extension: string): number =>
-  files.filter((file) => !file.includes('/') && file.endsWith(extension)).length;
-
-const markdownFiles = (files: readonly string[]): number => files.filter((file) => file.endsWith('.md')).length;
+const unique = (paths: readonly string[]): string[] => [...new Set(paths)];
 
 /**
- * The skill folders, those holding SKILL.md, or a location that is one itself; a plugin with SKILL.md at its root, no
- * `skills/` folder and no `skills` key loads as one skill.
+ * The files with the extension at the locations, at every depth read or, with `direct`, only those directly in a folder,
+ * by path relative to the plugin folder; each once, as locations can nest.
  */
-function skillCount(
-  plugin: z.infer<typeof manifest>,
-  { root, skills }: Inspection['directories'],
-  reads: ComponentReads,
-  paths: readonly string[],
-): number {
-  const rootSkill =
-    plugin.skills === undefined &&
-    skills === undefined &&
-    (root?.some((entry) => entry.type === 'blob' && entry.name === 'SKILL.md') ?? false);
-  if (rootSkill) return 1;
-  return paths
-    .map((path) => reads.files.get(path) ?? [])
-    .reduce(
-      (sum, files) =>
-        sum + (files.includes('SKILL.md') ? 1 : files.filter((file) => /^[^/]+\/SKILL\.md$/.test(file)).length),
-      0,
-    );
+function filesAt(reads: ComponentReads, locations: readonly string[], extension: string, direct = false): string[] {
+  const files = locations.flatMap((location) =>
+    (reads.files.get(location) ?? []).map((file) => ({ file, path: joinPath(location, file) })),
+  );
+  return unique(
+    files
+      .filter(({ file, path }) => path.endsWith(extension) && !(direct && file.includes('/')))
+      .map(({ path }) => path),
+  );
 }
 
+/** The skill folders at the locations, a location that holds SKILL.md or else each subfolder that does; each once. */
+function skillFolders(reads: ComponentReads, locations: readonly string[]): string[] {
+  return unique(
+    locations.flatMap((location) => {
+      const files = reads.files.get(location) ?? [];
+      if (files.includes('SKILL.md')) return [location];
+      return files
+        .flatMap((file) => /^([^/]+)\/SKILL\.md$/.exec(file)?.[1] ?? [])
+        .map((name) => joinPath(location, name));
+    }),
+  );
+}
+
+/** The skill folders, agent files and output style files at a plugin's component locations, relative to its folder. */
+export interface ComponentItems {
+  skills: string[];
+  agents: string[];
+  outputStyles: string[];
+}
+
+/** The skills, agents and output styles at the component locations the manifest names, read in `reads`. */
+export function componentItems(plugin: PluginManifest, reads: ComponentReads): ComponentItems {
+  const { folders } = manifestLocations(plugin);
+  return {
+    skills: skillFolders(reads, folders.skills),
+    agents: filesAt(reads, folders.agents, '.md', true),
+    outputStyles: filesAt(reads, folders.outputStyles, '.md', true),
+  };
+}
+
+/** A plugin with SKILL.md at its root, no `skills/` folder and no `skills` key loads as one skill. */
+const rootSkill = (plugin: PluginManifest, { root, skills }: Inspection['directories']): boolean =>
+  plugin.skills === undefined &&
+  skills === undefined &&
+  (root?.some((entry) => entry.type === 'blob' && entry.name === 'SKILL.md') ?? false);
+
 /** The valid commands of an object map, which replaces the `commands/` folder, or the command files. */
-function commandCount(plugin: z.infer<typeof manifest>, files: readonly string[]): number {
-  return isObject(plugin.commands) ? Object.values(plugin.commands).filter(validCommand).length : markdownFiles(files);
+function commandCount(plugin: PluginManifest, reads: ComponentReads, locations: readonly string[]): number {
+  return isObject(plugin.commands)
+    ? Object.values(plugin.commands).filter(validCommand).length
+    : filesAt(reads, locations, '.md').length;
 }
 
 function countEntries(entries: readonly Entry[] | undefined): number {
@@ -213,7 +237,7 @@ export function manifestLicense(
 }
 
 /** The manifest's keys; only a missing file is an empty manifest, so JSON null, like any non-object, fails. */
-const readManifest = (file: string | undefined) =>
+export const readManifest = (file: string | undefined) =>
   (file === undefined ? manifest : jsonText.pipe(manifest)).safeParse(file ?? {});
 
 /** The manifest's experimental values and the component locations it names. */
@@ -224,14 +248,12 @@ function manifestLocations(plugin: z.infer<typeof manifest>) {
 
 const layoutPaths: ReadonlySet<string> = new Set(Object.values(filePaths));
 
-/**
- * The component folders and the configuration files beyond the layout files that the manifest names and the plugin's
- * root holds; a manifest that is no JSON object names none, as it refuses the plugin's record.
- */
-export function componentTargets({ directories, files }: Inspection): { folders: string[]; texts: string[] } {
-  const parsed = readManifest(files.manifest);
-  if (!parsed.success) return { folders: [], texts: [] };
-  const { folders, configs } = manifestLocations(parsed.data);
+/** The component folders and the configuration files beyond the layout files that the manifest names and the plugin's root holds. */
+export function componentTargets(
+  { directories }: Inspection,
+  plugin: PluginManifest,
+): { folders: string[]; texts: string[] } {
+  const { folders, configs } = manifestLocations(plugin);
   // A path below a root entry the listing lacks is missing, so it costs no read.
   const rootNames = new Set(directories.root?.map((entry) => entry.name));
   const held = (path: string) => path === '' || rootNames.has(path.split('/')[0] ?? '');
@@ -256,11 +278,12 @@ function configTexts(files: Inspection['files'], reads: ComponentReads, paths: r
  * The facts of a plugin directory, read at the component locations of its manifest, with the license of the
  * marketplace entry when plugin.json states none.
  */
-export function analyzePlugin({ directories, files }: Inspection, reads: ComponentReads, entryLicense?: string) {
-  const read = readManifest(files.manifest);
-  // A manifest that is no JSON object throws, so the plugin gets no record.
-  if (!read.success) throw read.error;
-  const plugin = read.data;
+export function analyzePlugin(
+  { directories, files }: Inspection,
+  plugin: PluginManifest,
+  reads: ComponentReads,
+  entryLicense?: string,
+) {
   const version = versionLabel.safeParse(plugin.version);
   const { experimentalValues, folders, configs } = manifestLocations(plugin);
   const texts = (paths: readonly string[]) => configTexts(files, reads, paths);
@@ -274,22 +297,23 @@ export function analyzePlugin({ directories, files }: Inspection, reads: Compone
   const serverList = mcpServers([...parsed(configs.mcpServers), ...inline(plugin.mcpServers)]);
   const stdio = serverList.filter(({ type = 'stdio' }) => type === 'stdio');
   const secrets = secretReferences(plugin);
-  const filesAt = (paths: readonly string[]) => locationFiles(reads, paths);
+  const items = componentItems(plugin, reads);
   return {
     ...(version.success ? { version: version.data } : {}),
     components: {
-      skills: skillCount(plugin, directories, reads, folders.skills),
-      agents: markdownFiles(filesAt(folders.agents)),
-      commands: commandCount(plugin, filesAt(folders.commands)),
+      skills: rootSkill(plugin, directories) ? 1 : items.skills.length,
+      agents: items.agents.length,
+      commands: commandCount(plugin, reads, folders.commands),
       hooksByEvent: hooksByEvent(hookConfigs),
       mcpServersByTransport: mcpServersByTransport(serverList),
       lspServers: lspServers([...parsed(configs.lspServers), ...inline(plugin.lspServers)]),
-      outputStyles: ownFiles(filesAt(folders.outputStyles), '.md'),
+      outputStyles: items.outputStyles.length,
       monitors: monitors([plugin.monitors, experimentalValues.monitors], parsed(configs.monitors)),
       binFiles: countEntries(directories.bin),
     },
     modules: hookModules([...parsed(configs.hooks), ...inlineHooks]),
-    themesOrWorkflows: ownFiles(filesAt(folders.themes), '.json') + ownFiles(filesAt(folders.workflows), '.js') > 0,
+    themesOrWorkflows:
+      filesAt(reads, folders.themes, '.json', true).length + filesAt(reads, folders.workflows, '.js', true).length > 0,
     hasEvals: directories.root?.some((entry) => entry.name === 'evals') ?? false,
     ...(typeof plugin.name === 'string' ? { manifestName: plugin.name } : {}),
     manifestFields: manifestFields(plugin, version.success),

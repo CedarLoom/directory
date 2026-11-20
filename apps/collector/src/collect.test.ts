@@ -593,6 +593,28 @@ it('counts the components at the manifest paths of a plugin, also in subfolders 
   ]);
 });
 
+it('finds the agent at the manifest path of a plugin as an item, in place of the default folder', async () => {
+  const world = fakeWorld();
+  const files = repositoryOf(world, 'example-org/plugin-2').files;
+  files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-2', agents: './crew/lead.md' });
+  files['crew/lead.md'] = agent('lead');
+  const { files: written } = await run(world, '2026-11-16', new Map());
+  const rows = indexFile.parse(JSON.parse(written.get('index.json') ?? '')).items;
+  expect(
+    rows.filter((row) => row.kind === 'agent' && row.id.startsWith('gh.example-org.plugin-2.')).map(({ id }) => id),
+  ).toEqual(['gh.example-org.plugin-2.crew.lead_2emd']);
+});
+
+it('lists no skill at the folder of a plugin whose manifest names that folder a skill', async () => {
+  const world = fakeWorld();
+  const files = repositoryOf(world, 'example-org/plugin-2').files;
+  files['.claude-plugin/plugin.json'] = JSON.stringify({ name: 'plugin-2', skills: './' });
+  files['SKILL.md'] = `---\nname: plugin-2\ndescription: ${marker}\n---\n${marker}\n`;
+  const { files: written } = await run(world, '2026-11-16', new Map());
+  const rows = indexFile.parse(JSON.parse(written.get('index.json') ?? '')).items;
+  expect(rows.filter((row) => row.id === 'gh.example-org.plugin-2').map(({ kind }) => kind)).toEqual(['plugin']);
+});
+
 it('refuses a plugin whose manifest names a configuration file over 256 KB', async () => {
   const world = fakeWorld();
   const files = repositoryOf(world, 'example-org/plugin-0').files;
