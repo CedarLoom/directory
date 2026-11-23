@@ -18,7 +18,7 @@ jobs:
   gates:
     permissions: { contents: read, pull-requests: read }
     # No repo-standards release holds gates.yml yet; move to the first release that does.
-    uses: eikelandin/repo-standards/.github/workflows/gates.yml@e4f18540c9ab319742396897ceb08cadc38e9b27 # main 2026-11-14
+    uses: eikelandin/repo-standards/.github/workflows/gates.yml@c4192a7461a8894055d2e9615939ea2ac5dd6c71 # main 2026-11-14
     with:
       dependency-review: false
   repository:
@@ -33,7 +33,7 @@ jobs:
           # The rubric-lock gate compares rubrics/lock.json with the parent commit, the base branch of a pull request.
           fetch-depth: 2
       - uses: ./.github/actions/setup
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           enable-cache: false
       # knip loads the site's Vite config, which reads the data folder.
