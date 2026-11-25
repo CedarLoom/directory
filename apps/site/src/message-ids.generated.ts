@@ -150,6 +150,7 @@ declare module '@lingui/core' {
       | 'maintenance.archived'
       | 'maintenance.inactive'
       | 'maintenance.unknown'
+      | 'method.fontLicense'
       | 'method.gate'
       | 'method.group'
       | 'method.heading'
