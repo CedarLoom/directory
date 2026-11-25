@@ -80,6 +80,8 @@ On GitHub Free a private repository gets no CodeQL, dependency review or Scoreca
 
 ## Licenses
 
-[REUSE.toml](REUSE.toml) maps every path: code and site text ISC, own records, rubrics and curation files CC0-1.0, names and logos `LicenseRef-Brand`, the Inter font's license notice in `apps/site/public/licenses/`, which the site serves and the method page links, OFL-1.1. A license text goes into `LICENSES/` with the first file that uses it.
+[REUSE.toml](REUSE.toml) maps every path: code and site text ISC, own records, rubrics and curation files CC0-1.0, the SPDX License List data (license templates, license names, exception ids and the ids in the generated schemas) CC-BY-3.0, names and logos `LicenseRef-Brand`, the Inter font's license notice in `apps/site/public/licenses/`, which the site serves and the method page links, OFL-1.1. A license text goes into `LICENSES/` with the first file that uses it.
+
+The values of `apps/collector/src/license-templates.json` are license texts of their stewards and are replaced only as a whole from a newer list version, never edited. The list version in the comment of `apps/collector/src/license-text.ts` and in the `REUSE.toml` comment of that file moves with it.
 
 The packages in `allow-dependencies-licenses` of [.github/dependency-review-config.json](.github/dependency-review-config.json) pass the license gates by name, whatever their version: argparse (2.0.1 Python-2.0, 3.0.4 PSF-2.0), `@fontsource-variable/inter` (OFL-1.1) and caniuse-lite (CC-BY-4.0). When a change moves one of them to another version, check that its license is still the one named here.
