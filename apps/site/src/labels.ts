@@ -105,6 +105,10 @@ export const flagLabels = {
   }),
   'mcp-remote': msg({ id: 'flag.mcp-remote', message: 'Connects to a remote MCP server.' }),
   'mcp-secrets-required': msg({ id: 'flag.mcp-secrets-required', message: 'Needs secrets such as API keys.' }),
+  'mcp-headers-helper': msg({
+    id: 'flag.mcp-headers-helper',
+    message: 'Runs a local command for the headers of a remote MCP server.',
+  }),
   'allowed-tools-unrestricted-bash': msg({
     id: 'flag.allowed-tools-unrestricted-bash',
     message: 'Allows any shell command without asking.',

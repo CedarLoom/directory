@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "kind": "plugin",
+  "version": "1.3.0",
+  "signals": [
+    {
+      "id": "lastPush",
+      "group": "maintenance",
+      "max": 10,
+      "scale": {
+        "type": "push-age",
+        "steps": [
+          { "days": 90, "share": 1 },
+          { "days": 180, "share": 0.75 },
+          { "days": 365, "share": 0.5 },
+          { "days": 730, "share": 0.25 }
+        ]
+      }
+    },
+    {
+      "id": "recentCommits",
+      "group": "maintenance",
+      "max": 5,
+      "scale": { "type": "recent-commits", "levels": { "none": 0, "1-4": 0.5, "5+": 1 } }
+    },
+    { "id": "release", "group": "maintenance", "max": 5, "scale": { "type": "present" } },
+    {
+      "id": "license",
+      "group": "license",
+      "max": 10,
+      "scale": {
+        "type": "license",
+        "levels": { "permissive": 1, "copyleft": 1, "source-available": 0.5, "custom": 0.5, "none": 0 }
+      }
+    },
+    { "id": "manifestFields", "group": "quality", "max": 12, "scale": { "type": "linear", "full": 5, "zero": 0 } },
+    { "id": "nameValid", "group": "quality", "max": 4, "scale": { "type": "present" } },
+    { "id": "noRootClaudeMd", "group": "quality", "max": 4, "scale": { "type": "present" } },
+    {
+      "id": "alwaysOnComponents",
+      "group": "token-cost",
+      "max": 15,
+      "scale": { "type": "linear", "full": 10, "zero": 40 },
+      "gate": "hasComponents"
+    },
+    { "id": "safety", "group": "safety", "max": 30, "scale": { "type": "flags" } },
+    { "id": "hasEvals", "group": "evals", "max": 5, "scale": { "type": "present" } }
+  ],
+  "flagPenalties": [
+    { "flag": "hook-shell-command", "points": 5 },
+    { "flag": "hook-session-start", "points": 5 },
+    { "flag": "hook-match-all", "points": 5 },
+    { "flag": "hook-http", "points": 5 },
+    { "flag": "network-indicator", "points": 5 },
+    { "flag": "monitor-background-command", "points": 5 },
+    { "flag": "lsp-server-command", "points": 5 },
+    { "flag": "mod-module", "points": 5 },
+    { "flag": "workflow-code", "points": 5 },
+    { "flag": "bin-executables", "points": 5 },
+    { "flag": "mcp-stdio-unpinned-package", "points": 10 },
+    { "flag": "mcp-remote", "points": 5 },
+    { "flag": "mcp-secrets-required", "points": 5 },
+    { "flag": "mcp-headers-helper", "points": 5 },
+    { "flag": "install-command-source", "points": 10 },
+    { "flag": "unpinned-source", "points": 10 },
+    { "flag": "listed-official-marketplace", "points": -10 }
+  ]
+}

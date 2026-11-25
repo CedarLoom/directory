@@ -149,9 +149,9 @@ it('refuses a file above its size cap', () => {
 
 it('refuses a run when a rubric file is not in the lock', () => {
   const hook = z.looseObject({ version: semver }).parse(rubrics['hook/1.0.0.json']);
-  const unlocked = { ...hook, version: '1.1.0' };
-  expect(refusals({ rubrics: { ...rubrics, 'hook/1.1.0.json': unlocked } })).toEqual([
-    'rubrics/hook/1.1.0.json is not in the lock',
+  const unlocked = { ...hook, version: '99.0.0' };
+  expect(refusals({ rubrics: { ...rubrics, 'hook/99.0.0.json': unlocked } })).toEqual([
+    'rubrics/hook/99.0.0.json is not in the lock',
   ]);
 });
 

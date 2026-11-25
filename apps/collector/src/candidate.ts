@@ -1,6 +1,6 @@
 import type { Pin, SourceId, SourceKind } from '@directory/contracts';
 import { type GitHubLocation, repositoryId } from './github-location.ts';
-import type { HookFacts } from './hook-analyzer.ts';
+import type { HookFileFacts } from './hook-analyzer.ts';
 import type { MarketplaceEntries } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
 
@@ -30,7 +30,7 @@ export interface Candidate {
   /** A marketplace's plugin entries. */
   entries?: MarketplaceEntries;
   /** A hooks file's facts, read when the inspection found it. */
-  hooks?: HookFacts;
+  hooks?: HookFileFacts;
   /** An MCP server's facts as its registry entry gives them. */
   mcpServer?: McpServerFacts;
 }

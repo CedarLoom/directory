@@ -1,6 +1,6 @@
 import type { Pin, SourceKind } from '@directory/contracts';
 import type { Scorable } from '@directory/scoring';
-import type { HookFacts } from './hook-analyzer.ts';
+import type { HookFacts, HookFileFacts } from './hook-analyzer.ts';
 import { isLicenseValue } from './license-class.ts';
 import { type MarketplaceEntries, share } from './marketplace-analyzer.ts';
 import type { McpServerFacts } from './mcp-server-analyzer.ts';
@@ -100,10 +100,14 @@ function hookFlags(configs: readonly HookFacts[]) {
   ] as const;
 }
 
-export function hookAssessment(hooks: HookFacts): Assessment {
+export function hookAssessment(hooks: HookFileFacts): Assessment {
   return {
     signals: { matchersSpecific: hooks.matcherBreadth !== 'match-all' },
-    flags: raised([...hookFlags([hooks]), ['network-indicator', hooks.networkIndicator]]),
+    flags: raised([
+      ...hookFlags([hooks]),
+      ['mod-module', hooks.modules > 0],
+      ['network-indicator', hooks.networkIndicator],
+    ]),
   };
 }
 
@@ -133,6 +137,8 @@ export interface PluginFacts {
   hooks: readonly HookFacts[];
   mcpUnpinnedPackage: boolean;
   mcpSecretsRequired: boolean;
+  /** A remote MCP server runs a local command for its headers. */
+  mcpHeadersHelper: boolean;
   source: { kind: SourceKind; pin: Pin };
   listedIn: readonly string[];
 }
@@ -177,6 +183,7 @@ export function pluginAssessment(facts: PluginFacts): Assessment {
       ['mcp-stdio-unpinned-package', facts.mcpUnpinnedPackage],
       ['mcp-remote', http + sse > 0],
       ['mcp-secrets-required', facts.mcpSecretsRequired],
+      ['mcp-headers-helper', facts.mcpHeadersHelper],
       ['install-command-source', facts.source.kind === 'command'],
       ['unpinned-source', facts.source.pin === 'none'],
       ['listed-official-marketplace', facts.listedIn.includes(officialMarketplace)],
