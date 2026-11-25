@@ -3,7 +3,6 @@
   "id": "gh.tools-guild.marketplace",
   "kind": "marketplace",
   "name": "guild-marketplace",
-  "aliases": [],
   "links": {
     "source": "https://github.com/tools-guild/marketplace",
     "install": "https://github.com/tools-guild/marketplace/blob/main/README.md"

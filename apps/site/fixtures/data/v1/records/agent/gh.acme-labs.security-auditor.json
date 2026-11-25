@@ -3,7 +3,6 @@
   "id": "gh.acme-labs.security-auditor",
   "kind": "agent",
   "name": "security-auditor",
-  "aliases": [],
   "links": {
     "source": "https://github.com/acme-labs/security-auditor",
     "install": "https://github.com/acme-labs/security-auditor/blob/main/README.md"

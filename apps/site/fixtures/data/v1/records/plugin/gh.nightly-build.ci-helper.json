@@ -3,7 +3,6 @@
   "id": "gh.nightly-build.ci-helper",
   "kind": "plugin",
   "name": "ci-helper",
-  "aliases": [],
   "links": {
     "source": "https://github.com/nightly-build/ci-helper",
     "install": "https://github.com/nightly-build/ci-helper/blob/main/README.md"

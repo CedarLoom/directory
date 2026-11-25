@@ -3,7 +3,6 @@
   "id": "gh.example-org.skills.pdf-forms",
   "kind": "skill",
   "name": "pdf-forms",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/skills/tree/main/pdf-forms",
     "install": "https://github.com/example-org/skills/blob/main/README.md"

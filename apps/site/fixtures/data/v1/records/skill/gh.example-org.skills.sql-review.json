@@ -3,7 +3,6 @@
   "id": "gh.example-org.skills.sql-review",
   "kind": "skill",
   "name": "sql-review",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/skills/tree/main/sql-review",
     "install": "https://github.com/example-org/skills/blob/main/README.md"

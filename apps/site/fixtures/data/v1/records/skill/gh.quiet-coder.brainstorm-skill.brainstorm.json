@@ -3,7 +3,6 @@
   "id": "gh.quiet-coder.brainstorm-skill.brainstorm",
   "kind": "skill",
   "name": "brainstorm",
-  "aliases": [],
   "links": {
     "source": "https://github.com/quiet-coder/brainstorm-skill/tree/main/brainstorm",
     "install": "https://github.com/quiet-coder/brainstorm-skill/blob/main/README.md"

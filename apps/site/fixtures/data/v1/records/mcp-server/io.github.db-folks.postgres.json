@@ -3,7 +3,6 @@
   "id": "io.github.db-folks.postgres",
   "kind": "mcp-server",
   "name": "io.github.db-folks/postgres",
-  "aliases": [],
   "links": {
     "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.db-folks%2Fpostgres/versions/latest",
     "source": "https://github.com/db-folks/postgres-mcp"

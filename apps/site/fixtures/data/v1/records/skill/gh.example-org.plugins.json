@@ -3,7 +3,6 @@
   "id": "gh.example-org.plugins",
   "kind": "skill",
   "name": "plugins-guide",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/plugins",
     "install": "https://github.com/example-org/plugins/blob/main/README.md"

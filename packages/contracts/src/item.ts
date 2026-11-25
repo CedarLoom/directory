@@ -49,7 +49,6 @@ const common = {
   name: itemName.describe(
     'The identifier of the item, never a display name: the manifest or frontmatter `name` of a marketplace, plugin, skill or agent, the registry name of an MCP server, the file stem of an output style (its frontmatter `name` is a display name), and for a hook the name of the plugin folder or repository that holds its hooks file.',
   ),
-  aliases: z.array(itemId),
   links,
   container: itemId.optional(),
   listedIn: z.array(itemId),

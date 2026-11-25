@@ -1221,7 +1221,6 @@ it('rewrites the popularity file and the index, but no record, when a star count
 function ownFields(files: ReadonlyMap<string, string>, path: string) {
   const shared = new Set([
     'schemaVersion',
-    'aliases',
     'links',
     'popularity',
     'signals',

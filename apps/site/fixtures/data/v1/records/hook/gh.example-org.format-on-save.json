@@ -3,7 +3,6 @@
   "id": "gh.example-org.format-on-save",
   "kind": "hook",
   "name": "format-on-save",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/format-on-save",
     "install": "https://github.com/example-org/format-on-save/blob/main/README.md"

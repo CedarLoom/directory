@@ -100,7 +100,6 @@ function baseFields(
     schemaVersion: 1,
     id: candidate.id,
     name: candidate.name,
-    aliases: [],
     links: candidate.links,
     ...(candidate.container === undefined ? {} : { container: candidate.container }),
     listedIn: candidate.listedIn,
