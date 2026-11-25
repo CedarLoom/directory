@@ -17,7 +17,7 @@ import { analyzeAgent } from './agent-analyzer.ts';
 import type { Candidate, Located } from './candidate.ts';
 import { repositoryId } from './github-location.ts';
 import type { ComponentReads } from './component-reads.ts';
-import type { HookFacts } from './hook-analyzer.ts';
+import type { HookFileFacts } from './hook-analyzer.ts';
 import type { SkillFolders } from './item-files.ts';
 import {
   type Assessment,
@@ -71,7 +71,7 @@ export type RecordInput = {
     }
   | { kind: 'skill'; text: string; folders: SkillFolders; tests: boolean; licenseFile: boolean }
   | { kind: 'agent'; text: string }
-  | { kind: 'hook'; hooks: HookFacts }
+  | { kind: 'hook'; hooks: HookFileFacts }
   | { kind: 'mcp-server'; mcpServer: McpServerFacts }
   | { kind: 'output-style'; text: string }
 );
@@ -151,30 +151,24 @@ function marketplace(input: InputOf<'marketplace'>, runDate: string) {
 
 function plugin(input: InputOf<'plugin'>, runDate: string) {
   // The scoring-only facts stay out of the record; the manifest license feeds the record's license.
+  const analyzed = analyzePlugin(input.inspection, input.manifest, input.components, input.candidate.entryLicense);
   const {
-    manifestName,
-    manifestFields,
+    manifestName: _manifestName,
+    manifestFields: _manifestFields,
     manifestLicense,
-    rootClaudeMd,
-    hooks,
-    mcpUnpinnedPackage,
-    mcpSecretsRequired,
-    modules,
-    themesOrWorkflows,
-    workflowCode,
+    rootClaudeMd: _rootClaudeMd,
+    hooks: _hooks,
+    mcpUnpinnedPackage: _mcpUnpinnedPackage,
+    mcpSecretsRequired: _mcpSecretsRequired,
+    mcpHeadersHelper: _mcpHeadersHelper,
+    modules: _modules,
+    themesOrWorkflows: _themesOrWorkflows,
+    workflowCode: _workflowCode,
     ...facts
-  } = analyzePlugin(input.inspection, input.manifest, input.components, input.candidate.entryLicense);
+  } = analyzed;
   const assessment = pluginAssessment({
-    ...facts,
-    modules,
-    themesOrWorkflows,
-    workflowCode,
-    name: manifestName ?? input.candidate.name,
-    manifestFields,
-    rootClaudeMd,
-    hooks,
-    mcpUnpinnedPackage,
-    mcpSecretsRequired,
+    ...analyzed,
+    name: analyzed.manifestName ?? input.candidate.name,
     source: input.source,
     listedIn: input.candidate.listedIn,
   });
@@ -253,7 +247,7 @@ function agent(input: InputOf<'agent'>, runDate: string) {
 }
 
 function hook(input: InputOf<'hook'>, runDate: string) {
-  const { networkIndicator: _networkIndicator, ...facts } = input.hooks;
+  const { networkIndicator: _networkIndicator, modules: _modules, ...facts } = input.hooks;
   return scored(
     hookRecord,
     { ...baseFields(input, runDate, hookAssessment(input.hooks)), kind: 'hook', ...facts },

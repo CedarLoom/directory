@@ -23,6 +23,11 @@ export interface HookFacts {
   networkIndicator: boolean;
 }
 
+export interface HookFileFacts extends HookFacts {
+  /** The mod modules the hooks file lists; scored as a flag, not stored as a fact. */
+  modules: number;
+}
+
 // A command that fetches or posts over the network; `\b` keeps names such as `curling` out.
 const networkCommand = /\b(?:curl|wget|Invoke-WebRequest)\b|https?:\/\//i;
 
@@ -85,11 +90,12 @@ export function handledEvents(hooks: HookEvents): [string, Group[]][] {
 const recordEvents = hookRecord.pick({ events: true });
 
 /** The facts of a hooks file; more events than the record holds throw a ZodError. */
-export function analyzeHooks(text: string): HookFacts | undefined {
-  const hooks = hookEvents(text);
+export function analyzeHooks(text: string): HookFileFacts | undefined {
+  const file = jsonText.parse(text);
+  const { hooks } = hooksFile.parse(file);
   if (hooks === undefined) return undefined;
   const facts = hookFacts(hooks);
-  return { ...facts, events: recordEvents.parse({ events: facts.events }).events };
+  return { ...facts, events: recordEvents.parse({ events: facts.events }).events, modules: hookModules([file]) };
 }
 
 export function hookFacts(hooks: HookEvents): HookFacts {
