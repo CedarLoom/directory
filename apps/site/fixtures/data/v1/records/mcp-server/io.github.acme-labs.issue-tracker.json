@@ -3,7 +3,6 @@
   "id": "io.github.acme-labs.issue-tracker",
   "kind": "mcp-server",
   "name": "io.github.acme-labs/issue-tracker",
-  "aliases": [],
   "links": {
     "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.acme-labs%2Fissue-tracker/versions/latest",
     "source": "https://github.com/acme-labs/issue-tracker-mcp"

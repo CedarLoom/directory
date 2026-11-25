@@ -61,7 +61,6 @@ function previousRun(names: readonly string[], indexed = names): Map<string, str
       id: name.replace('/', '.'),
       kind: 'mcp-server',
       name,
-      aliases: [],
       links: {
         source: `https://github.com/example-org/${name.split('/')[1]}`,
         registry: `https://registry.modelcontextprotocol.io/v0.1/servers/${encodeURIComponent(name)}/versions/latest`,

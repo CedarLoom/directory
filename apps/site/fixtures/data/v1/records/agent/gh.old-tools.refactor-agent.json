@@ -3,7 +3,6 @@
   "id": "gh.old-tools.refactor-agent",
   "kind": "agent",
   "name": "refactor-agent",
-  "aliases": [],
   "links": {
     "source": "https://github.com/old-tools/refactor-agent",
     "install": "https://github.com/old-tools/refactor-agent/blob/main/README.md"

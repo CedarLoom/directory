@@ -3,7 +3,6 @@
   "id": "gh.example-org.agents.test-runner",
   "kind": "agent",
   "name": "test-runner",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/test-runner"
   },

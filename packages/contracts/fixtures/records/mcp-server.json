@@ -3,7 +3,6 @@
   "id": "io.github.example-org.weather",
   "kind": "mcp-server",
   "name": "io.github.example-org/weather",
-  "aliases": [],
   "links": {
     "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.example-org%2Fweather/versions/latest"
   },
