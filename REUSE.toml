@@ -51,6 +51,13 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 Eike Landin"
 SPDX-License-Identifier = "CC0-1.0"
 
+# The license notice of the Inter font, copied from the Inter repository; the site ships it with the font files.
+[[annotations]]
+path = "apps/site/public/licenses/inter-ofl.txt"
+precedence = "override"
+SPDX-FileCopyrightText = "2016 The Inter Project Authors"
+SPDX-License-Identifier = "OFL-1.1"
+
 # Names and logos: not licensed.
 [[annotations]]
 path = ["apps/site/src/assets/brand/**", "apps/site/public/favicon.svg"]
