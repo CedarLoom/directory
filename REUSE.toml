@@ -16,7 +16,12 @@ precedence = "override"
 SPDX-FileCopyrightText = "Linux Foundation and its Contributors"
 SPDX-License-Identifier = "CC-BY-3.0"
 
-# The SPDX License List license templates, copied from the list to name a license file by its text.
+# The SPDX License List license templates, copied to name a license file by its text: the field
+# standardLicenseTemplate of json/details/<id>.json in https://github.com/spdx/license-list-data, version 3.29.0,
+# unchanged, for the license ids of the collector's class table. The list and its matching markup are licensed
+# under CC-BY-3.0. Each template reproduces a license text that belongs to its steward (the copyright line is in the
+# text where the steward gives one) and stays under the terms that text states for itself: the GNU licenses, among
+# others, allow verbatim copies only. Never edit a value; replace the file from a newer list version instead.
 [[annotations]]
 path = "apps/collector/src/license-templates.json"
 precedence = "override"

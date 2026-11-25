@@ -1,6 +1,7 @@
 import templates from './license-templates.json' with { type: 'json' };
 
 // SPDX license-list-data v3.29.0 standard templates of the class table's licenses, an identical one once.
+// REUSE.toml names the same list version in the comment on license-templates.json.
 const templateTexts: Readonly<Record<string, string>> = templates;
 
 const copyrightNotice = /^(?:copyright ?(?:©|\(c\))|(?:copyright|©|\(c\)) ?(?:\d{4}|[[<{]))/i;
