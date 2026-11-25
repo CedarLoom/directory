@@ -294,6 +294,18 @@ it('flags a stdio server that runs a package without its version and one that ne
   ]);
 });
 
+const headersHelper = (type: string) =>
+  analyze(
+    {
+      directories: {},
+      files: { mcp: JSON.stringify({ api: { type, url: 'https://x.test', headersHelper: './auth.sh' } }) },
+    },
+    none,
+  ).mcpHeadersHelper;
+
+it('reads a headers helper only on a server type whose connection runs it', () =>
+  expect(['http', 'sse', 'ws', 'stdio'].map(headersHelper)).toEqual([true, true, true, false]));
+
 it('reads a user variable in arguments, a URL or with an empty default as a required secret', () => {
   expect([
     facts({ docs: { command: 'node', args: ['server.js', '--api-key', '${API_KEY}'] } }),

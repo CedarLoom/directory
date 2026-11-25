@@ -3,6 +3,7 @@ import { z } from 'zod';
 import agent from '../../../rubrics/agent/1.0.0.json' with { type: 'json' };
 import agent110 from '../../../rubrics/agent/1.1.0.json' with { type: 'json' };
 import hook from '../../../rubrics/hook/1.0.0.json' with { type: 'json' };
+import hook110 from '../../../rubrics/hook/1.1.0.json' with { type: 'json' };
 import lockFile from '../../../rubrics/lock.json' with { type: 'json' };
 import marketplace from '../../../rubrics/marketplace/1.0.0.json' with { type: 'json' };
 import mcpServer from '../../../rubrics/mcp-server/1.0.0.json' with { type: 'json' };
@@ -11,6 +12,7 @@ import outputStyle110 from '../../../rubrics/output-style/1.1.0.json' with { typ
 import plugin from '../../../rubrics/plugin/1.0.0.json' with { type: 'json' };
 import plugin110 from '../../../rubrics/plugin/1.1.0.json' with { type: 'json' };
 import plugin120 from '../../../rubrics/plugin/1.2.0.json' with { type: 'json' };
+import plugin130 from '../../../rubrics/plugin/1.3.0.json' with { type: 'json' };
 import skill from '../../../rubrics/skill/1.0.0.json' with { type: 'json' };
 import skill110 from '../../../rubrics/skill/1.1.0.json' with { type: 'json' };
 
@@ -39,6 +41,7 @@ const released = lockedRubrics(
     'agent/1.0.0.json': agent,
     'agent/1.1.0.json': agent110,
     'hook/1.0.0.json': hook,
+    'hook/1.1.0.json': hook110,
     'marketplace/1.0.0.json': marketplace,
     'mcp-server/1.0.0.json': mcpServer,
     'output-style/1.0.0.json': outputStyle,
@@ -46,6 +49,7 @@ const released = lockedRubrics(
     'plugin/1.0.0.json': plugin,
     'plugin/1.1.0.json': plugin110,
     'plugin/1.2.0.json': plugin120,
+    'plugin/1.3.0.json': plugin130,
     'skill/1.0.0.json': skill,
     'skill/1.1.0.json': skill110,
   },

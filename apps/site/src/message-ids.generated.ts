@@ -45,6 +45,7 @@ declare module '@lingui/core' {
       | 'flag.install-command-source'
       | 'flag.listed-official-marketplace'
       | 'flag.lsp-server-command'
+      | 'flag.mcp-headers-helper'
       | 'flag.mcp-remote'
       | 'flag.mcp-secrets-required'
       | 'flag.mcp-stdio-unpinned-package'
