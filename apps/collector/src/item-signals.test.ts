@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
-import { type PluginFacts, pluginAssessment, skillAssessment } from './item-signals.ts';
+import type { HookFacts } from './hook-analyzer.ts';
+import { type PluginFacts, hookAssessment, pluginAssessment, skillAssessment } from './item-signals.ts';
 
 const emptyPlugin: PluginFacts = {
   name: 'lint',
@@ -23,6 +24,7 @@ const emptyPlugin: PluginFacts = {
   hooks: [],
   mcpUnpinnedPackage: false,
   mcpSecretsRequired: false,
+  mcpHeadersHelper: false,
   source: { kind: 'github', pin: 'sha' },
   listedIn: [],
 };
@@ -32,7 +34,7 @@ const nameValid = (name: string) => pluginAssessment({ ...emptyPlugin, name }).s
 it('accepts a kebab-case plugin name that starts with claude, as official plugins do', () =>
   expect(['claude-code-setup', 'Lint'].map(nameValid)).toEqual([true, false]));
 
-it('flags monitors, LSP servers, mod modules and workflow code', () => {
+it('flags monitors, LSP servers, mod modules, workflow code and an MCP headers helper', () => {
   const { signals, flags } = pluginAssessment({
     ...emptyPlugin,
     components: {
@@ -45,10 +47,32 @@ it('flags monitors, LSP servers, mod modules and workflow code', () => {
     },
     modules: 1,
     workflowCode: true,
+    mcpHeadersHelper: true,
   });
   expect([signals['hasComponents'], flags]).toEqual([
     true,
-    ['monitor-background-command', 'lsp-server-command', 'mod-module', 'workflow-code', 'mcp-remote'],
+    [
+      'monitor-background-command',
+      'lsp-server-command',
+      'mod-module',
+      'workflow-code',
+      'mcp-remote',
+      'mcp-headers-helper',
+    ],
+  ]);
+});
+
+it('flags a hooks file that lists mod modules', () => {
+  const hooks: HookFacts = {
+    events: ['Stop'],
+    handlerTypes: ['prompt'],
+    commandForms: [],
+    matcherBreadth: 'none',
+    networkIndicator: false,
+  };
+  expect([hookAssessment({ ...hooks, modules: 0 }).flags, hookAssessment({ ...hooks, modules: 1 }).flags]).toEqual([
+    [],
+    ['mod-module'],
   ]);
 });
 

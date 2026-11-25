@@ -1573,8 +1573,8 @@ it('adds a history entry once the push age crosses a step and keeps the history 
       id: 'gh.example-org.plugin-0.hooks.hooks_2ejson',
       kind: 'hook',
       entries: [
-        { date: '2026-11-16', rubric: '1.0.0', total: 73 },
-        { date: '2027-02-10', rubric: '1.0.0', total: 70 },
+        { date: '2026-11-16', rubric: '1.1.0', total: 73 },
+        { date: '2027-02-10', rubric: '1.1.0', total: 70 },
       ],
     },
   });
@@ -1607,10 +1607,10 @@ it('publishes meta.json with the run time, the versions, the sources read and th
     schemaVersions: versions(1),
     rubricVersions: {
       marketplace: '1.0.0',
-      plugin: '1.2.0',
+      plugin: '1.3.0',
       skill: '1.1.0',
       agent: '1.1.0',
-      hook: '1.0.0',
+      hook: '1.1.0',
       'mcp-server': '1.0.0',
       'output-style': '1.1.0',
     },

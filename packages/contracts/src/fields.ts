@@ -101,6 +101,7 @@ const flags = [
   'mcp-stdio-unpinned-package',
   'mcp-remote',
   'mcp-secrets-required',
+  'mcp-headers-helper',
   'allowed-tools-unrestricted-bash',
   'agent-inherits-all-tools',
   'install-command-source',

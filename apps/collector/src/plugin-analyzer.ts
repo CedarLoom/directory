@@ -53,6 +53,7 @@ const server = z.object({
   url: z.string().optional(),
   env: strings,
   headers: strings,
+  headersHelper: z.string().optional(),
 });
 type Server = z.infer<typeof server>;
 const serverMap = z.record(z.string(), server);
@@ -65,6 +66,8 @@ const experimental = z.object({ monitors: z.unknown().optional(), themes: z.unkn
 // A Set, so a type such as `constructor` reads no inherited property.
 const transports: ReadonlySet<string> = new Set(['stdio', 'http', 'sse'] as const);
 const isTransport = (type: string): type is 'stdio' | 'http' | 'sse' => transports.has(type);
+// Claude Code runs `headersHelper` as a shell command when it connects to a server of these types.
+const helperTransports: ReadonlySet<string> = new Set(['http', 'sse', 'ws']);
 // A `${NAME}` without a default, or with an empty one, is set by the user; the path variables and HOME always hold a value.
 const userVariable = /\$\{(?!CLAUDE_PLUGIN_|CLAUDE_PROJECT_DIR\b|HOME\b)[A-Za-z_]\w*(?::-)?\}/;
 const configReference = /\$\{user_config\.\w+\}/g;
@@ -295,8 +298,6 @@ export function analyzePlugin(
   );
   const parsed = (paths: readonly string[]) => texts(paths).map((file) => jsonText.parse(file));
   const serverList = mcpServers([...parsed(configs.mcpServers), ...inline(plugin.mcpServers)]);
-  const stdio = serverList.filter(({ type = 'stdio' }) => type === 'stdio');
-  const secrets = secretReferences(plugin);
   const items = componentItems(plugin, reads);
   const workflowCode = filesAt(reads, folders.workflows, '.js', true).length > 0;
   return {
@@ -321,7 +322,19 @@ export function analyzePlugin(
     manifestLicense: pluginLicense(plugin.license, entryLicense),
     rootClaudeMd: directories.root?.some((entry) => entry.name === 'CLAUDE.md') ?? false,
     hooks: hookConfigs.map(hookFacts),
+    ...mcpFacts(plugin, serverList),
+  };
+}
+
+/** The scoring facts of the plugin's MCP servers. */
+function mcpFacts(plugin: PluginManifest, serverList: readonly Server[]) {
+  const stdio = serverList.filter(({ type = 'stdio' }) => type === 'stdio');
+  const secrets = secretReferences(plugin);
+  return {
     mcpUnpinnedPackage: stdio.some(({ command, args = [] }) => command !== undefined && unpinnedPackage(command, args)),
+    mcpHeadersHelper: serverList.some(
+      ({ type = 'stdio', headersHelper }) => headersHelper !== undefined && helperTransports.has(type),
+    ),
     mcpSecretsRequired: serverList.some(({ args = [], url = '', env = {}, headers = {} }) =>
       [...args, url, ...Object.values(env), ...Object.values(headers)].some(
         (value) => userVariable.test(value) || (value.match(configReference) ?? []).some((name) => secrets.has(name)),

@@ -14,6 +14,7 @@ it('reads a .* matcher as match-all and a command with args as exec', () => {
     commandForms: ['exec'],
     matcherBreadth: 'match-all',
     networkIndicator: false,
+    modules: 0,
   });
 });
 
@@ -40,7 +41,13 @@ it('reads the other handlers of a file that holds a handler type it does not kno
     commandForms: ['shell'],
     matcherBreadth: 'none',
     networkIndicator: true,
+    modules: 0,
   });
+});
+
+it('counts the mod modules a hooks file lists beside its hooks', () => {
+  const file = { hooks: { Stop: [{ hooks: [{ type: 'prompt' }] }] }, modules: ['./audit.js', './panes.js'] };
+  expect(analyzeHooks(JSON.stringify(file))?.modules).toBe(2);
 });
 
 it('holds no hooks in a file that only lists modules', () => {
