@@ -13,7 +13,7 @@
     },
     "license": {
       "type": "string",
-      "const": "CC0-1.0",
+      "const": "MIT",
       "description": "The license of the data folder, whose LICENSE file holds its text."
     },
     "schemaVersions": {

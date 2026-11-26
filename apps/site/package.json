@@ -2,7 +2,7 @@
   "name": "@directory/site",
   "private": true,
   "type": "module",
-  "license": "ISC",
+  "license": "MIT",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && node scripts/post-build.ts",
