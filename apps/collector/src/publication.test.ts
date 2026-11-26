@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { publication } from './publication.ts';
 import type { RunReport } from './run-report.ts';
 
-const license = 'CC0 1.0 Universal';
+const license = 'MIT License';
 const none = { marketplace: 0, plugin: 0, skill: 0, agent: 0, hook: 0, 'mcp-server': 0, 'output-style': 0 };
 const report: RunReport = {
   format: 'directory-run-report',

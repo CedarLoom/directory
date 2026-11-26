@@ -2,12 +2,12 @@ version = 1
 
 # A license text goes into LICENSES/ with the first file that uses it; `reuse lint` names it when it is missing.
 
-# Code, site text and everything not matched below: ISC.
+# Everything own (code, site text, records, rubrics and curation files) and everything not matched below: MIT.
 [[annotations]]
 path = "**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Eike Landin"
-SPDX-License-Identifier = "ISC"
+SPDX-License-Identifier = "MIT"
 
 # The SPDX License List exception ids, copied from the list and written into the pattern of the record schemas.
 [[annotations]]
@@ -48,13 +48,6 @@ path = [
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Linux Foundation and its Contributors"
 SPDX-License-Identifier = "CC-BY-3.0"
-
-# Own records (facts, scores, flags, tags), rubrics and curation files: CC0 1.0.
-[[annotations]]
-path = ["data/**", "rubrics/**", "curation/**"]
-precedence = "override"
-SPDX-FileCopyrightText = "2026 Eike Landin"
-SPDX-License-Identifier = "CC0-1.0"
 
 # The license notice of the Inter font, copied from the Inter repository; the site ships it with the font files.
 [[annotations]]

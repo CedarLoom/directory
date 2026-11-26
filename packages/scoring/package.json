@@ -2,7 +2,7 @@
   "name": "@directory/scoring",
   "private": true,
   "type": "module",
-  "license": "ISC",
+  "license": "MIT",
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc"

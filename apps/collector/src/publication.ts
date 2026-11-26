@@ -36,7 +36,7 @@ function metaText(report: RunReport, candidate: DataFiles): string {
   const meta = metaFile.parse({
     schemaVersion: 1,
     runAt: report.runAt,
-    license: 'CC0-1.0',
+    license: 'MIT',
     schemaVersions: Object.fromEntries(kinds.map(([kind, contract]) => [kind, contract.shape.schemaVersion.value])),
     rubricVersions: Object.fromEntries(
       kinds.map(([kind, contract]) => [kind, currentRubric(contract.shape.kind.value).version]),

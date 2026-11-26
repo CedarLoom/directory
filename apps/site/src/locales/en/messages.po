@@ -1016,7 +1016,7 @@ msgstr "The Directory is run by the maker of CedarLoom. CedarLoom is its maker's
 #. js-lingui-explicit-id
 #: src/method/MethodPage.tsx:155
 msgid "method.license"
-msgstr "The Directory's own data is released under CC0 1.0. Names and descriptions of listed items belong to their authors; the Directory links to them and copies no description."
+msgstr "The Directory's own data is released under the MIT license. Names and descriptions of listed items belong to their authors; the Directory links to them and copies no description."
 
 #. js-lingui-explicit-id
 #: src/labels.ts:55

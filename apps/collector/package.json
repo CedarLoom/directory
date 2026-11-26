@@ -2,7 +2,7 @@
   "name": "@directory/collector",
   "private": true,
   "type": "module",
-  "license": "ISC",
+  "license": "MIT",
   "scripts": {
     "collect": "node src/index.ts collect",
     "hash-exclusion": "node src/index.ts hash-exclusion",
