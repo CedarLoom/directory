@@ -1,7 +1,6 @@
 name: Correct an entry
 description: Report a value on an item's page that is wrong.
 title: "Correct: "
-labels: [triage]
 body:
   - type: markdown
     attributes:
@@ -9,6 +8,13 @@ body:
         The Directory records published facts and scores them with the rubric of the item's kind. A wrong value is
         corrected in the collector or in the data; a score that follows the rubric is not changed by hand. Every request
         is answered within one month. This issue is public.
+  - type: textarea
+    id: plain
+    attributes:
+      label: In plain words
+      description: Which item shows something wrong and what it should show, so that someone who does not know the Directory understands it.
+    validations:
+      required: true
   - type: input
     id: item
     attributes:
