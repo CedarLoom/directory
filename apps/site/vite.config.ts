@@ -48,7 +48,7 @@ const token = process.env['GITHUB_TOKEN'];
 const facts = token === undefined ? {} : await repoFacts('CedarLoom/directory', token, fetch);
 
 export default defineConfig({
-  // GitHub Pages serves the site under /directory/ and each preview under its own folder.
+  // GitHub Pages serves the site under /directory/.
   base: process.env['BASE_URL'] ?? '/',
   define: { 'import.meta.env.REPO_FACTS': JSON.stringify(facts) },
   // scripts/weight.ts reads the chunk graph from the client manifest.
