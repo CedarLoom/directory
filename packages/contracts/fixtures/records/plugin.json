@@ -3,7 +3,6 @@
   "id": "gh.example-org.plugins.code-review",
   "kind": "plugin",
   "name": "code-review",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/plugins/tree/main/plugins/code-review",
     "homepage": "https://claude.com/plugins/code-review"

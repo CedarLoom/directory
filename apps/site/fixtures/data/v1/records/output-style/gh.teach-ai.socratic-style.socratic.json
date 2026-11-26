@@ -3,7 +3,6 @@
   "id": "gh.teach-ai.socratic-style.socratic",
   "kind": "output-style",
   "name": "socratic",
-  "aliases": [],
   "links": {
     "source": "https://github.com/teach-ai/socratic-style/tree/main/socratic",
     "install": "https://github.com/teach-ai/socratic-style/blob/main/README.md"

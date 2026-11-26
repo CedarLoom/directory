@@ -3,7 +3,6 @@
   "id": "gh.example-org.test-runner",
   "kind": "agent",
   "name": "test-runner",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/test-runner",
     "install": "https://github.com/example-org/test-runner/blob/main/README.md"

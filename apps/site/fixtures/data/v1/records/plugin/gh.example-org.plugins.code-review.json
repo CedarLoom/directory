@@ -3,7 +3,6 @@
   "id": "gh.example-org.plugins.code-review",
   "kind": "plugin",
   "name": "code-review",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/plugins/tree/main/code-review",
     "install": "https://github.com/example-org/plugins/blob/main/README.md"

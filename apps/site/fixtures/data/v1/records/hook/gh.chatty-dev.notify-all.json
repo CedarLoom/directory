@@ -3,7 +3,6 @@
   "id": "gh.chatty-dev.notify-all",
   "kind": "hook",
   "name": "notify-all",
-  "aliases": [],
   "links": {
     "source": "https://github.com/chatty-dev/notify-all",
     "install": "https://github.com/chatty-dev/notify-all/blob/main/README.md"

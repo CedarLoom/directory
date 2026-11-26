@@ -3,7 +3,6 @@
   "id": "gh.example-org.styles.terse",
   "kind": "output-style",
   "name": "terse",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/terse"
   },

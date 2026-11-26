@@ -3,7 +3,6 @@
   "id": "gh.teach-ai.explainer-style.explainer",
   "kind": "output-style",
   "name": "explainer",
-  "aliases": [],
   "links": {
     "source": "https://github.com/teach-ai/explainer-style/tree/main/explainer",
     "install": "https://github.com/teach-ai/explainer-style/blob/main/README.md"

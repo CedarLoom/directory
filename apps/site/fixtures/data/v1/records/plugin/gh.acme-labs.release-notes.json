@@ -3,7 +3,6 @@
   "id": "gh.acme-labs.release-notes",
   "kind": "plugin",
   "name": "release-notes",
-  "aliases": [],
   "links": {
     "source": "https://github.com/acme-labs/release-notes",
     "install": "https://github.com/acme-labs/release-notes/blob/main/README.md"

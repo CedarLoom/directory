@@ -1,7 +1,7 @@
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { List, Stack, Text, Title } from '@mantine/core';
+import { Anchor, List, Stack, Text, Title } from '@mantine/core';
 import type { MetaFile, Rubric } from '../data-types.ts';
 import { ExternalLink } from '../layout/ExternalLink.tsx';
 import { newIssueUrl } from '../new-issue-url.ts';
@@ -155,6 +155,15 @@ function Policies() {
         <Trans id="method.license">
           The Directory's own data is released under CC0 1.0. Names and descriptions of listed items belong to their
           authors; the Directory links to them and copies no description.
+        </Trans>
+      </Text>
+      <Text>
+        <Trans id="method.fontLicense">
+          The site's font, Inter, is copyright 2016 The Inter Project Authors and licensed under the{' '}
+          <Anchor href="/licenses/inter-ofl.txt" underline="always">
+            SIL Open Font License 1.1
+          </Anchor>
+          .
         </Trans>
       </Text>
       <Text>

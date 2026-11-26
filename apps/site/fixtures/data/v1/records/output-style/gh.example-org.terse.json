@@ -3,7 +3,6 @@
   "id": "gh.example-org.terse",
   "kind": "output-style",
   "name": "terse",
-  "aliases": [],
   "links": {
     "source": "https://github.com/example-org/terse",
     "install": "https://github.com/example-org/terse/blob/main/README.md"

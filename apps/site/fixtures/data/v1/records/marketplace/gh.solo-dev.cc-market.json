@@ -3,7 +3,6 @@
   "id": "gh.solo-dev.cc-market",
   "kind": "marketplace",
   "name": "cc-market",
-  "aliases": [],
   "links": {
     "source": "https://github.com/solo-dev/cc-market",
     "install": "https://github.com/solo-dev/cc-market/blob/main/README.md"
