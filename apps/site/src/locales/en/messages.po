@@ -163,7 +163,7 @@ msgid "site.title"
 msgstr "CedarLoom Directory"
 
 #. js-lingui-explicit-id
-#: src/layout/SiteHeader.tsx:22
+#: src/layout/SiteHeader.tsx:24
 msgid "nav.home"
 msgstr "CedarLoom Directory"
 
@@ -301,6 +301,11 @@ msgstr "First page"
 #: src/item/ItemPage.tsx:42
 msgid "item.flagsNote"
 msgstr "Flags point at patterns that need care. They are no audit: an item without flags is not proven safe."
+
+#. js-lingui-explicit-id
+#: src/layout/RepoWidget.tsx:44
+msgid "repo.forks"
+msgstr "Forks"
 
 #. js-lingui-explicit-id
 #: src/labels.ts:53
@@ -478,7 +483,7 @@ msgid "flag.mod-module"
 msgstr "Loads code modules into Claude Code as a mod."
 
 #. js-lingui-explicit-id
-#: src/layout/SiteHeader.tsx:18
+#: src/layout/SiteHeader.tsx:20
 msgid "nav.label"
 msgstr "Main"
 
@@ -538,7 +543,7 @@ msgid "method.heading"
 msgstr "Method"
 
 #. js-lingui-explicit-id
-#: src/layout/SiteHeader.tsx:31
+#: src/layout/SiteHeader.tsx:38
 msgid "nav.method"
 msgstr "Method"
 
@@ -919,7 +924,7 @@ msgid "kinds.skill"
 msgstr "Skills"
 
 #. js-lingui-explicit-id
-#: src/layout/SiteHeader.tsx:15
+#: src/layout/SiteHeader.tsx:16
 msgid "nav.skip"
 msgstr "Skip to content"
 
@@ -947,6 +952,11 @@ msgstr "Sources"
 #: src/labels.ts:147
 msgid "signal.matchersSpecific"
 msgstr "Specific matchers"
+
+#. js-lingui-explicit-id
+#: src/layout/RepoWidget.tsx:35
+msgid "repo.stars"
+msgstr "Stars"
 
 #. js-lingui-explicit-id
 #: src/labels.ts:178
@@ -1057,6 +1067,11 @@ msgstr "The site's font, Inter, is copyright 2016 The Inter Project Authors and 
 #: src/routes/__root.tsx:56
 msgid "notFound.body"
 msgstr "This page does not exist."
+
+#. js-lingui-explicit-id
+#: src/layout/SiteHeader.tsx:46
+msgid "nav.fixtureData"
+msgstr "This site shows sample data until the Directory publishes its first collected data."
 
 #. js-lingui-explicit-id
 #: src/method/MethodPage.tsx:170

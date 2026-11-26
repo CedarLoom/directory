@@ -160,7 +160,7 @@ function Policies() {
       <Text>
         <Trans id="method.fontLicense">
           The site's font, Inter, is copyright 2016 The Inter Project Authors and licensed under the{' '}
-          <Anchor href="/licenses/inter-ofl.txt" underline="always">
+          <Anchor href={`${import.meta.env.BASE_URL}licenses/inter-ofl.txt`} underline="always">
             SIL Open Font License 1.1
           </Anchor>
           .
