@@ -80,7 +80,7 @@ On GitHub Free a private repository gets no CodeQL, dependency review or Scoreca
 
 ## Licenses
 
-[REUSE.toml](REUSE.toml) maps every path: everything own (code, site text, records, rubrics and curation files) MIT, the SPDX License List data (license templates, license names, exception ids and the ids in the generated schemas) CC-BY-3.0, names and logos `LicenseRef-Brand`, the Inter font's license notice in `apps/site/public/licenses/`, which the site serves and the method page links, OFL-1.1. A license text goes into `LICENSES/` with the first file that uses it.
+[REUSE.toml](REUSE.toml) maps every path: everything own (code, site text, records, rubrics and curation files) MIT, the SPDX License List data (license templates, license names, exception ids and the ids in the generated schemas) CC-BY-3.0, names and logos `LicenseRef-Brand`, the Inter font's license notice in `apps/site/public/licenses/`, which the site serves and the method page links, OFL-1.1. Third-party icons are used with credit: the GitHub Octicons paths of the repository link (MIT, copyright GitHub Inc.) carry a credit comment in `apps/site/src/layout/RepoWidget.tsx` and their own `REUSE.toml` annotation. A license text goes into `LICENSES/` with the first file that uses it.
 
 The values of `apps/collector/src/license-templates.json` are license texts of their stewards and are replaced only as a whole from a newer list version, never edited. The list version in the comment of `apps/collector/src/license-text.ts` and in the `REUSE.toml` comment of that file moves with it.
 

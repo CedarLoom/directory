@@ -303,7 +303,7 @@ msgid "item.flagsNote"
 msgstr "Flags point at patterns that need care. They are no audit: an item without flags is not proven safe."
 
 #. js-lingui-explicit-id
-#: src/layout/RepoWidget.tsx:29
+#: src/layout/RepoWidget.tsx:44
 msgid "repo.forks"
 msgstr "Forks"
 
@@ -954,7 +954,7 @@ msgid "signal.matchersSpecific"
 msgstr "Specific matchers"
 
 #. js-lingui-explicit-id
-#: src/layout/RepoWidget.tsx:20
+#: src/layout/RepoWidget.tsx:35
 msgid "repo.stars"
 msgstr "Stars"
 
