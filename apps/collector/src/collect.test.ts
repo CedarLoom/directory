@@ -1595,14 +1595,14 @@ it('publishes meta.json with the run time, the versions, the sources read and th
       files,
       new Map(),
       { ...report, requests: 123 },
-      { excluded: new Set(), license: 'CC0 1.0 Universal' },
+      { excluded: new Set(), license: 'MIT License' },
     ).files.get('meta.json') ?? '',
   );
   const versions = (version: unknown) => Object.fromEntries(Object.keys(firstItems).map((kind) => [kind, version]));
   expect(meta).toEqual({
     schemaVersion: 1,
     runAt: '2026-11-16T06:00:00Z',
-    license: 'CC0-1.0',
+    license: 'MIT',
     schemaVersions: versions(1),
     rubricVersions: {
       marketplace: '1.0.0',
@@ -1627,12 +1627,12 @@ it('changes only meta.json on a second run on the same run date without upstream
   const first = await run(fakeWorld(), '2026-11-16');
   const published = publication(first.files, new Map(), first.report, {
     excluded: new Set(),
-    license: 'CC0 1.0 Universal',
+    license: 'MIT License',
   }).files;
   const second = await run(fakeWorld(), '2026-11-16', published, { time: '18:00:00' });
   const { files, removed } = publication(second.files, published, second.report, {
     excluded: new Set(),
-    license: 'CC0 1.0 Universal',
+    license: 'MIT License',
   });
   expect({ changed: [...files.keys()], removed }).toEqual({ changed: ['meta.json'], removed: [] });
 });

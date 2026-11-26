@@ -153,8 +153,8 @@ function Policies() {
       </Title>
       <Text>
         <Trans id="method.license">
-          The Directory's own data is released under CC0 1.0. Names and descriptions of listed items belong to their
-          authors; the Directory links to them and copies no description.
+          The Directory's own data is released under the MIT license. Names and descriptions of listed items belong to
+          their authors; the Directory links to them and copies no description.
         </Trans>
       </Text>
       <Text>

@@ -20,7 +20,7 @@ import { checkRun } from './validation.ts';
 
 const defaultExclusions = fileURLToPath(new URL('../../../curation/exclusions.json', import.meta.url));
 const rubricsFolder = fileURLToPath(new URL('../../../rubrics', import.meta.url));
-const dataLicense = fileURLToPath(new URL('../../../LICENSES/CC0-1.0.txt', import.meta.url));
+const dataLicense = fileURLToPath(new URL('../../../LICENSE', import.meta.url));
 // A hard cap well under the 1,000 requests per hour of the workflow token; repository facts take one request per 50 registry servers.
 const requestCap = 600;
 // GitHub's secondary limit allows 900 REST points per minute; one request per second stays far below it.
