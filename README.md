@@ -1,5 +1,7 @@
 # CedarLoom Directory
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-eikelandin-db61a2?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/eikelandin)
+
 The CedarLoom Directory lists plugins, skills and other extensions for Claude Code with links to their sources, published facts and a score from an open rubric, so you can find one that fits and see why it scored as it did.
 
 | Path                 | Holds                                             |
