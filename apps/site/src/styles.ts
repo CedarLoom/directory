@@ -18,5 +18,6 @@ import '@mantine/core/styles/Table.css';
 import '@mantine/core/styles/ScrollArea.css';
 import '@mantine/core/styles/Title.css';
 import '@mantine/core/styles/UnstyledButton.css';
+import '@mantine/core/styles/VisuallyHidden.css';
 import './theme/tokens.css';
 import './site.css';

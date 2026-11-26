@@ -1,0 +1,80 @@
+name: Pages
+
+# Builds the site in apps/site on pull requests and, from main, publishes it to the root of the gh-pages branch, which
+# GitHub Pages serves at /directory/. The deploy keeps pr-preview/, the previews of .github/workflows/preview.yml, and
+# rebases instead of force-pushing so a preview pushed at the same time survives. The site reads the rubrics and the
+# workspace packages, so those are in the paths too.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/site/**"
+      - "packages/**"
+      - "rubrics/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/actions/**"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    paths:
+      - "apps/site/**"
+      - "packages/**"
+      - "rubrics/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/actions/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+# A deploy on main is never cancelled by the next push; it waits.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    if: github.repository == 'CedarLoom/directory'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/site-build
+        with:
+          base-url: /directory/
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: apps/site/dist/client
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    if: github.repository == 'CedarLoom/directory' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # The deploy action pushes to gh-pages from this checkout with its own token.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
+          path: apps/site/dist/client
+      - uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
+        with:
+          folder: apps/site/dist/client
+          branch: gh-pages
+          clean-exclude: pr-preview/
+          force: false

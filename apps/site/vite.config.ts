@@ -5,6 +5,7 @@ import { lingui } from '@lingui/vite-plugin';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { repoFacts } from './scripts/repo-facts.ts';
 
 const dataFolder = join(import.meta.dirname, 'data/v1');
 
@@ -42,7 +43,14 @@ const pages = [
   ...index.items.map((item) => `/${item.kind}/${item.id}/`),
 ].map((path) => ({ path, prerender: { enabled: true } }));
 
+// Anonymous requests from shared runner addresses hit GitHub's rate limit; the test builds run without a token and show no counts.
+const token = process.env['GITHUB_TOKEN'];
+const facts = token === undefined ? {} : await repoFacts('CedarLoom/directory', token, fetch);
+
 export default defineConfig({
+  // GitHub Pages serves the site under /directory/ and each preview under its own folder.
+  base: process.env['BASE_URL'] ?? '/',
+  define: { 'import.meta.env.REPO_FACTS': JSON.stringify(facts) },
   // scripts/weight.ts reads the chunk graph from the client manifest.
   environments: { client: { build: { manifest: true } } },
   // The prerender fetches pages from the preview server; `localhost` can resolve to an address it does not listen on.
