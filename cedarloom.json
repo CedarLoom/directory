@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 2,
+  "$schema": "https://cedarloom.github.io/cedarloom/schema/cedarloom.json",
+  "schemaVersion": 3,
   "startLabel": "cedarloom:ready-for-agent",
   "trustedAuthors": [],
   "merge": {
