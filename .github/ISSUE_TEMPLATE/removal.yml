@@ -1,7 +1,6 @@
 name: Remove an item
 description: Ask for an item to be removed from the Directory. No reason is needed.
 title: "Remove: "
-labels: [triage]
 body:
   - type: markdown
     attributes:
@@ -10,6 +9,13 @@ body:
         published data; earlier commits of the published data may still hold them. The star counts of its repository,
         which every item in the repository shares, are removed with the whole repository, or 90 days after no listed item
         of the repository uses them. Every request is answered within one month. This issue is public.
+  - type: textarea
+    id: plain
+    attributes:
+      label: In plain words
+      description: Which item you want removed, so that someone who does not know the Directory understands it. No reason is needed.
+    validations:
+      required: true
   - type: input
     id: item
     attributes:
