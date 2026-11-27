@@ -23,8 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     # The request caps allow 2,600 requests at one a second, plus the waits of the retries.
     timeout-minutes: 120
+    # Holds EXCLUSIONS_KEY.
+    environment: refresh
     permissions:
       contents: read
+    outputs:
+      # The data commit this run read and validated against, or "none" before the first refresh.
+      data-commit: ${{ steps.published.outputs.commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -32,12 +37,20 @@ jobs:
       - uses: ./.github/actions/setup
       - id: data
         uses: ./.github/actions/data-branch
-      - name: The published data folder
+      - id: published
+        name: The published data folder
+        # bash sets pipefail, so a failed git archive stops the run instead of leaving the folder empty.
+        shell: bash
         env:
           EXISTS: ${{ steps.data.outputs.exists }}
         run: |
           mkdir -p "$RUNNER_TEMP/published" "$RUNNER_TEMP/run"
-          if [ "$EXISTS" = true ]; then git archive origin/data | tar -x -C "$RUNNER_TEMP/published"; fi
+          if [ "$EXISTS" = true ]; then
+            git archive origin/data | tar -x -C "$RUNNER_TEMP/published"
+            echo "commit=$(git rev-parse --verify origin/data)" >> "$GITHUB_OUTPUT"
+          else
+            echo "commit=none" >> "$GITHUB_OUTPUT"
+          fi
       - name: Collect
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -60,6 +73,8 @@ jobs:
     needs: collect
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Holds EXCLUSIONS_KEY.
+    environment: refresh
     permissions:
       # Pushes the data branch.
       contents: write
@@ -75,6 +90,18 @@ jobs:
           path: ${{ runner.temp }}/run
       - id: data
         uses: ./.github/actions/data-branch
+      # A re-run of this job alone reuses an earlier candidate, which must not land on data published after it.
+      - name: The data branch is still the one collect read
+        env:
+          EXISTS: ${{ steps.data.outputs.exists }}
+          READ: ${{ needs.collect.outputs.data-commit }}
+        run: |
+          head=none
+          if [ "$EXISTS" = true ]; then head=$(git rev-parse --verify origin/data); fi
+          if [ "$head" != "$READ" ]; then
+            echo "::error::The data branch is at $head, but collect read ${READ:-nothing}. Use Re-run all jobs."
+            exit 1
+          fi
       - name: A work tree of the data branch, which the first refresh starts
         env:
           EXISTS: ${{ steps.data.outputs.exists }}
