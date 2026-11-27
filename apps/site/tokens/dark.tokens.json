@@ -17,13 +17,13 @@
       "$value": { "colorSpace": "srgb", "components": [0.6745, 0.6902, 0.7529], "hex": "#acb0c0" }
     },
     "accent": {
-      "$value": { "colorSpace": "srgb", "components": [0.302, 0.6706, 0.9686], "hex": "#4dabf7" }
+      "$value": { "colorSpace": "srgb", "components": [0.498, 0.749, 0.651], "hex": "#7fbfa6" }
     },
     "accent-hover": {
-      "$value": { "colorSpace": "srgb", "components": [0.4549, 0.7529, 0.9882], "hex": "#74c0fc" }
+      "$value": { "colorSpace": "srgb", "components": [0.6235, 0.8157, 0.7373], "hex": "#9fd0bc" }
     },
     "accent-tint": {
-      "$value": { "colorSpace": "srgb", "components": [0.0902, 0.1647, 0.251], "hex": "#172a40" }
+      "$value": { "colorSpace": "srgb", "components": [0.0863, 0.1882, 0.1647], "hex": "#16302a" }
     },
     "on-accent": {
       "$value": { "colorSpace": "srgb", "components": [0.0627, 0.0706, 0.1059], "hex": "#10121b" }
@@ -32,7 +32,7 @@
       "$value": "{color.accent-hover}"
     },
     "link-hover": {
-      "$value": { "colorSpace": "srgb", "components": [0.8157, 0.9216, 1], "hex": "#d0ebff" }
+      "$value": { "colorSpace": "srgb", "components": [0.8275, 0.9255, 0.8863], "hex": "#d3ece2" }
     },
     "line": {
       "$value": { "colorSpace": "srgb", "components": [0.1843, 0.1961, 0.2471], "hex": "#2f323f" }
