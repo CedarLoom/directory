@@ -28,9 +28,10 @@ on:
 
 permissions: {}
 
-# A deploy on main is never cancelled by the next push; it waits.
+# A deploy on main is never cancelled by the next push; it waits. A literal name, as a called workflow reports its
+# caller's name: a push and a refresh never deploy at once.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: pages-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

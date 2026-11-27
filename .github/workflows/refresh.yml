@@ -11,14 +11,15 @@ on:
 permissions: {}
 
 # Two refreshes never push the data branch at once; a running refresh is never cancelled. Pages, which this workflow
-# calls, holds its own group.
+# calls, holds the group of its deploys from main, which its own runs share.
 concurrency:
   group: refresh
   cancel-in-progress: false
 
 jobs:
   collect:
-    if: github.repository == 'CedarLoom/directory'
+    # Pages deploys only from main, so a refresh from another branch would publish data the site never shows.
+    if: github.repository == 'CedarLoom/directory' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # The request caps allow 2,600 requests at one a second, plus the waits of the retries.
     timeout-minutes: 120
