@@ -35,7 +35,7 @@ msgstr "{0} below {1}"
 #. js-lingui-explicit-id
 #. placeholder {0}: shown.length
 #. placeholder {1}: rows.length
-#: src/list/ListPage.tsx:86
+#: src/list/ListPage.tsx:74
 msgid "list.count"
 msgstr "{0} of {1} items"
 
@@ -85,7 +85,7 @@ msgid "method.gate"
 msgstr "{signals}: no points without {gate}, so an empty item gets none."
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:57
+#: src/item/ItemFacts.tsx:51
 msgid "item.stars"
 msgstr "{stars} stars on the whole repository, counted {date}"
 
@@ -170,7 +170,7 @@ msgid "maintenance.archived"
 msgstr "Archived"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:41
+#: src/item/ItemFacts.tsx:35
 msgid "item.archived"
 msgstr "Archived"
 
@@ -220,7 +220,7 @@ msgid "columns.label"
 msgstr "Columns"
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:98
+#: src/list/ListPage.tsx:86
 msgid "list.columns"
 msgstr "Columns"
 
@@ -230,7 +230,7 @@ msgid "signal.recentCommits"
 msgstr "Commits in the last 90 days"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:30
+#: src/item/ItemFacts.tsx:24
 msgid "item.recentCommits"
 msgstr "Commits in the last 90 days"
 
@@ -305,7 +305,7 @@ msgid "signal.versionPinned"
 msgstr "Exact package versions"
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:92
+#: src/list/ListPage.tsx:80
 msgid "list.filters"
 msgstr "Filters"
 
@@ -390,7 +390,7 @@ msgid "kinds.hook"
 msgstr "Hooks"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:207
+#: src/labels.ts:210
 msgid "groupSentence.token-cost"
 msgstr "How few tokens the item adds to Claude's context, from {signals}: fewer tokens earn more points."
 
@@ -420,7 +420,7 @@ msgid "method.ownInterest.ownItems"
 msgstr "Items of CedarLoom's maker get no exception: they are read from the same sources and scored with the same rubric as every other item, and no score is set by hand."
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:104
+#: src/list/ListPage.tsx:92
 msgid "list.caption"
 msgstr "Items, sorted by the chosen column"
 
@@ -435,7 +435,7 @@ msgid "filter.kinds"
 msgstr "Kind"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:71
+#: src/item/ItemFacts.tsx:65
 msgid "item.kind"
 msgstr "Kind"
 
@@ -455,12 +455,12 @@ msgid "column.pushedAt"
 msgstr "Last push"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:27
+#: src/item/ItemFacts.tsx:21
 msgid "item.lastPush"
 msgstr "Last push"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:33
+#: src/item/ItemFacts.tsx:27
 msgid "item.release"
 msgstr "Latest release"
 
@@ -485,7 +485,7 @@ msgid "filter.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:72
+#: src/item/ItemFacts.tsx:66
 msgid "item.license"
 msgstr "License"
 
@@ -500,7 +500,7 @@ msgid "list.listed"
 msgstr "listed"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:84
+#: src/item/ItemFacts.tsx:78
 msgid "item.listedIn"
 msgstr "Listed in"
 
@@ -650,7 +650,7 @@ msgid "item.notScored"
 msgstr "No rubric has scored this item yet."
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:35
+#: src/item/ItemFacts.tsx:29
 msgid "item.noRelease"
 msgstr "none"
 
@@ -695,7 +695,7 @@ msgid "list.notMeasured"
 msgstr "not measured"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:53
+#: src/item/ItemFacts.tsx:47
 #: src/item/ScoreBreakdown.tsx:30
 msgid "item.notMeasured"
 msgstr "not measured"
@@ -736,7 +736,7 @@ msgid "kinds.output-style"
 msgstr "Output styles"
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:117
+#: src/list/ListPage.tsx:105
 msgid "list.page"
 msgstr "Page {item}"
 
@@ -771,7 +771,7 @@ msgid "item.points"
 msgstr "Points"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:80
+#: src/item/ItemFacts.tsx:74
 msgid "item.popularity"
 msgstr "Popularity"
 
@@ -976,7 +976,7 @@ msgid "license.source-available"
 msgstr "Source available"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:77
+#: src/item/ItemFacts.tsx:71
 msgid "item.licenseSource"
 msgstr "Source: {licenseSource}"
 
@@ -1036,12 +1036,12 @@ msgid "flag.mcp-stdio-unpinned-package"
 msgstr "Starts a local MCP server from a package without an exact version."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:211
+#: src/labels.ts:214
 msgid "groupSentence.safety"
 msgstr "Starts at full points from {signals}; each flag below takes points off or gives some back, between 0 and full points."
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:86
+#: src/item/ItemFacts.tsx:80
 msgid "item.tags"
 msgstr "Tags"
 
@@ -1181,12 +1181,12 @@ msgid "groupSentence.quality"
 msgstr "Whether the item is complete and well formed, from {signals}."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:216
+#: src/labels.ts:219
 msgid "groupSentence.evals"
 msgstr "Whether the item ships evals or tests, from {signals}."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:217
+#: src/labels.ts:220
 msgid "groupSentence.provenance"
 msgstr "Whether the item's origin can be traced, from {signals}."
 
@@ -1206,7 +1206,7 @@ msgid "license.withheld"
 msgstr "Withheld: no license granted"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:42
+#: src/item/ItemFacts.tsx:36
 #: src/item/ScoreBreakdown.tsx:18
 msgid "item.yes"
 msgstr "yes"
