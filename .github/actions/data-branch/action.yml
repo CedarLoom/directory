@@ -1,0 +1,21 @@
+name: Data branch
+description: Fetches the data branch, which holds the published data folder, as origin/data when the repository has one.
+outputs:
+  exists:
+    description: '"true" when origin/data holds the data branch, "false" before the first refresh created it.'
+    value: ${{ steps.fetch.outputs.exists }}
+runs:
+  using: composite
+  steps:
+    - id: fetch
+      shell: bash
+      run: |
+        if git ls-remote --exit-code --heads origin refs/heads/data > /dev/null; then
+          git fetch --no-tags --depth=1 origin +refs/heads/data:refs/remotes/origin/data
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+        else
+          status=$?
+          # 2 is no such branch; any other failure must not pass for a missing branch.
+          if [ "$status" -ne 2 ]; then exit "$status"; fi
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+        fi

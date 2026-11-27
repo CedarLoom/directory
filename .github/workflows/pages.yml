@@ -23,6 +23,8 @@ on:
       - ".github/actions/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
+  # The refresh deploys the site after each push of the data branch.
+  workflow_call:
 
 permissions: {}
 
