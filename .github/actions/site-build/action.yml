@@ -1,5 +1,5 @@
 name: Site build
-description: Builds the site from the fixture data for GitHub Pages under the given base URL.
+description: Builds the site for GitHub Pages under the given base URL, from the data branch or, on pull requests and before the first refresh, from the fixtures.
 inputs:
   base-url:
     description: The path the site is served under, with a leading and a trailing slash.
@@ -8,13 +8,20 @@ runs:
   using: composite
   steps:
     - uses: ./.github/actions/setup
-    # No collected data is published yet: the site builds from the fixtures and says so in its header.
-    - run: cp -R apps/site/fixtures/data apps/site/data
+    - id: data
+      if: github.event_name != 'pull_request'
+      uses: ./.github/actions/data-branch
+    - if: steps.data.outputs.exists == 'true'
+      run: mkdir -p apps/site/data/v1 && git archive origin/data | tar -x -C apps/site/data/v1
+      shell: bash
+    # Without collected data the site builds from the fixtures and says so in its header.
+    - if: steps.data.outputs.exists != 'true'
+      run: cp -R apps/site/fixtures/data apps/site/data
       shell: bash
     # The token lets the build read the star and fork counts for the header; the build runs without them when GitHub fails.
     - run: pnpm --filter @directory/site run build
       shell: bash
       env:
         BASE_URL: ${{ inputs.base-url }}
-        VITE_FIXTURE_DATA: "true"
+        VITE_FIXTURE_DATA: ${{ steps.data.outputs.exists != 'true' }}
         GITHUB_TOKEN: ${{ github.token }}
