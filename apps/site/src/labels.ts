@@ -1,7 +1,8 @@
 import type { I18n, MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import type { Flag, ItemRecord, Kind, LicenseClass, Maintenance, RecentCommits } from './data-types.ts';
+import type { Flag, ItemRecord, Kind, LicenseClass, Maintenance, RecentCommits, Rubric } from './data-types.ts';
 import type { ColumnId } from './list-search.ts';
+import type { ScoreBand } from './score-band.ts';
 
 export const kindLabels = {
   marketplace: msg({ id: 'kind.marketplace', message: 'Marketplace' }),
@@ -175,3 +176,49 @@ export const columnLabels = {
   pushedAt: msg({ id: 'column.pushedAt', message: 'Last push' }),
   flagCount: msg({ id: 'column.flagCount', message: 'Safety flags' }),
 } satisfies Record<ColumnId, MessageDescriptor>;
+
+export const scoreBandLabels = {
+  high: msg({ id: 'band.high', message: 'High' }),
+  medium: msg({ id: 'band.medium', message: 'Medium' }),
+  low: msg({ id: 'band.low', message: 'Low' }),
+  'very-low': msg({ id: 'band.very-low', message: 'Very low' }),
+} satisfies Record<ScoreBand, MessageDescriptor>;
+
+type Group = Rubric['signals'][number]['group'];
+
+export const groupLabels = {
+  maintenance: msg({ id: 'group.maintenance', message: 'Maintenance' }),
+  license: msg({ id: 'group.license', message: 'License' }),
+  quality: msg({ id: 'group.quality', message: 'Quality' }),
+  'token-cost': msg({ id: 'group.token-cost', message: 'Token cost' }),
+  safety: msg({ id: 'group.safety', message: 'Safety' }),
+  evals: msg({ id: 'group.evals', message: 'Evals' }),
+  provenance: msg({ id: 'group.provenance', message: 'Provenance' }),
+} satisfies Record<Group, MessageDescriptor>;
+
+/** What each rubric group rewards, with `signals` the names of the group's signals in the rubric that scored the item. */
+export const groupSentences = {
+  maintenance: msg({
+    id: 'groupSentence.maintenance',
+    message: 'How recently and how often the repository changes, from {signals}.',
+  }),
+  license: msg({ id: 'groupSentence.license', message: 'Whether a license grants use of the item, from {signals}.' }),
+  quality: msg({
+    id: 'groupSentence.quality',
+    message: 'Whether the item is complete and well formed, from {signals}.',
+  }),
+  'token-cost': msg({
+    id: 'groupSentence.token-cost',
+    message: "How few tokens the item adds to Claude's context, from {signals}: fewer tokens earn more points.",
+  }),
+  safety: msg({
+    id: 'groupSentence.safety',
+    message:
+      'Starts at full points from {signals}; each flag below takes points off or gives some back, between 0 and full points.',
+  }),
+  evals: msg({ id: 'groupSentence.evals', message: 'Whether the item ships evals or tests, from {signals}.' }),
+  provenance: msg({
+    id: 'groupSentence.provenance',
+    message: "Whether the item's origin can be traced, from {signals}.",
+  }),
+} satisfies Record<Group, MessageDescriptor>;

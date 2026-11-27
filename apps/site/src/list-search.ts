@@ -6,15 +6,15 @@ import { kinds, licenseClasses, maintenanceStates } from './vocabulary.ts';
 z.config({ jitless: true });
 
 export const columnIds = [
+  'score',
   'name',
   'kind',
-  'score',
+  'licenseClass',
+  'pushedAt',
+  'listedOfficial',
+  'flagCount',
   'stars',
   'starsGained30d',
-  'licenseClass',
-  'listedOfficial',
-  'pushedAt',
-  'flagCount',
 ] as const;
 export type ColumnId = (typeof columnIds)[number];
 
@@ -32,7 +32,7 @@ export const defaultSearch = {
   noFlags: false,
   official: false,
   sort: 'score.desc',
-  cols: ['name', 'kind', 'score', 'stars', 'starsGained30d', 'pushedAt'] as ColumnId[],
+  cols: ['score', 'name', 'kind', 'licenseClass', 'pushedAt', 'listedOfficial', 'flagCount'] as ColumnId[],
   page: 1,
 };
 

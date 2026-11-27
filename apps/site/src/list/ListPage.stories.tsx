@@ -39,15 +39,15 @@ export const EveryColumn: Story = {
   args: {
     initial: listSearch.parse({
       cols: [
+        'score',
         'name',
         'kind',
-        'score',
+        'licenseClass',
+        'pushedAt',
+        'listedOfficial',
+        'flagCount',
         'stars',
         'starsGained30d',
-        'licenseClass',
-        'listedOfficial',
-        'pushedAt',
-        'flagCount',
       ],
     }),
   },

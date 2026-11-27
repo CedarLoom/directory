@@ -6,8 +6,10 @@ import { flagLabels } from '../labels.ts';
 import { ExternalLink } from '../layout/ExternalLink.tsx';
 import { newIssueUrl } from '../new-issue-url.ts';
 import { ItemFacts } from './ItemFacts.tsx';
+import { ItemSummary } from './ItemSummary.tsx';
 import { ScoreBreakdown } from './ScoreBreakdown.tsx';
 import { ScoreHistory } from './ScoreHistory.tsx';
+import { WhyScore } from './WhyScore.tsx';
 
 function Links({ links }: { links: ItemRecord['links'] }) {
   return (
@@ -58,16 +60,20 @@ function Flags({ flags }: { flags: ItemRecord['flags'] }) {
   );
 }
 
-/** One item: its facts, links, score breakdown, flags and score history. */
+/** One item: its facts at a glance, why it has its score, links, all facts, score breakdown, flags and score history. */
 export function ItemPage({ item, runAt }: { item: Item; runAt: string }) {
   const { i18n } = useLingui();
-  const { record, history, popularity } = item;
+  const { record, history, popularity, rubric } = item;
   const changedAt = i18n.date(record.changedAt, { dateStyle: 'long', timeZone: 'UTC' });
   const runDate = i18n.date(runAt, { dateStyle: 'long', timeZone: 'UTC' });
   return (
     <Stack gap="lg">
       <Title order={1}>{record.name}</Title>
+      <ItemSummary record={record} />
       <Links links={record.links} />
+      {record.score !== undefined && rubric !== undefined && (
+        <WhyScore record={record} score={record.score} rubric={rubric} />
+      )}
       <ItemFacts record={record} popularity={popularity} />
       {record.score === undefined ? (
         <Text>
