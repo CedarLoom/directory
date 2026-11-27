@@ -36,28 +36,14 @@ function parseSort(sort: string): SortingState[number] {
 
 /** The filter fields of the search, as an object that a sort, column or page change leaves as it is. */
 function useFilters(search: ListSearch): Filters {
-  const {
-    q,
-    kinds,
-    tag,
-    license,
-    fit,
-    maintenance,
-    scoreMin,
-    scoreMax,
-    starsMin,
-    starsMax,
-    gainMin,
-    noFlags,
-    official,
-  } = search;
+  const { q, kinds, tag, license, maintenance, scoreMin, scoreMax, starsMin, starsMax, gainMin, noFlags, official } =
+    search;
   return useMemo(
     () => ({
       q,
       kinds,
       tag,
       license,
-      fit,
       maintenance,
       scoreMin,
       scoreMax,
@@ -67,7 +53,7 @@ function useFilters(search: ListSearch): Filters {
       noFlags,
       official,
     }),
-    [q, kinds, tag, license, fit, maintenance, scoreMin, scoreMax, starsMin, starsMax, gainMin, noFlags, official],
+    [q, kinds, tag, license, maintenance, scoreMin, scoreMax, starsMin, starsMax, gainMin, noFlags, official],
   );
 }
 

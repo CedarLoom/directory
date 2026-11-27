@@ -130,8 +130,8 @@ function OwnInterest() {
         </List.Item>
         <List.Item>
           <Trans id="method.ownInterest.fit">
-            The CedarLoom fit fact on item pages and in the list is not part of the score. It reads "Not assessed" for
-            every item today.
+            The CedarLoom fit is not part of the score. It is not assessed for any item yet, so the list and the item
+            pages leave it out.
           </Trans>
         </List.Item>
         <List.Item>

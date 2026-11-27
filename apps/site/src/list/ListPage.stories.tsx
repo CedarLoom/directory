@@ -45,7 +45,6 @@ export const EveryColumn: Story = {
         'stars',
         'starsGained30d',
         'licenseClass',
-        'fit',
         'listedOfficial',
         'pushedAt',
         'flagCount',

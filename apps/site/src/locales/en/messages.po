@@ -28,7 +28,7 @@ msgstr "{0} | CedarLoom Directory"
 #. js-lingui-explicit-id
 #. placeholder {0}: shown.length
 #. placeholder {1}: rows.length
-#: src/list/ListPage.tsx:88
+#: src/list/ListPage.tsx:86
 msgid "list.count"
 msgstr "{0} of {1} items"
 
@@ -58,7 +58,7 @@ msgid "method.gate"
 msgstr "{signals}: no points without {gate}, so an empty item gets none."
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:58
+#: src/item/ItemFacts.tsx:57
 msgid "item.stars"
 msgstr "{stars} stars on the whole repository, counted {date}"
 
@@ -93,7 +93,7 @@ msgid "license.custom"
 msgstr "A license, no SPDX id detected"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:154
+#: src/labels.ts:147
 msgid "signal.registryActive"
 msgstr "Active in the MCP Registry"
 
@@ -113,17 +113,17 @@ msgid "list.title"
 msgstr "All items | CedarLoom Directory"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:112
+#: src/labels.ts:105
 msgid "flag.allowed-tools-unrestricted-bash"
 msgstr "Allows any shell command without asking."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:144
+#: src/labels.ts:137
 msgid "signal.metadataTokens"
 msgstr "Always-loaded tokens (estimate)"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:161
+#: src/labels.ts:154
 msgid "signal.alwaysOnComponents"
 msgstr "Always-on components"
 
@@ -133,22 +133,22 @@ msgid "filter.anyTag"
 msgstr "Any tag"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:76
+#: src/labels.ts:69
 msgid "maintenance.archived"
 msgstr "Archived"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:42
+#: src/item/ItemFacts.tsx:41
 msgid "item.archived"
 msgstr "Archived"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:143
+#: src/labels.ts:136
 msgid "signal.bodyLines"
 msgstr "Body lines"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:145
+#: src/labels.ts:138
 msgid "signal.bodyTokens"
 msgstr "Body tokens (estimate)"
 
@@ -166,21 +166,6 @@ msgstr "CedarLoom Directory"
 #: src/layout/SiteHeader.tsx:24
 msgid "nav.home"
 msgstr "CedarLoom Directory"
-
-#. js-lingui-explicit-id
-#: src/labels.ts:181
-msgid "column.fit"
-msgstr "CedarLoom fit"
-
-#. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:142
-msgid "filter.fit"
-msgstr "CedarLoom fit"
-
-#. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:81
-msgid "item.fit"
-msgstr "CedarLoom fit"
 
 #. js-lingui-explicit-id
 #: src/labels.ts:38
@@ -203,32 +188,27 @@ msgid "columns.label"
 msgstr "Columns"
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:100
+#: src/list/ListPage.tsx:98
 msgid "list.columns"
 msgstr "Columns"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:137
+#: src/labels.ts:130
 msgid "signal.recentCommits"
 msgstr "Commits in the last 90 days"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:31
+#: src/item/ItemFacts.tsx:30
 msgid "item.recentCommits"
 msgstr "Commits in the last 90 days"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:67
-msgid "fit.complements"
-msgstr "Complements CedarLoom"
-
-#. js-lingui-explicit-id
-#: src/labels.ts:162
+#: src/labels.ts:155
 msgid "signal.hasComponents"
 msgstr "Components"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:106
+#: src/labels.ts:99
 msgid "flag.mcp-remote"
 msgstr "Connects to a remote MCP server."
 
@@ -253,22 +233,22 @@ msgid "item.historyDate"
 msgstr "Date"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:142
+#: src/labels.ts:135
 msgid "signal.toolsDeclared"
 msgstr "Declares its tools"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:151
+#: src/labels.ts:144
 msgid "signal.transportDeclared"
 msgstr "Declares its transport"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:116
+#: src/labels.ts:109
 msgid "flag.agent-inherits-all-tools"
 msgstr "Declares no tools, so it can use every tool of the session."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:141
+#: src/labels.ts:134
 msgid "signal.descriptionLength"
 msgstr "Description length"
 
@@ -283,12 +263,12 @@ msgid "method.ownInterest.sameRubric"
 msgstr "Every item of a kind is scored with the same published rubric. No entry, score or position is paid for."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:152
+#: src/labels.ts:145
 msgid "signal.versionPinned"
 msgstr "Exact package versions"
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:94
+#: src/list/ListPage.tsx:92
 msgid "list.filters"
 msgstr "Filters"
 
@@ -323,37 +303,37 @@ msgid "method.group"
 msgstr "Group"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:157
+#: src/labels.ts:150
 msgid "signal.descriptionField"
 msgstr "Has a description field"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:84
+#: src/labels.ts:77
 msgid "flag.hook-match-all"
 msgstr "Has a hook that matches every tool call."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:164
+#: src/labels.ts:157
 msgid "signal.licenseField"
 msgstr "Has a license field that is neither blank nor withheld"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:156
+#: src/labels.ts:149
 msgid "signal.nameField"
 msgstr "Has a name field"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:138
+#: src/labels.ts:131
 msgid "signal.release"
 msgstr "Has a release"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:153
+#: src/labels.ts:146
 msgid "signal.versionLabel"
 msgstr "Has a version"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:98
+#: src/labels.ts:91
 msgid "flag.network-indicator"
 msgstr "Has hook commands with signs of network access."
 
@@ -373,12 +353,12 @@ msgid "item.install"
 msgstr "Install instructions"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:120
+#: src/labels.ts:113
 msgid "flag.install-command-source"
 msgstr "Installs by running a command."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:124
+#: src/labels.ts:117
 msgid "flag.unpinned-source"
 msgstr "Installs from a source not pinned to a commit or tag."
 
@@ -388,12 +368,12 @@ msgid "method.ownInterest.ownItems"
 msgstr "Items of CedarLoom's maker get no exception: they are read from the same sources and scored with the same rubric as every other item, and no score is set by hand."
 
 #. js-lingui-explicit-id
-#: src/list/ListPage.tsx:106
+#: src/list/ListPage.tsx:104
 msgid "list.caption"
 msgstr "Items, sorted by the chosen column"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:176
+#: src/labels.ts:169
 msgid "column.kind"
 msgstr "Kind"
 
@@ -403,7 +383,7 @@ msgid "filter.kinds"
 msgstr "Kind"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:72
+#: src/item/ItemFacts.tsx:71
 msgid "item.kind"
 msgstr "Kind"
 
@@ -413,32 +393,32 @@ msgid "list.lastPage"
 msgstr "Last page"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:136
+#: src/labels.ts:129
 msgid "signal.lastPush"
 msgstr "Last push"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:183
+#: src/labels.ts:175
 msgid "column.pushedAt"
 msgstr "Last push"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:28
+#: src/item/ItemFacts.tsx:27
 msgid "item.lastPush"
 msgstr "Last push"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:34
+#: src/item/ItemFacts.tsx:33
 msgid "item.release"
 msgstr "Latest release"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:139
+#: src/labels.ts:132
 msgid "signal.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:180
+#: src/labels.ts:173
 msgid "column.licenseClass"
 msgstr "License"
 
@@ -453,7 +433,7 @@ msgid "filter.license"
 msgstr "License"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:73
+#: src/item/ItemFacts.tsx:72
 msgid "item.license"
 msgstr "License"
 
@@ -463,22 +443,22 @@ msgid "method.policiesHeading"
 msgstr "License, corrections and removal"
 
 #. js-lingui-explicit-id
-#: src/list/columns.tsx:82
+#: src/list/columns.tsx:77
 msgid "list.listed"
 msgstr "listed"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:86
+#: src/item/ItemFacts.tsx:84
 msgid "item.listedIn"
 msgstr "Listed in"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:128
+#: src/labels.ts:121
 msgid "flag.listed-official-marketplace"
 msgstr "Listed in the official Anthropic marketplace."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:94
+#: src/labels.ts:87
 msgid "flag.mod-module"
 msgstr "Loads code modules into Claude Code as a mod."
 
@@ -493,12 +473,12 @@ msgid "group.maintenance"
 msgstr "Maintenance"
 
 #. js-lingui-explicit-id
-#: src/list/ListFilters.tsx:149
+#: src/list/ListFilters.tsx:142
 msgid "filter.maintenance"
 msgstr "Maintenance"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:159
+#: src/labels.ts:152
 msgid "signal.manifestFields"
 msgstr "Manifest fields"
 
@@ -511,11 +491,6 @@ msgstr "Marketplace"
 #: src/labels.ts:17
 msgid "kinds.marketplace"
 msgstr "Marketplaces"
-
-#. js-lingui-explicit-id
-#: src/labels.ts:69
-msgid "fit.may-conflict"
-msgstr "May conflict with CedarLoom"
 
 #. js-lingui-explicit-id
 #: src/item/ItemPage.tsx:27
@@ -553,17 +528,17 @@ msgid "method.title"
 msgstr "Method | CedarLoom Directory"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:175
+#: src/labels.ts:168
 msgid "column.name"
 msgstr "Name"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:155
+#: src/labels.ts:148
 msgid "signal.namespaceMatches"
 msgstr "Namespace matches the repository"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:107
+#: src/labels.ts:100
 msgid "flag.mcp-secrets-required"
 msgstr "Needs secrets such as API keys."
 
@@ -578,12 +553,12 @@ msgid "item.no"
 msgstr "no"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:160
+#: src/labels.ts:153
 msgid "signal.noRootClaudeMd"
 msgstr "No CLAUDE.md at the plugin root"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:150
+#: src/labels.ts:143
 msgid "signal.noDuplicateNames"
 msgstr "No duplicate names"
 
@@ -598,7 +573,7 @@ msgid "license.notDetected"
 msgstr "No license detected"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:75
+#: src/labels.ts:68
 msgid "maintenance.inactive"
 msgstr "No push in 90 days"
 
@@ -608,7 +583,7 @@ msgid "item.notScored"
 msgstr "No rubric has scored this item yet."
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:36
+#: src/item/ItemFacts.tsx:35
 msgid "item.noRelease"
 msgstr "none"
 
@@ -633,22 +608,17 @@ msgid "licenseSource.none"
 msgstr "none of the places the method page lists"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:70
-msgid "fit.not-assessed"
-msgstr "Not assessed"
-
-#. js-lingui-explicit-id
 #: src/list/columns.tsx:31
 msgid "list.notKnown"
 msgstr "not known"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:77
+#: src/labels.ts:70
 msgid "maintenance.unknown"
 msgstr "Not known"
 
 #. js-lingui-explicit-id
-#: src/list/columns.tsx:82
+#: src/list/columns.tsx:77
 msgid "list.notListed"
 msgstr "not listed"
 
@@ -658,13 +628,13 @@ msgid "list.notMeasured"
 msgstr "not measured"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:54
+#: src/item/ItemFacts.tsx:53
 #: src/item/ScoreBreakdown.tsx:30
 msgid "item.notMeasured"
 msgstr "not measured"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:182
+#: src/labels.ts:174
 msgid "column.listedOfficial"
 msgstr "Official listing"
 
@@ -694,12 +664,7 @@ msgid "kinds.output-style"
 msgstr "Output styles"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:68
-msgid "fit.overlaps"
-msgstr "Overlaps CedarLoom"
-
-#. js-lingui-explicit-id
-#: src/list/ListPage.tsx:119
+#: src/list/ListPage.tsx:117
 msgid "list.page"
 msgstr "Page {item}"
 
@@ -734,7 +699,7 @@ msgid "item.points"
 msgstr "Points"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:82
+#: src/item/ItemFacts.tsx:80
 msgid "item.popularity"
 msgstr "Popularity"
 
@@ -754,7 +719,7 @@ msgid "group.provenance"
 msgstr "Provenance"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:74
+#: src/labels.ts:67
 msgid "maintenance.active"
 msgstr "Pushed in the last 90 days"
 
@@ -779,22 +744,22 @@ msgid "method.rubricsHeading"
 msgstr "Rubrics"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:86
+#: src/labels.ts:79
 msgid "flag.monitor-background-command"
 msgstr "Runs a command in the background as a monitor."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:83
+#: src/labels.ts:76
 msgid "flag.hook-session-start"
 msgstr "Runs a hook when every session starts."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:108
+#: src/labels.ts:101
 msgid "flag.mcp-headers-helper"
 msgstr "Runs a local command for the headers of a remote MCP server."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:82
+#: src/labels.ts:75
 msgid "flag.hook-shell-command"
 msgstr "Runs shell commands from hooks."
 
@@ -804,12 +769,12 @@ msgid "group.safety"
 msgstr "Safety"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:146
+#: src/labels.ts:139
 msgid "signal.safety"
 msgstr "Safety flags"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:184
+#: src/labels.ts:176
 msgid "column.flagCount"
 msgstr "Safety flags"
 
@@ -824,7 +789,7 @@ msgid "method.penalties"
 msgstr "Safety points lost per flag:"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:177
+#: src/labels.ts:170
 msgid "column.score"
 msgstr "Score"
 
@@ -864,42 +829,42 @@ msgid "method.notMeasured.audit"
 msgstr "Security: safety flags point at patterns that need care; they are no audit, and an item without flags is not proven safe."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:85
+#: src/labels.ts:78
 msgid "flag.hook-http"
 msgstr "Sends hook events to a web address."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:149
+#: src/labels.ts:142
 msgid "signal.describedShare"
 msgstr "Share of described entries"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:148
+#: src/labels.ts:141
 msgid "signal.validEntryShare"
 msgstr "Share of valid entries"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:163
+#: src/labels.ts:156
 msgid "signal.hasEvals"
 msgstr "Ships evals"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:96
+#: src/labels.ts:89
 msgid "flag.bin-executables"
 msgstr "Ships executables that are added to the path."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:97
+#: src/labels.ts:90
 msgid "flag.scripts-present"
 msgstr "Ships scripts that the model may run."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:165
+#: src/labels.ts:158
 msgid "signal.testsShipped"
 msgstr "Ships tests"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:95
+#: src/labels.ts:88
 msgid "flag.workflow-code"
 msgstr "Ships workflow scripts that Claude Code runs as code."
 
@@ -939,7 +904,7 @@ msgid "license.source-available"
 msgstr "Source available"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:78
+#: src/item/ItemFacts.tsx:77
 msgid "item.licenseSource"
 msgstr "Source: {licenseSource}"
 
@@ -949,7 +914,7 @@ msgid "method.sourcesHeading"
 msgstr "Sources"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:147
+#: src/labels.ts:140
 msgid "signal.matchersSpecific"
 msgstr "Specific matchers"
 
@@ -959,12 +924,12 @@ msgid "repo.stars"
 msgstr "Stars"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:178
+#: src/labels.ts:171
 msgid "column.stars"
 msgstr "Stars (repository)"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:179
+#: src/labels.ts:172
 msgid "column.starsGained30d"
 msgstr "Stars +30d (repository)"
 
@@ -984,17 +949,17 @@ msgid "filter.starsMax"
 msgstr "Stars to"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:90
+#: src/labels.ts:83
 msgid "flag.lsp-server-command"
 msgstr "Starts a language server program."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:102
+#: src/labels.ts:95
 msgid "flag.mcp-stdio-unpinned-package"
 msgstr "Starts a local MCP server from a package without an exact version."
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:88
+#: src/item/ItemFacts.tsx:86
 msgid "item.tags"
 msgstr "Tags"
 
@@ -1006,7 +971,7 @@ msgstr "The CedarLoom Directory is not affiliated with or endorsed by Anthropic.
 #. js-lingui-explicit-id
 #: src/method/MethodPage.tsx:132
 msgid "method.ownInterest.fit"
-msgstr "The CedarLoom fit fact on item pages and in the list is not part of the score. It reads \"Not assessed\" for every item today."
+msgstr "The CedarLoom fit is not part of the score. It is not assessed for any item yet, so the list and the item pages leave it out."
 
 #. js-lingui-explicit-id
 #: src/item/ItemPage.tsx:48
@@ -1089,12 +1054,12 @@ msgid "method.notMeasured.tokens"
 msgstr "Token counts are estimates: characters divided by four."
 
 #. js-lingui-explicit-id
-#: src/labels.ts:158
+#: src/labels.ts:151
 msgid "signal.tokens"
 msgstr "Tokens (estimate)"
 
 #. js-lingui-explicit-id
-#: src/labels.ts:140
+#: src/labels.ts:133
 msgid "signal.nameValid"
 msgstr "Valid name"
 
@@ -1119,7 +1084,7 @@ msgid "license.withheld"
 msgstr "Withheld: no license granted"
 
 #. js-lingui-explicit-id
-#: src/item/ItemFacts.tsx:43
+#: src/item/ItemFacts.tsx:42
 #: src/item/ScoreBreakdown.tsx:18
 msgid "item.yes"
 msgstr "yes"

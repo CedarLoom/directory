@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { FitLabel, Kind, LicenseClass, Maintenance } from './data-types.ts';
-import { fitLabels, kinds, licenseClasses, maintenanceStates } from './vocabulary.ts';
+import type { Kind, LicenseClass, Maintenance } from './data-types.ts';
+import { kinds, licenseClasses, maintenanceStates } from './vocabulary.ts';
 
 // The page policy allows no eval, and zod's `new Function` probe would be reported as a violation.
 z.config({ jitless: true });
@@ -12,7 +12,6 @@ export const columnIds = [
   'stars',
   'starsGained30d',
   'licenseClass',
-  'fit',
   'listedOfficial',
   'pushedAt',
   'flagCount',
@@ -24,7 +23,6 @@ export const defaultSearch = {
   kinds: [] as Kind[],
   tag: '',
   license: [] as LicenseClass[],
-  fit: [] as FitLabel[],
   maintenance: [] as Maintenance[],
   scoreMin: undefined as number | undefined,
   scoreMax: undefined as number | undefined,
@@ -53,7 +51,6 @@ export const listSearch = z.object({
   kinds: field(z.array(z.enum(kinds)), defaultSearch.kinds),
   tag: field(z.string().max(64), defaultSearch.tag),
   license: field(z.array(z.enum(licenseClasses)), defaultSearch.license),
-  fit: field(z.array(z.enum(fitLabels)), defaultSearch.fit),
   maintenance: field(z.array(z.enum(maintenanceStates)), defaultSearch.maintenance),
   scoreMin: bound(z.number().min(0).max(100)),
   scoreMax: bound(z.number().min(0).max(100)),

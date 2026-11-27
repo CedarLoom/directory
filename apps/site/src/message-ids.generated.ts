@@ -3,7 +3,6 @@
 declare module '@lingui/core' {
   interface Register {
     messageIds:
-      | 'column.fit'
       | 'column.flagCount'
       | 'column.kind'
       | 'column.licenseClass'
@@ -18,7 +17,6 @@ declare module '@lingui/core' {
       | 'commits.5-or-more'
       | 'commits.none'
       | 'filter.anyTag'
-      | 'filter.fit'
       | 'filter.gainMin'
       | 'filter.kinds'
       | 'filter.license'
@@ -31,10 +29,6 @@ declare module '@lingui/core' {
       | 'filter.starsMax'
       | 'filter.starsMin'
       | 'filter.tag'
-      | 'fit.complements'
-      | 'fit.may-conflict'
-      | 'fit.not-assessed'
-      | 'fit.overlaps'
       | 'flag.agent-inherits-all-tools'
       | 'flag.allowed-tools-unrestricted-bash'
       | 'flag.bin-executables'
@@ -67,7 +61,6 @@ declare module '@lingui/core' {
       | 'item.archived'
       | 'item.closedGate'
       | 'item.dataAsOf'
-      | 'item.fit'
       | 'item.flagsHeading'
       | 'item.flagsNone'
       | 'item.flagsNote'

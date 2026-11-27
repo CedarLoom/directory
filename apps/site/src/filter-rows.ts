@@ -35,7 +35,6 @@ export function filterRows(rows: readonly Row[], filters: ListFilters, runAt: st
     (row) => oneOf(filters.kinds, row.kind),
     (row) => filters.tag === '' || row.tags.includes(filters.tag),
     (row) => oneOf(filters.license, row.licenseClass),
-    (row) => oneOf(filters.fit, row.fit),
     (row) => oneOf(filters.maintenance, maintenanceOf(row, runAt)),
     (row) => within(row.score, filters.scoreMin, filters.scoreMax),
     (row) => within(row.stars, filters.starsMin, filters.starsMax),

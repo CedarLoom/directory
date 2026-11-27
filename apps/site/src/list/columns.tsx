@@ -5,7 +5,7 @@ import { Anchor } from '@mantine/core';
 import { createColumnHelper } from '@tanstack/react-table';
 import { createLink } from '@tanstack/react-router';
 import type { Row } from '../data-types.ts';
-import { columnLabels, fitLabels, kindLabels, licenseClassLabels } from '../labels.ts';
+import { columnLabels, kindLabels, licenseClassLabels } from '../labels.ts';
 import type { ColumnId } from '../list-search.ts';
 import { features } from './table-features.ts';
 
@@ -69,11 +69,6 @@ export const columns = helper.columns([
   helper.accessor('licenseClass', {
     header: () => <Label descriptor={columnLabels.licenseClass} />,
     cell: ({ getValue }) => <Label descriptor={licenseClassLabels[getValue()]} />,
-    sortFn: 'text',
-  }),
-  helper.accessor('fit', {
-    header: () => <Label descriptor={columnLabels.fit} />,
-    cell: ({ getValue }) => <Label descriptor={fitLabels[getValue()]} />,
     sortFn: 'text',
   }),
   helper.accessor('listedOfficial', {

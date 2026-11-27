@@ -1,6 +1,6 @@
 import type { I18n, MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import type { Flag, FitLabel, ItemRecord, Kind, LicenseClass, Maintenance, RecentCommits } from './data-types.ts';
+import type { Flag, ItemRecord, Kind, LicenseClass, Maintenance, RecentCommits } from './data-types.ts';
 import type { ColumnId } from './list-search.ts';
 
 export const kindLabels = {
@@ -62,13 +62,6 @@ export const recentCommitsLabels = {
   '1-4': msg({ id: 'commits.1-4', message: '1 to 4' }),
   '5+': msg({ id: 'commits.5-or-more', message: '5 or more' }),
 } satisfies Record<RecentCommits, MessageDescriptor>;
-
-export const fitLabels = {
-  complements: msg({ id: 'fit.complements', message: 'Complements CedarLoom' }),
-  overlaps: msg({ id: 'fit.overlaps', message: 'Overlaps CedarLoom' }),
-  'may-conflict': msg({ id: 'fit.may-conflict', message: 'May conflict with CedarLoom' }),
-  'not-assessed': msg({ id: 'fit.not-assessed', message: 'Not assessed' }),
-} satisfies Record<FitLabel, MessageDescriptor>;
 
 export const maintenanceLabels = {
   active: msg({ id: 'maintenance.active', message: 'Pushed in the last 90 days' }),
@@ -178,7 +171,6 @@ export const columnLabels = {
   stars: msg({ id: 'column.stars', message: 'Stars (repository)' }),
   starsGained30d: msg({ id: 'column.starsGained30d', message: 'Stars +30d (repository)' }),
   licenseClass: msg({ id: 'column.licenseClass', message: 'License' }),
-  fit: msg({ id: 'column.fit', message: 'CedarLoom fit' }),
   listedOfficial: msg({ id: 'column.listedOfficial', message: 'Official listing' }),
   pushedAt: msg({ id: 'column.pushedAt', message: 'Last push' }),
   flagCount: msg({ id: 'column.flagCount', message: 'Safety flags' }),
