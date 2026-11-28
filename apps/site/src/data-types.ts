@@ -7,7 +7,6 @@ export type IndexFile = z.infer<typeof indexFile>;
 export type Row = IndexFile['items'][number];
 export type Kind = Row['kind'];
 export type LicenseClass = Row['licenseClass'];
-export type FitLabel = Row['fit'];
 export type MetaFile = z.infer<typeof metaFile>;
 export type Flag = ItemRecord['flags'][number];
 export type RecentCommits = NonNullable<ItemRecord['maintenance']>['recentCommits'];

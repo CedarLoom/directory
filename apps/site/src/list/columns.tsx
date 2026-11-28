@@ -5,8 +5,9 @@ import { Anchor } from '@mantine/core';
 import { createColumnHelper } from '@tanstack/react-table';
 import { createLink } from '@tanstack/react-router';
 import type { Row } from '../data-types.ts';
-import { columnLabels, fitLabels, kindLabels, licenseClassLabels } from '../labels.ts';
+import { columnLabels, kindLabels, licenseClassLabels } from '../labels.ts';
 import type { ColumnId } from '../list-search.ts';
+import { LastPush, OfficialListing, SafetyLine, ScoreBadge } from '../glance/GlanceValues.tsx';
 import { features } from './table-features.ts';
 
 const helper = createColumnHelper<typeof features, Row>();
@@ -26,12 +27,6 @@ function NumberCell({ value, signed = false }: { value: number | undefined; sign
   return i18n.number(value, { maximumFractionDigits: 1, signDisplay: signed ? 'exceptZero' : 'auto' });
 }
 
-function DateCell({ value }: { value: string | undefined }) {
-  const { i18n } = useLingui();
-  if (value === undefined) return <Trans id="list.notKnown">not known</Trans>;
-  return i18n.date(value, { dateStyle: 'medium', timeZone: 'UTC' });
-}
-
 function Label({ descriptor }: { descriptor: MessageDescriptor }) {
   return useLingui()._(descriptor);
 }
@@ -41,6 +36,11 @@ const numeric = { sortFn: 'basic', sortDescFirst: true, sortUndefined: 'last' } 
 
 /** The list columns by id; column ids are the values of the search parameters `sort` and `cols`. */
 export const columns = helper.columns([
+  helper.accessor('score', {
+    header: () => <Label descriptor={columnLabels.score} />,
+    cell: ({ getValue }) => <ScoreBadge score={getValue()} />,
+    ...numeric,
+  }),
   helper.accessor('name', {
     header: () => <Label descriptor={columnLabels.name} />,
     cell: ({ row }) => <NameCell row={row.original} />,
@@ -51,10 +51,28 @@ export const columns = helper.columns([
     cell: ({ getValue }) => <Label descriptor={kindLabels[getValue()]} />,
     sortFn: 'text',
   }),
-  helper.accessor('score', {
-    header: () => <Label descriptor={columnLabels.score} />,
-    cell: ({ getValue }) => <NumberCell value={getValue()} />,
-    ...numeric,
+  helper.accessor('licenseClass', {
+    header: () => <Label descriptor={columnLabels.licenseClass} />,
+    cell: ({ getValue }) => <Label descriptor={licenseClassLabels[getValue()]} />,
+    sortFn: 'text',
+  }),
+  helper.accessor('pushedAt', {
+    header: () => <Label descriptor={columnLabels.pushedAt} />,
+    cell: ({ getValue }) => <LastPush pushedAt={getValue()} />,
+    sortFn: 'text',
+    sortDescFirst: true,
+    sortUndefined: 'last',
+  }),
+  helper.accessor('listedOfficial', {
+    header: () => <Label descriptor={columnLabels.listedOfficial} />,
+    cell: ({ getValue }) => <OfficialListing listed={getValue()} />,
+    sortFn: 'basic',
+    sortDescFirst: true,
+  }),
+  helper.accessor('flagCount', {
+    header: () => <Label descriptor={columnLabels.flagCount} />,
+    cell: ({ getValue }) => <SafetyLine flagCount={getValue()} />,
+    sortFn: 'basic',
   }),
   helper.accessor('stars', {
     header: () => <Label descriptor={columnLabels.stars} />,
@@ -66,35 +84,6 @@ export const columns = helper.columns([
     cell: ({ getValue }) => <NumberCell value={getValue()} signed />,
     ...numeric,
   }),
-  helper.accessor('licenseClass', {
-    header: () => <Label descriptor={columnLabels.licenseClass} />,
-    cell: ({ getValue }) => <Label descriptor={licenseClassLabels[getValue()]} />,
-    sortFn: 'text',
-  }),
-  helper.accessor('fit', {
-    header: () => <Label descriptor={columnLabels.fit} />,
-    cell: ({ getValue }) => <Label descriptor={fitLabels[getValue()]} />,
-    sortFn: 'text',
-  }),
-  helper.accessor('listedOfficial', {
-    header: () => <Label descriptor={columnLabels.listedOfficial} />,
-    cell: ({ getValue }) =>
-      getValue() ? <Trans id="list.listed">listed</Trans> : <Trans id="list.notListed">not listed</Trans>,
-    sortFn: 'basic',
-    sortDescFirst: true,
-  }),
-  helper.accessor('pushedAt', {
-    header: () => <Label descriptor={columnLabels.pushedAt} />,
-    cell: ({ getValue }) => <DateCell value={getValue()} />,
-    sortFn: 'text',
-    sortDescFirst: true,
-    sortUndefined: 'last',
-  }),
-  helper.accessor('flagCount', {
-    header: () => <Label descriptor={columnLabels.flagCount} />,
-    cell: ({ getValue }) => <NumberCell value={getValue()} />,
-    sortFn: 'basic',
-  }),
 ]);
 
-export const numericColumns: ReadonlySet<string> = new Set<ColumnId>(['score', 'stars', 'starsGained30d', 'flagCount']);
+export const numericColumns: ReadonlySet<string> = new Set<ColumnId>(['stars', 'starsGained30d']);

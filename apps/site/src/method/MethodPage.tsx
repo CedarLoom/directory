@@ -3,8 +3,10 @@ import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Anchor, List, Stack, Text, Title } from '@mantine/core';
 import type { MetaFile, Rubric } from '../data-types.ts';
+import { scoreBandLabels } from '../labels.ts';
 import { ExternalLink } from '../layout/ExternalLink.tsx';
 import { newIssueUrl } from '../new-issue-url.ts';
+import { scoreBands } from '../score-band.ts';
 import { RubricTable } from './RubricTable.tsx';
 
 const sourceLabels: Readonly<Record<string, MessageDescriptor>> = {
@@ -72,6 +74,45 @@ function Sources({ meta }: { meta: MetaFile }) {
   );
 }
 
+function Bands() {
+  const { t, i18n } = useLingui();
+  const lowestEdge = Math.min(...scoreBands.map(({ from }) => from));
+  const bands = new Intl.ListFormat(i18n.locale, { type: 'conjunction' }).format([
+    ...scoreBands.map(({ band, from }) => {
+      const name = i18n._(scoreBandLabels[band]);
+      const points = i18n.number(from);
+      return t({ id: 'method.bandFrom', message: `${name} from ${points}` });
+    }),
+    t({ id: 'method.bandBelow', message: `${i18n._(scoreBandLabels['very-low'])} below ${i18n.number(lowestEdge)}` }),
+  ]);
+  return <Trans id="method.bands">The list and the item pages name the band of each score: {bands}.</Trans>;
+}
+
+/** The method in plain words, before its details. */
+function InShort() {
+  return (
+    <List>
+      <List.Item>
+        <Trans id="method.short.rubric">
+          The collector scores every item by the same published rubric of its kind, shown below.
+        </Trans>
+      </List.Item>
+      <List.Item>
+        <Trans id="method.short.noPerson">No person scores an item, and no score is set by hand.</Trans>
+      </List.Item>
+      <List.Item>
+        <Trans id="method.short.stars">Stars are shown, but never counted in the score.</Trans>
+      </List.Item>
+      <List.Item>
+        <Trans id="method.short.itemPage">Each item's page shows where every point of its score came from.</Trans>
+      </List.Item>
+      <List.Item>
+        <Bands />
+      </List.Item>
+    </List>
+  );
+}
+
 function NotMeasured() {
   return (
     <section aria-labelledby="not-measured-heading">
@@ -130,8 +171,8 @@ function OwnInterest() {
         </List.Item>
         <List.Item>
           <Trans id="method.ownInterest.fit">
-            The CedarLoom fit fact on item pages and in the list is not part of the score. It reads "Not assessed" for
-            every item today.
+            The CedarLoom fit is not part of the score. It is not assessed for any item yet, so the list and the item
+            pages leave it out.
           </Trans>
         </List.Item>
         <List.Item>
@@ -256,6 +297,7 @@ export function MethodPage({ meta, rubrics }: { meta: MetaFile; rubrics: readonl
       <Title order={1}>
         <Trans id="method.heading">Method</Trans>
       </Title>
+      <InShort />
       <Text>
         <Trans id="method.intro">
           A collector reads public sources once a week, records published facts about each item and scores it with the

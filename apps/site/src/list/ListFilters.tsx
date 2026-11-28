@@ -2,7 +2,7 @@ import type { MessageDescriptor } from '@lingui/core';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Checkbox, Group, NativeSelect, SimpleGrid, Stack } from '@mantine/core';
 import type { ReactNode } from 'react';
-import { fitLabels, kindLabels, licenseClassLabels, maintenanceLabels } from '../labels.ts';
+import { kindLabels, licenseClassLabels, maintenanceLabels } from '../labels.ts';
 import type { ListFilters as Filters } from '../list-search.ts';
 import * as vocabulary from '../vocabulary.ts';
 import { BoundInput } from './BoundInput.tsx';
@@ -137,13 +137,6 @@ export function ListFilters({ filters, tags, showKinds, onChange }: Props) {
         labels={licenseClassLabels}
         value={filters.license}
         onChange={(license) => onChange({ license })}
-      />
-      <Choices
-        label={<Trans id="filter.fit">CedarLoom fit</Trans>}
-        options={vocabulary.fitLabels}
-        labels={fitLabels}
-        value={filters.fit}
-        onChange={(fit) => onChange({ fit })}
       />
       <Choices
         label={<Trans id="filter.maintenance">Maintenance</Trans>}

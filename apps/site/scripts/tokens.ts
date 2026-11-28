@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { DEFAULT_THEME } from '@mantine/core';
+import { colorsTuple } from '@mantine/core';
 import {
   build,
   type ConfigInit,
@@ -118,14 +118,9 @@ const steps = ['xs', 'sm', 'md', 'lg', 'xl'] as const;
 
 type Colors = Record<'light' | 'dark', Record<string, string>>;
 
-/** The shade of Mantine's blue that the accent is. */
-function blueShade(hex: string | undefined): number {
-  const index = DEFAULT_THEME.colors.blue.indexOf(hex ?? '');
-  if (index < 0) throw new Error(`Accent ${String(hex)} is no shade of Mantine's blue; the theme needs own colors`);
-  return index;
-}
-
 function mantineTheme(tokens: TokenNormalizedSet, colors: Colors) {
+  const accent = colors.light['accent'];
+  if (accent === undefined) throw new Error('No token color.accent');
   const value = (id: string) => {
     const token = tokens[id];
     if (token === undefined) throw new Error(`No token ${id}`);
@@ -145,8 +140,9 @@ function mantineTheme(tokens: TokenNormalizedSet, colors: Colors) {
       fontFamily: value('font.family.ui'),
       sizes: { h1: heading('h1'), h2: heading('h2'), h3: heading('h3') },
     },
-    primaryColor: 'blue',
-    primaryShade: { light: blueShade(colors.light['accent']), dark: blueShade(colors.dark['accent']) },
+    // Mantine needs ten shades; the scheme variables below replace the ones the site's components read.
+    colors: { accent: colorsTuple(accent) },
+    primaryColor: 'accent',
     white: colors.light['on-accent'],
     black: colors.dark['on-accent'],
     // Mantine runs transitions under prefers-reduced-motion unless this is set.
@@ -168,10 +164,10 @@ const mantineRoles = {
   '--mantine-color-default-border': 'control-line',
   '--mantine-color-error': 'error-text',
   '--mantine-primary-color-contrast': 'on-accent',
-  '--mantine-color-blue-filled': 'accent',
-  '--mantine-color-blue-filled-hover': 'accent-hover',
-  '--mantine-color-blue-light': 'accent-tint',
-  '--mantine-color-blue-light-color': 'link',
+  '--mantine-color-accent-filled': 'accent',
+  '--mantine-color-accent-filled-hover': 'accent-hover',
+  '--mantine-color-accent-light': 'accent-tint',
+  '--mantine-color-accent-light-color': 'link',
 };
 
 const mantineVariables = Object.fromEntries(

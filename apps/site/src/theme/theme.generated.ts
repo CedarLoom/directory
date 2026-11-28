@@ -44,11 +44,21 @@ export const theme = {
       }
     }
   },
-  "primaryColor": "blue",
-  "primaryShade": {
-    "light": 8,
-    "dark": 4
+  "colors": {
+    "accent": [
+      "#2e5e4e",
+      "#2e5e4e",
+      "#2e5e4e",
+      "#2e5e4e",
+      "#2e5e4e",
+      "#2e5e4e",
+      "#2e5e4e",
+      "#2e5e4e",
+      "#2e5e4e",
+      "#2e5e4e"
+    ]
   },
+  "primaryColor": "accent",
   "white": "#ffffff",
   "black": "#10121b",
   "respectReducedMotion": true
@@ -70,10 +80,10 @@ export const cssVariables = {
     "--mantine-color-default-border": "var(--control-line)",
     "--mantine-color-error": "var(--error-text)",
     "--mantine-primary-color-contrast": "var(--on-accent)",
-    "--mantine-color-blue-filled": "var(--accent)",
-    "--mantine-color-blue-filled-hover": "var(--accent-hover)",
-    "--mantine-color-blue-light": "var(--accent-tint)",
-    "--mantine-color-blue-light-color": "var(--link)"
+    "--mantine-color-accent-filled": "var(--accent)",
+    "--mantine-color-accent-filled-hover": "var(--accent-hover)",
+    "--mantine-color-accent-light": "var(--accent-tint)",
+    "--mantine-color-accent-light-color": "var(--link)"
   },
   "dark": {
     "--mantine-color-body": "var(--page)",
@@ -88,9 +98,9 @@ export const cssVariables = {
     "--mantine-color-default-border": "var(--control-line)",
     "--mantine-color-error": "var(--error-text)",
     "--mantine-primary-color-contrast": "var(--on-accent)",
-    "--mantine-color-blue-filled": "var(--accent)",
-    "--mantine-color-blue-filled-hover": "var(--accent-hover)",
-    "--mantine-color-blue-light": "var(--accent-tint)",
-    "--mantine-color-blue-light-color": "var(--link)"
+    "--mantine-color-accent-filled": "var(--accent)",
+    "--mantine-color-accent-filled-hover": "var(--accent-hover)",
+    "--mantine-color-accent-light": "var(--accent-tint)",
+    "--mantine-color-accent-light-color": "var(--link)"
   }
 } as const;

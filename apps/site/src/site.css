@@ -87,3 +87,89 @@ body {
 .history-change {
   font-weight: 600;
 }
+
+/* A score band reads from its words; the fill and border repeat it. */
+.score-badge {
+  display: inline-flex;
+  gap: var(--space-xs);
+  align-items: baseline;
+  padding-inline: var(--space-xs);
+  border: 1px solid var(--control-line);
+  border-radius: var(--radius-default);
+  background: var(--surface-alt);
+  color: var(--ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.score-badge-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.score-badge[data-band="high"] {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.score-badge[data-band="low"] {
+  border-color: var(--warn-border);
+  background: var(--warn-fill);
+  color: var(--warn-text);
+}
+
+.score-badge[data-band="very-low"] {
+  border-color: var(--error-text);
+  background: var(--warn-fill);
+  color: var(--error-text);
+}
+
+.glance {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--space-sm) var(--space-md);
+  margin: 0;
+  padding: var(--space-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.glance-fact dt {
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+.glance-fact dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.score-groups {
+  display: grid;
+  gap: var(--space-md);
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.score-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.score-group-name {
+  font-weight: 600;
+}
+
+.score-bar {
+  block-size: var(--space-xs);
+  margin-block: var(--space-2xs);
+  border: 1px solid var(--control-line);
+  background: var(--surface-alt);
+}
+
+.score-bar-fill {
+  block-size: 100%;
+  background: var(--accent);
+}

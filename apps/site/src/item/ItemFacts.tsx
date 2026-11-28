@@ -2,14 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Table, Text } from '@mantine/core';
 import type { ReactNode } from 'react';
 import type { ItemRecord, PopularityFile } from '../data-types.ts';
-import {
-  fitLabels,
-  kindLabels,
-  licenseClassOfId,
-  licenseSourceLabels,
-  licenseWithoutId,
-  recentCommitsLabels,
-} from '../labels.ts';
+import { kindLabels, licenseClassOfId, licenseSourceLabels, licenseWithoutId, recentCommitsLabels } from '../labels.ts';
 
 function Fact({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
@@ -61,7 +54,7 @@ function Stars({ popularity }: { popularity: PopularityFile | undefined }) {
   );
 }
 
-/** Kind, license, fit, popularity and maintenance of one item. */
+/** Kind, license, popularity and maintenance of one item. */
 export function ItemFacts({ record, popularity }: { record: ItemRecord; popularity: PopularityFile | undefined }) {
   const { i18n } = useLingui();
   const { spdx, source } = record.license;
@@ -78,7 +71,6 @@ export function ItemFacts({ record, popularity }: { record: ItemRecord; populari
             <Trans id="item.licenseSource">Source: {licenseSource}</Trans>
           </Text>
         </Fact>
-        <Fact label={<Trans id="item.fit">CedarLoom fit</Trans>}>{i18n._(fitLabels[record.cedarloomFit.label])}</Fact>
         <Fact label={<Trans id="item.popularity">Popularity</Trans>}>
           <Stars popularity={popularity} />
         </Fact>

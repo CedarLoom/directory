@@ -1,4 +1,4 @@
-import type { FitLabel, Kind, LicenseClass, Maintenance } from './data-types.ts';
+import type { Kind, LicenseClass, Maintenance } from './data-types.ts';
 
 /** Returns the list as given; it does not compile when the list misses a value of `T`. */
 function everyValueOf<T extends string>() {
@@ -21,5 +21,4 @@ export const licenseClasses = everyValueOf<LicenseClass>()([
   'none',
   'withheld',
 ]);
-export const fitLabels = everyValueOf<FitLabel>()(['complements', 'overlaps', 'may-conflict', 'not-assessed']);
 export const maintenanceStates = everyValueOf<Maintenance>()(['active', 'inactive', 'archived', 'unknown']);

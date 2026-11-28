@@ -46,11 +46,6 @@ test('a filter, a sort and a column choice survive a reload and a copied URL', a
   await expectState(copied);
 });
 
-test('the stars +30d column is visible by default', async ({ page }) => {
-  await openList(page);
-  await expect(header(page, 'Stars +30d (repository)')).toBeVisible();
-});
-
 async function expectStarFilters(page: Page): Promise<void> {
   await expect(page.getByRole('status')).toHaveText('5 of 22 items');
   await expect(page.getByLabel('Stars from')).toHaveValue('100');
@@ -74,6 +69,9 @@ test('the star range filter, the minimum gain filter and the sorts by stars and 
   await page.getByLabel('Stars to').fill('1000');
   await page.getByLabel('Stars gained in 30 days, at least').fill('10');
   await expectStarFilters(page);
+  await page.locator('summary', { hasText: 'Columns' }).click();
+  await page.getByRole('checkbox', { name: 'Stars (repository)', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'Stars +30d (repository)', exact: true }).check();
   await expectSortSurvivesReload(page, 'Stars (repository)');
   await expectSortSurvivesReload(page, 'Stars +30d (repository)');
 });
@@ -82,7 +80,7 @@ test('a marketplace and a root skill of one repository share an id and each show
   page,
 }) => {
   await openList(page, '/?tag=review');
-  const names = page.locator('tbody tr td:first-child');
+  const names = page.locator('tbody tr td:nth-child(2)');
   const byScore = ['sql-review', 'security-auditor', 'code-review', 'plugins-guide', 'plugins', 'refactor-agent'];
   await expect(names).toHaveText(byScore);
   await sortBy(page, 'Score');
