@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.dynatrace.dynatrace-for-ai",
+  "name": "io.github.Dynatrace/dynatrace-for-ai",
+  "links": {
+    "source": "https://github.com/Dynatrace/dynatrace-for-ai",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.Dynatrace%2Fdynatrace-for-ai/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-09T06:37:40Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v10.0.0",
+      "date": "2026-11-03"
+    },
+    "archived": false,
+    "headSha": "5dbfd574ab59524aed68a4314dc383d73bdf7e9c"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.dynatrace.dynatrace-for-ai",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.dynatrace.dynatrace-for-ai",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-remote",
+    "mcp-secrets-required"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 75,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 20,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "10.0.0",
+  "registryStatus": "active",
+  "transports": [
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [],
+  "versionPinned": true,
+  "requiredSecrets": 1,
+  "remoteHosts": 1
+}

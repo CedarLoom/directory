@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.heygen-com.hyperframes",
+  "name": "hyperframes",
+  "links": {
+    "source": "https://github.com/heygen-com/hyperframes"
+  },
+  "listedIn": [
+    "gh.anthropics.claude-plugins-official",
+    "gh.anthropics.claude-plugins-community"
+  ],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T12:02:52Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.9.104",
+      "date": "2026-11-27"
+    },
+    "archived": false,
+    "headSha": "d8885713c3dc03836eaa879b491553cab6eb67a6"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.heygen-com.hyperframes",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.heygen-com.hyperframes",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "manifestFields": 5,
+    "nameValid": true,
+    "noRootClaudeMd": false,
+    "alwaysOnComponents": 21,
+    "hasComponents": true,
+    "hasEvals": false
+  },
+  "flags": [
+    "listed-official-marketplace"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "plugin",
+      "version": "1.3.0"
+    },
+    "total": 85.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "manifestFields",
+        "points": 12,
+        "max": 12
+      },
+      {
+        "signal": "nameValid",
+        "points": 4,
+        "max": 4
+      },
+      {
+        "signal": "noRootClaudeMd",
+        "points": 0,
+        "max": 4
+      },
+      {
+        "signal": "alwaysOnComponents",
+        "points": 9.5,
+        "max": 15
+      },
+      {
+        "signal": "safety",
+        "points": 30,
+        "max": 30
+      },
+      {
+        "signal": "hasEvals",
+        "points": 0,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "official-marketplace",
+    "community-marketplace",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "plugin",
+  "version": "0.8.61",
+  "components": {
+    "skills": 21,
+    "agents": 0,
+    "commands": 0,
+    "hooksByEvent": {},
+    "mcpServersByTransport": {},
+    "lspServers": 0,
+    "outputStyles": 0,
+    "monitors": 0,
+    "binFiles": 0
+  },
+  "dependencies": [],
+  "hasEvals": false,
+  "sourceKind": "url",
+  "pin": "sha"
+}

@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.anthropics.claude-plugins-official.plugins.agent-sdk-dev.agents.agent-sdk-verifier-ts_2emd",
+  "name": "agent-sdk-verifier-ts",
+  "links": {
+    "source": "https://github.com/anthropics/claude-plugins-official/tree/HEAD/plugins/agent-sdk-dev/agents/agent-sdk-verifier-ts.md"
+  },
+  "container": "gh.anthropics.claude-plugins-official.plugins.agent-sdk-dev",
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T07:28:52Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "0fbfda5a91f4adc311daca25acc99132f40f0b6e"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.anthropics.claude-plugins-official",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.anthropics.claude-plugins-official",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": false,
+    "nameValid": true,
+    "descriptionLength": 282,
+    "toolsDeclared": false,
+    "bodyLines": 140,
+    "metadataTokens": 85,
+    "bodyTokens": 1269
+  },
+  "flags": [
+    "agent-inherits-all-tools"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "agent",
+      "version": "1.1.0"
+    },
+    "total": 70,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "toolsDeclared",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 10,
+        "max": 25
+      }
+    ]
+  },
+  "provenance": [
+    "official-marketplace",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "agent",
+  "toolsDeclared": false,
+  "toolClasses": [],
+  "modelSet": true,
+  "tokens": {
+    "metadata": 85,
+    "body": 1269
+  }
+}

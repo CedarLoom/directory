@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.54yyyu.zotero-mcp",
+  "name": "io.github.54yyyu/zotero-mcp",
+  "links": {
+    "source": "https://github.com/54yyyu/zotero-mcp",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.54yyyu%2Fzotero-mcp/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-24T17:28:03Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.17.4",
+      "date": "2026-11-24"
+    },
+    "archived": false,
+    "headSha": "0e6ff62d7383a999bf918c765494c8228bff385d"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.54yyyu.zotero-mcp",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.54yyyu.zotero-mcp",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 100,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 45,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "0.17.4",
+  "registryStatus": "active",
+  "transports": [
+    "stdio"
+  ],
+  "packageRegistryTypes": [
+    "pypi"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 0
+}

@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.dvcdsys.code-index",
+  "name": "code-index",
+  "links": {
+    "source": "https://github.com/dvcdsys/code-index"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-23T14:56:30Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "server/v0.15.1",
+      "date": "2026-11-03"
+    },
+    "archived": false,
+    "headSha": "87b6bfff8bca24cb29d9b4439f9ada92188e539f"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.dvcdsys.code-index",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.dvcdsys.code-index",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 1,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 100,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 2,
+  "sourceKinds": {
+    "path": 2,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "user"
+}

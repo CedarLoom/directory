@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.heygen-com.hyperframes",
+  "name": "io.github.heygen-com/hyperframes",
+  "links": {
+    "source": "https://github.com/heygen-com/hyperframes",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.heygen-com%2Fhyperframes/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T12:02:52Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.9.104",
+      "date": "2026-11-27"
+    },
+    "archived": false,
+    "headSha": "d8885713c3dc03836eaa879b491553cab6eb67a6"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.heygen-com.hyperframes",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.heygen-com.hyperframes",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-remote"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 85,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 30,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "1.0.0",
+  "registryStatus": "active",
+  "transports": [
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 1
+}

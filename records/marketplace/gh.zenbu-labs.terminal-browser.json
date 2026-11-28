@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.zenbu-labs.terminal-browser",
+  "name": "terminal-browser",
+  "links": {
+    "source": "https://github.com/zenbu-labs/terminal-browser"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-25T04:16:30Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.16.3",
+      "date": "2026-11-25"
+    },
+    "archived": false,
+    "headSha": "690f59f2d98cafc5f36f2c1db4c764a1b5f3aa39"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.zenbu-labs.terminal-browser",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.zenbu-labs.terminal-browser",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 0,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 1,
+  "sourceKinds": {
+    "path": 1,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "organization"
+}

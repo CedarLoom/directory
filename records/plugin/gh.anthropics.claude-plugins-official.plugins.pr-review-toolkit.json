@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.anthropics.claude-plugins-official.plugins.pr-review-toolkit",
+  "name": "pr-review-toolkit",
+  "links": {
+    "source": "https://github.com/anthropics/claude-plugins-official/tree/HEAD/plugins/pr-review-toolkit",
+    "homepage": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/pr-review-toolkit"
+  },
+  "listedIn": [
+    "gh.anthropics.claude-plugins-official"
+  ],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T07:28:52Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "0fbfda5a91f4adc311daca25acc99132f40f0b6e"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.anthropics.claude-plugins-official",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.anthropics.claude-plugins-official",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "manifestFields": 3,
+    "nameValid": true,
+    "noRootClaudeMd": true,
+    "alwaysOnComponents": 7,
+    "hasComponents": true,
+    "hasEvals": false
+  },
+  "flags": [
+    "listed-official-marketplace"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "plugin",
+      "version": "1.3.0"
+    },
+    "total": 90.2,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "manifestFields",
+        "points": 7.2,
+        "max": 12
+      },
+      {
+        "signal": "nameValid",
+        "points": 4,
+        "max": 4
+      },
+      {
+        "signal": "noRootClaudeMd",
+        "points": 4,
+        "max": 4
+      },
+      {
+        "signal": "alwaysOnComponents",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "safety",
+        "points": 30,
+        "max": 30
+      },
+      {
+        "signal": "hasEvals",
+        "points": 0,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "official-marketplace",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "plugin",
+  "version": "1.0.1",
+  "components": {
+    "skills": 0,
+    "agents": 6,
+    "commands": 1,
+    "hooksByEvent": {},
+    "mcpServersByTransport": {},
+    "lspServers": 0,
+    "outputStyles": 0,
+    "monitors": 0,
+    "binFiles": 0
+  },
+  "dependencies": [],
+  "hasEvals": false,
+  "sourceKind": "path",
+  "pin": "marketplace-commit"
+}

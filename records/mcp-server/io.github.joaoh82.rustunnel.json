@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.joaoh82.rustunnel",
+  "name": "io.github.joaoh82/rustunnel",
+  "links": {
+    "source": "https://github.com/joaoh82/rustunnel",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.joaoh82%2Frustunnel/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "AGPL-3.0",
+    "source": "github-detected",
+    "class": "copyleft"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T01:33:00Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.8.9",
+      "date": "2026-11-05"
+    },
+    "archived": false,
+    "headSha": "ac972d7205a9bac4c07f9bd9770ed66986dad8e3"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.joaoh82.rustunnel",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.joaoh82.rustunnel",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": false,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-stdio-unpinned-package"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 75,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 25,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "0.8.9",
+  "registryStatus": "active",
+  "transports": [
+    "stdio"
+  ],
+  "packageRegistryTypes": [
+    "oci",
+    "mcpb"
+  ],
+  "versionPinned": false,
+  "requiredSecrets": 0,
+  "remoteHosts": 0
+}

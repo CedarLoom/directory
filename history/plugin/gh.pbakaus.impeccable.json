@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.pbakaus.impeccable",
+  "kind": "plugin",
+  "entries": [
+    {
+      "date": "2026-11-28",
+      "rubric": "1.3.0",
+      "total": 89
+    }
+  ]
+}

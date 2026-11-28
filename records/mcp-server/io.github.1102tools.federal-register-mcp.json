@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.1102tools.federal-register-mcp",
+  "name": "io.github.1102tools/federal-register-mcp",
+  "links": {
+    "source": "https://github.com/1102tools/federal-contracting-mcps",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.1102tools%2Ffederal-register-mcp/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-24T22:09:35Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "sam-gov-hosted/v1.1.19",
+      "date": "2026-11-02"
+    },
+    "archived": false,
+    "headSha": "233117d572bd8fe4f029a71293e40b90526d18fe"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.1102tools.federal-contracting-mcps",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.1102tools.federal-contracting-mcps",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 100,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 45,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "0.2.7",
+  "registryStatus": "active",
+  "transports": [
+    "stdio"
+  ],
+  "packageRegistryTypes": [
+    "pypi"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 0
+}

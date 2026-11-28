@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.obra.superpowers",
+  "name": "superpowers",
+  "links": {
+    "source": "https://github.com/obra/superpowers",
+    "homepage": "https://github.com/obra/superpowers.git"
+  },
+  "listedIn": [
+    "gh.anthropics.claude-plugins-official",
+    "gh.anthropics.claude-plugins-community"
+  ],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T05:13:56Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v7.0.2",
+      "date": "2026-11-03"
+    },
+    "archived": false,
+    "headSha": "22f0b463e7a5e579904dd6211a520321035526f7"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.obra.superpowers",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.obra.superpowers",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "manifestFields": 5,
+    "nameValid": true,
+    "noRootClaudeMd": true,
+    "alwaysOnComponents": 15,
+    "hasComponents": true,
+    "hasEvals": false
+  },
+  "flags": [
+    "hook-shell-command",
+    "hook-session-start",
+    "listed-official-marketplace"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "plugin",
+      "version": "1.3.0"
+    },
+    "total": 92.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "manifestFields",
+        "points": 12,
+        "max": 12
+      },
+      {
+        "signal": "nameValid",
+        "points": 4,
+        "max": 4
+      },
+      {
+        "signal": "noRootClaudeMd",
+        "points": 4,
+        "max": 4
+      },
+      {
+        "signal": "alwaysOnComponents",
+        "points": 12.5,
+        "max": 15
+      },
+      {
+        "signal": "safety",
+        "points": 30,
+        "max": 30
+      },
+      {
+        "signal": "hasEvals",
+        "points": 0,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "official-marketplace",
+    "community-marketplace",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "plugin",
+  "version": "7.0.2",
+  "components": {
+    "skills": 15,
+    "agents": 0,
+    "commands": 0,
+    "hooksByEvent": {
+      "SessionStart": 1
+    },
+    "mcpServersByTransport": {},
+    "lspServers": 0,
+    "outputStyles": 0,
+    "monitors": 0,
+    "binFiles": 0
+  },
+  "dependencies": [],
+  "hasEvals": false,
+  "sourceKind": "url",
+  "pin": "sha"
+}

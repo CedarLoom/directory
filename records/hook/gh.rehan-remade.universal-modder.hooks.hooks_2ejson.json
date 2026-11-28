@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.rehan-remade.universal-modder.hooks.hooks_2ejson",
+  "name": "universal-modder",
+  "links": {
+    "source": "https://github.com/rehan-remade/universal-modder/tree/HEAD/hooks/hooks.json"
+  },
+  "container": "gh.rehan-remade.universal-modder",
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T06:26:31Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "a34eae75732d7fd5e7810abde188063e72829525"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.rehan-remade.universal-modder",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.rehan-remade.universal-modder",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": false,
+    "matchersSpecific": true
+  },
+  "flags": [
+    "hook-shell-command",
+    "hook-session-start"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.1.0"
+    },
+    "total": 70,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 25,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "hook",
+  "events": [
+    "SessionStart"
+  ],
+  "handlerTypes": [
+    "command"
+  ],
+  "commandForms": [
+    "shell"
+  ],
+  "matcherBreadth": "specific"
+}

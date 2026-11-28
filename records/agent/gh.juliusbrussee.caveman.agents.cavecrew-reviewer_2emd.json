@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.juliusbrussee.caveman.agents.cavecrew-reviewer_2emd",
+  "name": "cavecrew-reviewer",
+  "links": {
+    "source": "https://github.com/JuliusBrussee/caveman/tree/309834233183478e6fd7800d26e1fbaa6210274e/agents/cavecrew-reviewer.md"
+  },
+  "container": "gh.juliusbrussee.caveman",
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T05:11:31Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v4.2.0",
+      "date": "2026-11-22"
+    },
+    "archived": false,
+    "headSha": "e74a11ccdb38b98d15c9f9545787c907dd15f0ab"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.juliusbrussee.caveman",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.juliusbrussee.caveman",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 270,
+    "toolsDeclared": true,
+    "bodyLines": 38,
+    "metadataTokens": 90,
+    "bodyTokens": 291
+  },
+  "flags": [
+    "allowed-tools-unrestricted-bash"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "agent",
+      "version": "1.1.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "toolsDeclared",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 25
+      }
+    ]
+  },
+  "provenance": [
+    "community-marketplace",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "agent",
+  "toolsDeclared": true,
+  "toolClasses": [
+    "read",
+    "bash"
+  ],
+  "modelSet": true,
+  "tokens": {
+    "metadata": 90,
+    "body": 291
+  }
+}

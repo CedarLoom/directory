@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.rohitg00.pro-workflow.hooks.hooks_2ejson",
+  "name": "pro-workflow",
+  "links": {
+    "source": "https://github.com/rohitg00/pro-workflow/tree/HEAD/hooks/hooks.json"
+  },
+  "container": "gh.rohitg00.pro-workflow",
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "manifest",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-09-29T10:12:13Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v3.4.0",
+      "date": "2026-09-28"
+    },
+    "archived": false,
+    "headSha": "86d5f2770bd8e1695e40888e4242841eb7cbad4f"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.rohitg00.pro-workflow",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.rohitg00.pro-workflow",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "matchersSpecific": false
+  },
+  "flags": [
+    "hook-shell-command",
+    "hook-session-start",
+    "hook-match-all"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.1.0"
+    },
+    "total": 45,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 0,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "hook",
+  "events": [
+    "PreToolUse",
+    "PostToolUse",
+    "Stop",
+    "SessionStart",
+    "SessionEnd",
+    "UserPromptSubmit",
+    "PreCompact",
+    "PostCompact",
+    "ConfigChange",
+    "Notification",
+    "SubagentStart",
+    "SubagentStop",
+    "TaskCompleted",
+    "TaskCreated",
+    "PermissionRequest",
+    "PermissionDenied",
+    "PostToolUseFailure",
+    "TeammateIdle",
+    "StopFailure",
+    "FileChanged",
+    "Setup",
+    "CwdChanged"
+  ],
+  "handlerTypes": [
+    "command"
+  ],
+  "commandForms": [
+    "shell"
+  ],
+  "matcherBreadth": "match-all"
+}

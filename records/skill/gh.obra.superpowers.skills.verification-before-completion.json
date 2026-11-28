@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.obra.superpowers.skills.verification-before-completion",
+  "name": "verification-before-completion",
+  "links": {
+    "source": "https://github.com/obra/superpowers/tree/22f0b463e7a5e579904dd6211a520321035526f7/skills/verification-before-completion"
+  },
+  "container": "gh.obra.superpowers",
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T05:13:56Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v7.0.2",
+      "date": "2026-11-03"
+    },
+    "archived": false,
+    "headSha": "22f0b463e7a5e579904dd6211a520321035526f7"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.obra.superpowers",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.obra.superpowers",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 225,
+    "bodyLines": 116,
+    "licenseField": false,
+    "metadataTokens": 69,
+    "bodyTokens": 829,
+    "testsShipped": false
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "skill",
+      "version": "1.1.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 8,
+        "max": 8
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 7,
+        "max": 7
+      },
+      {
+        "signal": "licenseField",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "testsShipped",
+        "points": 0,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "official-marketplace",
+    "community-marketplace",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "skill",
+  "frontmatterFields": [
+    "name",
+    "description"
+  ],
+  "bodyLines": 116,
+  "tokens": {
+    "metadata": 69,
+    "body": 829
+  },
+  "allowedTools": [],
+  "files": {
+    "scripts": 0,
+    "references": 0,
+    "assets": 0
+  }
+}

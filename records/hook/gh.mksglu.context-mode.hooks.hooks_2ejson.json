@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.mksglu.context-mode.hooks.hooks_2ejson",
+  "name": "context-mode",
+  "links": {
+    "source": "https://github.com/mksglu/context-mode/tree/HEAD/hooks/hooks.json"
+  },
+  "container": "gh.mksglu.context-mode",
+  "listedIn": [],
+  "license": {
+    "spdx": "Elastic-2.0",
+    "source": "manifest",
+    "class": "source-available"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T03:27:02Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v2.2.4",
+      "date": "2026-11-25"
+    },
+    "archived": false,
+    "headSha": "80bbddd7875883bc1c50bbd2fe306387122e4cee"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.mksglu.context-mode",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.mksglu.context-mode",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "matchersSpecific": true
+  },
+  "flags": [
+    "hook-shell-command"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.1.0"
+    },
+    "total": 80,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 5,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "hook",
+  "events": [
+    "AfterTool",
+    "BeforeAgent",
+    "BeforeTool",
+    "PreCompress"
+  ],
+  "handlerTypes": [
+    "command"
+  ],
+  "commandForms": [
+    "shell"
+  ],
+  "matcherBreadth": "none"
+}

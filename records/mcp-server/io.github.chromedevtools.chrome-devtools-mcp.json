@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.chromedevtools.chrome-devtools-mcp",
+  "name": "io.github.ChromeDevTools/chrome-devtools-mcp",
+  "links": {
+    "source": "https://github.com/ChromeDevTools/chrome-devtools-mcp",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.ChromeDevTools%2Fchrome-devtools-mcp/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-27T14:34:29Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "chrome-devtools-mcp-v1.14.0",
+      "date": "2026-11-24"
+    },
+    "archived": false,
+    "headSha": "597b029dc9f1c1bbb48b71dc3d8abf25efec6f8c"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.chromedevtools.chrome-devtools-mcp",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.chromedevtools.chrome-devtools-mcp",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 100,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 45,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "1.13.0",
+  "registryStatus": "active",
+  "transports": [
+    "stdio"
+  ],
+  "packageRegistryTypes": [
+    "npm"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 0
+}

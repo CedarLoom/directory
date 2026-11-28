@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.drolosoft.immich-photo-manager",
+  "name": "io.github.drolosoft/immich-photo-manager",
+  "links": {
+    "source": "https://github.com/drolosoft/immich-photo-manager",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.drolosoft%2Fimmich-photo-manager/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-05T12:25:30Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v2.0.14",
+      "date": "2026-11-05"
+    },
+    "archived": false,
+    "headSha": "9de590db5d901c3f88e2477121af546c66a19c8a"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.drolosoft.immich-photo-manager",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.drolosoft.immich-photo-manager",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-secrets-required"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "2.0.11",
+  "registryStatus": "active",
+  "transports": [
+    "stdio",
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [
+    "pypi",
+    "oci"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 1,
+  "remoteHosts": 0
+}

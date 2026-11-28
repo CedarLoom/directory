@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.ray-amjad.claude-code-mods",
+  "name": "claude-code-mods",
+  "links": {
+    "source": "https://github.com/ray-amjad/claude-code-mods"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-24T06:53:20Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.1.0",
+      "date": "2026-10-12"
+    },
+    "archived": false,
+    "headSha": "5bf5d5f6d078f4f81f91699d483fc3b4021ac443"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.ray-amjad.claude-code-mods",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.ray-amjad.claude-code-mods",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 0,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 11,
+  "sourceKinds": {
+    "path": 11,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "user"
+}

@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.summerengine.summer",
+  "name": "io.github.SummerEngine/summer",
+  "links": {
+    "source": "https://github.com/summerengine/summer",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.SummerEngine%2Fsummer/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T00:32:21Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v4.9.2",
+      "date": "2026-11-13"
+    },
+    "archived": false,
+    "headSha": "47da1f3c9cdde5c13782dc0bee7dd6317d211c36"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.summerengine.summer",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.summerengine.summer",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-remote"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 85,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 30,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "4.9.2",
+  "registryStatus": "active",
+  "transports": [
+    "stdio",
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [
+    "npm"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 1
+}

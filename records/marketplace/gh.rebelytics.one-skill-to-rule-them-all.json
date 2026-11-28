@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.rebelytics.one-skill-to-rule-them-all",
+  "name": "one-skill-to-rule-them-all",
+  "links": {
+    "source": "https://github.com/rebelytics/one-skill-to-rule-them-all"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-27T12:24:13Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v3.13.0",
+      "date": "2026-11-27"
+    },
+    "archived": false,
+    "headSha": "48a5ee904be716bdee89d26af64917e663a5f172"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.rebelytics.one-skill-to-rule-them-all",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.rebelytics.one-skill-to-rule-them-all",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 0,
+    "noDuplicateNames": true
+  },
+  "flags": [
+    "unpinned-source"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 70,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 2,
+  "sourceKinds": {
+    "path": 1,
+    "github": 0,
+    "url": 1,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 0.5,
+  "ownerType": "user"
+}

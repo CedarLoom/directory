@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.anthropics.claude-plugins-community",
+  "name": "claude-community",
+  "links": {
+    "source": "https://github.com/anthropics/claude-plugins-community"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-23T07:01:02Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "24479d5a1fb7a1c4f068a6d3b74d0c0fbc1acfda"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.anthropics.claude-plugins-community",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.anthropics.claude-plugins-community",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": false,
+    "validEntryShare": 1,
+    "describedShare": 0.068,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 85.68,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 0.68,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "community-marketplace",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 2280,
+  "sourceKinds": {
+    "path": 7,
+    "github": 0,
+    "url": 1876,
+    "git-subdir": 397,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "organization"
+}

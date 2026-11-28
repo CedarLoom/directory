@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.acedatacloud.mcp-suno",
+  "name": "io.github.AceDataCloud/mcp-suno",
+  "links": {
+    "source": "https://github.com/AceDataCloud/SunoMCP",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.AceDataCloud%2Fmcp-suno/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T03:48:16Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v2026.11.28.0",
+      "date": "2026-11-28"
+    },
+    "archived": false,
+    "headSha": "6ca53b4591a0d6af632ae33e4bd5225a4596490f"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.acedatacloud.sunomcp",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.acedatacloud.sunomcp",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-remote",
+    "mcp-secrets-required"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 75,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 20,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "2026.11.28.0",
+  "registryStatus": "active",
+  "transports": [
+    "stdio",
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [
+    "pypi"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 1,
+  "remoteHosts": 1
+}

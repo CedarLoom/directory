@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.croffasia.cc-blueprint-toolkit",
+  "name": "cc-blueprint-toolkit",
+  "links": {
+    "source": "https://github.com/croffasia/cc-blueprint-toolkit"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2025-11-26T12:15:55Z",
+    "recentCommits": "none",
+    "latestRelease": {
+      "tag": "v1.4.1",
+      "date": "2025-11-26"
+    },
+    "archived": false,
+    "headSha": "cebf2f3526629aaf0c6c044682dec1c36cb53085"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.croffasia.cc-blueprint-toolkit",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.croffasia.cc-blueprint-toolkit",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 0,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 73.75,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 3.75,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 1,
+  "sourceKinds": {
+    "path": 1,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "user"
+}

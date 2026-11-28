@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.iman.agent-driven-options-desk-and-skills",
+  "name": "option-desk",
+  "links": {
+    "source": "https://github.com/Iman/agent-driven-options-desk-and-skills"
+  },
+  "listedIn": [],
+  "license": {
+    "source": "github-detected",
+    "class": "none"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-27T17:46:31Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.3.0",
+      "date": "2026-09-05"
+    },
+    "archived": false,
+    "headSha": "994609c7bda99ad990ec4e637feee4dcacaf4775"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.iman.agent-driven-options-desk-and-skills",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.iman.agent-driven-options-desk-and-skills",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 0,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 85,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 5,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 2,
+  "sourceKinds": {
+    "path": 2,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "user"
+}

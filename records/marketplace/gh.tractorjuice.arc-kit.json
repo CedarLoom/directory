@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.tractorjuice.arc-kit",
+  "name": "arc-kit",
+  "links": {
+    "source": "https://github.com/tractorjuice/arc-kit"
+  },
+  "listedIn": [],
+  "license": {
+    "source": "github-detected",
+    "class": "none"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-25T09:22:07Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v6.26.0",
+      "date": "2026-11-24"
+    },
+    "archived": false,
+    "headSha": "f78eef890970cd0cf76e6167664e870a13838135"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.tractorjuice.arc-kit",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.tractorjuice.arc-kit",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 1,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 95,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 5,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 21,
+  "sourceKinds": {
+    "path": 21,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "user"
+}

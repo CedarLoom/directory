@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.agentphone-ai.agentphone",
+  "name": "io.github.AgentPhone-AI/agentphone",
+  "links": {
+    "source": "https://github.com/AgentPhone-AI/agentphone-mcp",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.AgentPhone-AI%2Fagentphone/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-26T15:45:18Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "1cc28242a0f4a48c47788a8e541a3d4241ee6d95"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.agentphone-ai.agentphone-mcp",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.agentphone-ai.agentphone-mcp",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-remote",
+    "mcp-secrets-required"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 75,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 20,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "0.11.0",
+  "registryStatus": "active",
+  "transports": [
+    "stdio",
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [
+    "npm"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 1,
+  "remoteHosts": 1
+}

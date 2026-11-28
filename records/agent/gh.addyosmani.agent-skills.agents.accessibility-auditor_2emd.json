@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.addyosmani.agent-skills.agents.accessibility-auditor_2emd",
+  "name": "accessibility-auditor",
+  "links": {
+    "source": "https://github.com/addyosmani/agent-skills/tree/HEAD/agents/accessibility-auditor.md"
+  },
+  "container": "gh.addyosmani.agent-skills",
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-24T07:11:17Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "0.6.18",
+      "date": "2026-11-24"
+    },
+    "archived": false,
+    "headSha": "e997ac5b9a74eab332d5e9793bb38a38c8cfdd74"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.addyosmani.agent-skills",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.addyosmani.agent-skills",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 240,
+    "toolsDeclared": false,
+    "bodyLines": 131,
+    "metadataTokens": 71,
+    "bodyTokens": 1829
+  },
+  "flags": [
+    "agent-inherits-all-tools"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "agent",
+      "version": "1.1.0"
+    },
+    "total": 75,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "toolsDeclared",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 10,
+        "max": 25
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "agent",
+  "toolsDeclared": false,
+  "toolClasses": [],
+  "modelSet": false,
+  "tokens": {
+    "metadata": 71,
+    "body": 1829
+  }
+}

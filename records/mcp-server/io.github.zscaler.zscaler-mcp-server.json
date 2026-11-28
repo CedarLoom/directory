@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.zscaler.zscaler-mcp-server",
+  "name": "io.github.zscaler/zscaler-mcp-server",
+  "links": {
+    "source": "https://github.com/zscaler/zscaler-mcp-server",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.zscaler%2Fzscaler-mcp-server/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-16T06:13:08Z",
+    "recentCommits": "none",
+    "latestRelease": {
+      "tag": "v0.15.4",
+      "date": "2026-08-19"
+    },
+    "archived": false,
+    "headSha": "6340cd24087a5681bc9ca2ba1c477748fbcc7bcb"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.zscaler.zscaler-mcp-server",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.zscaler.zscaler-mcp-server",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": false,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-stdio-unpinned-package",
+    "mcp-secrets-required"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 60,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "0.15.4",
+  "registryStatus": "active",
+  "transports": [
+    "stdio"
+  ],
+  "packageRegistryTypes": [
+    "pypi",
+    "oci"
+  ],
+  "versionPinned": false,
+  "requiredSecrets": 2,
+  "remoteHosts": 0
+}

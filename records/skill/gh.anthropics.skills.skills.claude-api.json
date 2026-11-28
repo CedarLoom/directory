@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.anthropics.skills.skills.claude-api",
+  "name": "claude-api",
+  "links": {
+    "source": "https://github.com/anthropics/skills/tree/HEAD/skills/claude-api"
+  },
+  "container": "gh.anthropics.skills._.claude-api",
+  "listedIn": [
+    "gh.anthropics.skills"
+  ],
+  "license": {
+    "source": "frontmatter",
+    "class": "none"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-16T14:22:50Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.anthropics.skills",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.anthropics.skills",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": false,
+    "nameValid": true,
+    "descriptionLength": 1068,
+    "bodyLines": 608,
+    "licenseField": true,
+    "metadataTokens": 287,
+    "bodyTokens": 25991,
+    "testsShipped": false
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "skill",
+      "version": "1.1.0"
+    },
+    "total": 54.88,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 5,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 8,
+        "max": 8
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 0,
+        "max": 7
+      },
+      {
+        "signal": "licenseField",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 1.88,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "testsShipped",
+        "points": 0,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "anthropic-marketplaces",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "skill",
+  "frontmatterFields": [
+    "name",
+    "description",
+    "license"
+  ],
+  "bodyLines": 608,
+  "tokens": {
+    "metadata": 287,
+    "body": 25991
+  },
+  "allowedTools": [],
+  "files": {
+    "scripts": 0,
+    "references": 0,
+    "assets": 0
+  }
+}

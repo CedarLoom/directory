@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.avids2.memorix",
+  "name": "io.github.AVIDS2/memorix",
+  "links": {
+    "source": "https://github.com/AVIDS2/memorix",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.AVIDS2%2Fmemorix/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-27T14:43:36Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.10.5",
+      "date": "2026-11-27"
+    },
+    "archived": false,
+    "headSha": "96ed8b77520c2da99172df54cee7cebfb24a9a9d"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.avids2.memorix",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.avids2.memorix",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 100,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 45,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "1.10.5",
+  "registryStatus": "active",
+  "transports": [
+    "stdio"
+  ],
+  "packageRegistryTypes": [
+    "npm"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 0
+}

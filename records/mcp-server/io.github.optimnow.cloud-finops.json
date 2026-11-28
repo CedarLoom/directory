@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.optimnow.cloud-finops",
+  "name": "io.github.OptimNow/cloud-finops",
+  "links": {
+    "source": "https://github.com/OptimNow/cloud-finops-skills",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.OptimNow%2Fcloud-finops/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "CC-BY-SA-4.0",
+    "source": "github-detected",
+    "class": "copyleft"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T09:42:58Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v1.55.0",
+      "date": "2026-11-28"
+    },
+    "archived": false,
+    "headSha": "493364aa08a0116b73e1250c337645c597c7ab2c"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.optimnow.cloud-finops-skills",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.optimnow.cloud-finops-skills",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-remote"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 85,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 30,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "1.55.0",
+  "registryStatus": "active",
+  "transports": [
+    "stdio",
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [
+    "pypi"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 1
+}

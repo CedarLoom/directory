@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.kenryu42.cc-safety-net.hooks.hooks_2ejson",
+  "name": "cc-safety-net",
+  "links": {
+    "source": "https://github.com/kenryu42/cc-safety-net/tree/HEAD/hooks/hooks.json"
+  },
+  "container": "gh.kenryu42.cc-safety-net",
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T10:45:28Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v2.9.0",
+      "date": "2026-11-28"
+    },
+    "archived": false,
+    "headSha": "cda6c3d204a495723bd836938cc5e2b6c57b2457"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.kenryu42.cc-safety-net",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.kenryu42.cc-safety-net",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "matchersSpecific": false
+  },
+  "flags": [
+    "hook-shell-command",
+    "hook-match-all"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.1.0"
+    },
+    "total": 55,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 0,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 25,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "hook",
+  "events": [
+    "PreToolUse"
+  ],
+  "handlerTypes": [
+    "command"
+  ],
+  "commandForms": [
+    "shell"
+  ],
+  "matcherBreadth": "match-all"
+}

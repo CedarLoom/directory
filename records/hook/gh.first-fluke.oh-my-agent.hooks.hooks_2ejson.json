@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.first-fluke.oh-my-agent.hooks.hooks_2ejson",
+  "name": "oh-my-agent",
+  "links": {
+    "source": "https://github.com/first-fluke/oh-my-agent/tree/HEAD/hooks/hooks.json"
+  },
+  "container": "gh.first-fluke.oh-my-agent",
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T05:39:11Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "cli-v23.0.2",
+      "date": "2026-11-28"
+    },
+    "archived": false,
+    "headSha": "20067757fbc0b15b2fba76aa436d292323afc913"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.first-fluke.oh-my-agent",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.first-fluke.oh-my-agent",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "matchersSpecific": true
+  },
+  "flags": [
+    "hook-shell-command",
+    "hook-session-start"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.1.0"
+    },
+    "total": 75,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 25,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "hook",
+  "events": [
+    "SessionStart",
+    "UserPromptSubmit",
+    "PreToolUse",
+    "Stop"
+  ],
+  "handlerTypes": [
+    "command"
+  ],
+  "commandForms": [
+    "shell"
+  ],
+  "matcherBreadth": "specific"
+}

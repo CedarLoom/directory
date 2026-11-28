@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.bitwize-music-studio.claude-ai-music-skills.hooks.hooks_2ejson",
+  "name": "claude-ai-music-skills",
+  "links": {
+    "source": "https://github.com/bitwize-music-studio/claude-ai-music-skills/tree/HEAD/hooks/hooks.json"
+  },
+  "container": "gh.bitwize-music-studio.claude-ai-music-skills",
+  "listedIn": [],
+  "license": {
+    "spdx": "CC0-1.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-26T21:37:33Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.105.1",
+      "date": "2026-11-20"
+    },
+    "archived": false,
+    "headSha": "8e0e19c0fe7072830ba2918e351102c3c0be9dc4"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.bitwize-music-studio.claude-ai-music-skills",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.bitwize-music-studio.claude-ai-music-skills",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "matchersSpecific": true
+  },
+  "flags": [
+    "hook-shell-command",
+    "hook-session-start"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.1.0"
+    },
+    "total": 75,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 25,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "hook",
+  "events": [
+    "PostToolUse",
+    "SessionStart"
+  ],
+  "handlerTypes": [
+    "command"
+  ],
+  "commandForms": [
+    "shell"
+  ],
+  "matcherBreadth": "specific"
+}

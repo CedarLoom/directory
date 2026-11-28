@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.me2resh.apexyard._2eclaude.output-styles.human-report_2emd",
+  "name": "human-report",
+  "links": {
+    "source": "https://github.com/me2resh/apexyard/tree/HEAD/.claude/output-styles/human-report.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-23T22:30:54Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v5.10.1",
+      "date": "2026-10-24"
+    },
+    "archived": false,
+    "headSha": "fa6911078bb3c91af457290cd2c7e8bd91843746"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.me2resh.apexyard",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.me2resh.apexyard",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameField": true,
+    "descriptionField": true,
+    "bodyLines": 13,
+    "tokens": 616
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "output-style",
+      "version": "1.1.0"
+    },
+    "total": 100,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameField",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "descriptionField",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "bodyLines",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "tokens",
+        "points": 25,
+        "max": 25
+      },
+      {
+        "signal": "safety",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "output-style",
+  "tokens": 616,
+  "frontmatterFields": [
+    "name",
+    "description"
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.rohitg00.pro-workflow",
+  "name": "pro-workflow",
+  "links": {
+    "source": "https://github.com/rohitg00/pro-workflow"
+  },
+  "listedIn": [],
+  "license": {
+    "class": "none"
+  },
+  "maintenance": {
+    "pushedAt": "2026-09-29T10:12:13Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v3.4.0",
+      "date": "2026-09-28"
+    },
+    "archived": false,
+    "headSha": "86d5f2770bd8e1695e40888e4242841eb7cbad4f"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.rohitg00.pro-workflow",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.rohitg00.pro-workflow",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "validEntryShare": 1,
+    "describedShare": 1,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 1,
+  "sourceKinds": {
+    "path": 1,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "user"
+}

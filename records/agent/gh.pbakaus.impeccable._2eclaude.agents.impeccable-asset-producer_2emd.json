@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.pbakaus.impeccable._2eclaude.agents.impeccable-asset-producer_2emd",
+  "name": "impeccable-asset-producer",
+  "links": {
+    "source": "https://github.com/pbakaus/impeccable/tree/2ab054d1f400c5ec085133352232ffc2617f0d54/.claude/agents/impeccable-asset-producer.md"
+  },
+  "container": "gh.pbakaus.impeccable",
+  "listedIn": [],
+  "license": {
+    "spdx": "Apache-2.0",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T03:53:52Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "engine-v0.1.32",
+      "date": "2026-11-28"
+    },
+    "archived": false,
+    "headSha": "2fc5e1459efbbf06d92c7306517c286bf12490cf"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.pbakaus.impeccable",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.pbakaus.impeccable",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 113,
+    "toolsDeclared": true,
+    "bodyLines": 87,
+    "metadataTokens": 62,
+    "bodyTokens": 2425
+  },
+  "flags": [
+    "allowed-tools-unrestricted-bash"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "agent",
+      "version": "1.1.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "toolsDeclared",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 25
+      }
+    ]
+  },
+  "provenance": [
+    "community-marketplace",
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "agent",
+  "toolsDeclared": true,
+  "toolClasses": [
+    "read",
+    "write",
+    "bash"
+  ],
+  "modelSet": false,
+  "tokens": {
+    "metadata": 62,
+    "body": 2425
+  }
+}

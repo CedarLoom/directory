@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.8beeeaaat.touchdesigner-mcp-server",
+  "name": "io.github.8beeeaaat/touchdesigner-mcp-server",
+  "links": {
+    "source": "https://github.com/8beeeaaat/touchdesigner-mcp",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.8beeeaaat%2Ftouchdesigner-mcp-server/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T03:23:30Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v2.3.0",
+      "date": "2026-11-28"
+    },
+    "archived": false,
+    "headSha": "4a9aa4e73e0f9c39faf8398cb8cf91e2a5b0e774"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.8beeeaaat.touchdesigner-mcp",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.8beeeaaat.touchdesigner-mcp",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 100,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 45,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "1.2.0",
+  "registryStatus": "active",
+  "transports": [
+    "stdio"
+  ],
+  "packageRegistryTypes": [
+    "npm",
+    "mcpb"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 0
+}

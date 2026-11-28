@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.nykooi1.vibe-wise.hooks.hooks_2ejson",
+  "name": "vibe-wise",
+  "links": {
+    "source": "https://github.com/nykooi1/vibe-wise/tree/HEAD/hooks/hooks.json"
+  },
+  "container": "gh.nykooi1.vibe-wise",
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-10-09T09:37:21Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "eefb53df406ab89e31444684ff32c1df205221f8"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.nykooi1.vibe-wise",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.nykooi1.vibe-wise",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": false,
+    "matchersSpecific": true
+  },
+  "flags": [
+    "hook-shell-command",
+    "hook-session-start"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "hook",
+      "version": "1.1.0"
+    },
+    "total": 70,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "matchersSpecific",
+        "points": 20,
+        "max": 20
+      },
+      {
+        "signal": "safety",
+        "points": 25,
+        "max": 50
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "hook",
+  "events": [
+    "SessionStart"
+  ],
+  "handlerTypes": [
+    "command"
+  ],
+  "commandForms": [
+    "shell"
+  ],
+  "matcherBreadth": "specific"
+}

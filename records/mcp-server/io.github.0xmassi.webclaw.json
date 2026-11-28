@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.0xmassi.webclaw",
+  "name": "io.github.0xMassi/webclaw",
+  "links": {
+    "source": "https://github.com/0xMassi/webclaw",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.0xMassi%2Fwebclaw/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "AGPL-3.0",
+    "source": "github-detected",
+    "class": "copyleft"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-25T09:34:22Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.7.5",
+      "date": "2026-11-23"
+    },
+    "archived": false,
+    "headSha": "cfb2f7ea6aff08ae81d7500da13e597b3e96d214"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.0xmassi.webclaw",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.0xmassi.webclaw",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-remote"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 85,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 30,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "0.7.1",
+  "registryStatus": "active",
+  "transports": [
+    "stdio",
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [
+    "npm"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 1
+}

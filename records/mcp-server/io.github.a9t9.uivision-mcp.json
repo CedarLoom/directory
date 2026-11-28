@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.a9t9.uivision-mcp",
+  "name": "io.github.A9T9/uivision-mcp",
+  "links": {
+    "source": "https://github.com/A9T9/RPA",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.A9T9%2Fuivision-mcp/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "source": "github-detected",
+    "class": "none"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-04T08:03:08Z",
+    "recentCommits": "1-4",
+    "latestRelease": {
+      "tag": "V10.0.276",
+      "date": "2026-09-21"
+    },
+    "archived": false,
+    "headSha": "17b6302f1617b838efe2b26d3ef19c2face81350"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.a9t9.rpa",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.a9t9.rpa",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 92.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 2.5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 5,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 45,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "1.7.18",
+  "registryStatus": "active",
+  "transports": [
+    "stdio"
+  ],
+  "packageRegistryTypes": [
+    "npm"
+  ],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 0
+}

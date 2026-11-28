@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.paperclipai.paperclip._2eclaude.agents.token-auditor_2emd",
+  "name": "token-auditor",
+  "links": {
+    "source": "https://github.com/paperclipai/paperclip/tree/HEAD/.claude/agents/token-auditor.md"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-28T09:46:23Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v2026.1117.0",
+      "date": "2026-11-18"
+    },
+    "archived": false,
+    "headSha": "9c1fd24642b7a3315070a123dd5f5a2696995d24"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.paperclipai.paperclip",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.paperclipai.paperclip",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "nameValid": true,
+    "descriptionLength": 277,
+    "toolsDeclared": true,
+    "bodyLines": 10,
+    "metadataTokens": 89,
+    "bodyTokens": 396
+  },
+  "flags": [
+    "allowed-tools-unrestricted-bash"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "agent",
+      "version": "1.1.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "nameValid",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "descriptionLength",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "toolsDeclared",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "bodyLines",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "metadataTokens",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "bodyTokens",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 25
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "agent",
+  "toolsDeclared": true,
+  "toolClasses": [
+    "read",
+    "bash"
+  ],
+  "modelSet": true,
+  "tokens": {
+    "metadata": 89,
+    "body": 396
+  }
+}

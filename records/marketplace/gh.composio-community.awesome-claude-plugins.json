@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.composio-community.awesome-claude-plugins",
+  "name": "awesome-claude-plugins",
+  "links": {
+    "source": "https://github.com/composio-community/awesome-claude-plugins"
+  },
+  "listedIn": [],
+  "license": {
+    "class": "none"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-05T04:02:31Z",
+    "recentCommits": "1-4",
+    "archived": false,
+    "headSha": "c511c77b6e4860bc076e5c5b3ac55c51030d602d"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.composio-community.awesome-claude-plugins",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.composio-community.awesome-claude-plugins",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": false,
+    "validEntryShare": 1,
+    "describedShare": 0,
+    "noDuplicateNames": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 72.5,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 2.5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 0,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 35,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 24,
+  "sourceKinds": {
+    "path": 24,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 0,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 1,
+  "ownerType": "organization"
+}

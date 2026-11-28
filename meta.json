@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "runAt": "2026-11-28T11:53:44.052Z",
+  "license": "MIT",
+  "schemaVersions": {
+    "marketplace": 1,
+    "plugin": 1,
+    "skill": 1,
+    "agent": 1,
+    "hook": 1,
+    "mcp-server": 1,
+    "output-style": 1
+  },
+  "rubricVersions": {
+    "marketplace": "1.0.0",
+    "plugin": "1.3.0",
+    "skill": "1.1.0",
+    "agent": "1.1.0",
+    "hook": "1.1.0",
+    "mcp-server": "1.0.0",
+    "output-style": "1.1.0"
+  },
+  "sources": [
+    {
+      "id": "official-marketplace",
+      "readAt": "2026-11-28T11:53:44.052Z"
+    },
+    {
+      "id": "community-marketplace",
+      "readAt": "2026-11-28T11:53:44.052Z"
+    },
+    {
+      "id": "anthropic-marketplaces",
+      "readAt": "2026-11-28T11:53:44.052Z"
+    },
+    {
+      "id": "github",
+      "readAt": "2026-11-28T11:53:44.052Z"
+    },
+    {
+      "id": "mcp-registry",
+      "readAt": "2026-11-28T11:53:44.052Z"
+    }
+  ],
+  "stats": {
+    "requests": 877,
+    "itemsByKind": {
+      "marketplace": 123,
+      "plugin": 60,
+      "skill": 60,
+      "agent": 60,
+      "hook": 20,
+      "mcp-server": 60,
+      "output-style": 1
+    },
+    "otherSourceKinds": 0
+  }
+}

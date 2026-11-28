@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "gh.wshobson.agents",
+  "name": "claude-code-workflows",
+  "links": {
+    "source": "https://github.com/wshobson/agents"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-24T14:32:25Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "c96b5f6552dba32e4492307493ee613581430715"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.wshobson.agents",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.wshobson.agents",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": false,
+    "validEntryShare": 1,
+    "describedShare": 0.957,
+    "noDuplicateNames": true
+  },
+  "flags": [
+    "unpinned-source"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "marketplace",
+      "version": "1.0.0"
+    },
+    "total": 74.57,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "validEntryShare",
+        "points": 15,
+        "max": 15
+      },
+      {
+        "signal": "describedShare",
+        "points": 9.57,
+        "max": 10
+      },
+      {
+        "signal": "noDuplicateNames",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 15,
+        "max": 35
+      }
+    ]
+  },
+  "provenance": [
+    "github"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "marketplace",
+  "pluginCount": 93,
+  "sourceKinds": {
+    "path": 91,
+    "github": 0,
+    "url": 0,
+    "git-subdir": 2,
+    "npm": 0,
+    "archive": 0,
+    "command": 0,
+    "other": 0
+  },
+  "pinnedShare": 0.989,
+  "ownerType": "user"
+}

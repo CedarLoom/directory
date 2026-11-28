@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.akzar1el.digestseo-mcp",
+  "name": "io.github.AKzar1el/digestseo-mcp",
+  "links": {
+    "source": "https://github.com/AKzar1el/mcp-geo",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.AKzar1el%2Fdigestseo-mcp/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-27T16:05:02Z",
+    "recentCommits": "5+",
+    "latestRelease": {
+      "tag": "v0.3.31",
+      "date": "2026-11-11"
+    },
+    "archived": false,
+    "headSha": "9bf85139b90b8a2c5f288aaf3e2d6903266645a4"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.akzar1el.mcp-geo",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.akzar1el.mcp-geo",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": false,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": false,
+    "namespaceMatches": true
+  },
+  "flags": [],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 90,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 45,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 0,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "0.3.0",
+  "registryStatus": "deprecated",
+  "transports": [],
+  "packageRegistryTypes": [],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 0
+}

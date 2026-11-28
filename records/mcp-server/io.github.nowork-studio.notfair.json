@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.nowork-studio.notfair",
+  "name": "io.github.nowork-studio/notfair",
+  "links": {
+    "source": "https://github.com/nowork-studio/notfair-plugin",
+    "registry": "https://registry.modelcontextprotocol.io/v0.1/servers/io.github.nowork-studio%2Fnotfair/versions/latest"
+  },
+  "listedIn": [],
+  "license": {
+    "spdx": "MIT",
+    "source": "github-detected",
+    "class": "permissive"
+  },
+  "maintenance": {
+    "pushedAt": "2026-11-17T20:25:09Z",
+    "recentCommits": "5+",
+    "archived": false,
+    "headSha": "be3a43233c8836525fafcfdb85f78fb08e56a43f"
+  },
+  "popularity": [
+    {
+      "signal": "stars",
+      "ref": "gh.nowork-studio.notfair-plugin",
+      "scope": "repository",
+      "source": "github"
+    },
+    {
+      "signal": "starsGained30d",
+      "ref": "gh.nowork-studio.notfair-plugin",
+      "scope": "repository",
+      "source": "github"
+    }
+  ],
+  "signals": {
+    "release": true,
+    "transportDeclared": true,
+    "versionPinned": true,
+    "versionLabel": true,
+    "registryActive": true,
+    "namespaceMatches": true
+  },
+  "flags": [
+    "mcp-remote"
+  ],
+  "tags": [],
+  "cedarloomFit": {
+    "label": "not-assessed",
+    "tags": []
+  },
+  "score": {
+    "rubric": {
+      "kind": "mcp-server",
+      "version": "1.0.0"
+    },
+    "total": 85,
+    "parts": [
+      {
+        "signal": "lastPush",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "recentCommits",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "release",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "license",
+        "points": 10,
+        "max": 10
+      },
+      {
+        "signal": "transportDeclared",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionPinned",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "versionLabel",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "safety",
+        "points": 30,
+        "max": 45
+      },
+      {
+        "signal": "registryActive",
+        "points": 5,
+        "max": 5
+      },
+      {
+        "signal": "namespaceMatches",
+        "points": 5,
+        "max": 5
+      }
+    ]
+  },
+  "provenance": [
+    "github",
+    "mcp-registry"
+  ],
+  "changedAt": "2026-11-28",
+  "kind": "mcp-server",
+  "version": "0.27.25",
+  "registryStatus": "active",
+  "transports": [
+    "streamable-http"
+  ],
+  "packageRegistryTypes": [],
+  "versionPinned": true,
+  "requiredSecrets": 0,
+  "remoteHosts": 1
+}
